@@ -64,13 +64,28 @@
     </header>
 
     <!-- MOBILE HEADER -->
-    <header class="lg:hidden bg-paho-very-dark-blue text-white px-6 py-4 flex items-center justify-between z-30 no-print">
+    <header class="lg:hidden bg-paho-very-dark-blue text-white px-4 py-3 flex items-center justify-between z-30 no-print">
       <div class="flex items-center gap-3">
-        <span class="text-sm font-extrabold tracking-tight">TODOS LOS NIVELES DE ATENCIÓN</span>
+        <span class="text-xs sm:text-sm font-extrabold tracking-tight">TODOS LOS NIVELES DE ATENCIÓN</span>
       </div>
-      <button @click="mobileMenuOpen = !mobileMenuOpen" class="p-2 hover:bg-paho-dark-blue transition-colors focus:outline-none">
-        <i :data-lucide="mobileMenuOpen ? 'x' : 'menu'" class="w-6 h-6 text-white"></i>
-      </button>
+
+      <div class="flex items-center gap-2">
+        <!-- BOTÓN DE IMPRIMIR EN MÓVIL (SÓLO EN MÓDULO RESUMEN) -->
+        <button v-if="activeView === 'dashboard'" 
+                @click="printReport" 
+                class="flex items-center gap-1.5 px-3 py-1.5 bg-paho-dark-blue hover:bg-paho-blue text-white text-xs font-extrabold border border-white/20 transition-all rounded-none cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          <span>Imprimir</span>
+        </button>
+
+        <button @click="mobileMenuOpen = !mobileMenuOpen" class="p-2 hover:bg-paho-dark-blue transition-colors focus:outline-none">
+          <i :data-lucide="mobileMenuOpen ? 'x' : 'menu'" class="w-6 h-6 text-white"></i>
+        </button>
+      </div>
     </header>
 
     <!-- CONTAINER FOR SIDEBAR AND MAIN CONTENT -->
@@ -623,22 +638,41 @@
                     <span class="block text-[10px] text-paho-gray-medium mt-1">Formatos recomendados: JPG, PNG • Max 5MB</span>
                   </div>
 
-                  <div v-if="generalInfo.photos.length > 0" class="mt-6 space-y-3">
-                    <div v-for="(photo, index) in generalInfo.photos" :key="index" class="flex items-center justify-between p-3 bg-white border border-paho-grid">
-                      <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 border border-paho-grid flex items-center justify-center overflow-hidden">
-                          <img :src="photo.url" class="w-full h-full object-cover">
+                  <!-- GALERÍA DE EVIDENCIAS FOTOGRÁFICAS MEJORADA -->
+                  <div v-if="generalInfo.photos && generalInfo.photos.length > 0" class="mt-6">
+                    <span class="block text-xs font-bold text-paho-gray-dark uppercase mb-2">Fotos cargadas (Haga clic para ampliar):</span>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div 
+                        v-for="(photo, index) in generalInfo.photos" 
+                        :key="index" 
+                        class="relative group border border-paho-grid bg-white overflow-hidden shadow-sm hover:shadow-md transition duration-200"
+                      >
+                        <!-- Miniatura con clic para abrir modal -->
+                        <div @click="openPhotoModal(photo)" class="cursor-pointer overflow-hidden bg-gray-100 aspect-video flex items-center justify-center">
+                          <img 
+                            :src="photo.url" 
+                            :alt="photo.name" 
+                            class="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
+                          />
                         </div>
-                        <div>
-                          <span class="block text-xs font-bold text-paho-gray-dark truncate max-w-[150px]">{{ photo.name }}</span>
-                          <span class="block text-[10px] text-paho-gray-medium">Cargada con éxito</span>
+
+                        <!-- Pie con nombre del archivo y botón eliminar -->
+                        <div class="p-2 text-xs text-paho-gray-dark bg-paho-card border-t border-paho-grid flex justify-between items-center gap-1">
+                          <span class="truncate font-bold text-[11px]" :title="photo.name">{{ photo.name }}</span>
+                          
+                          <button 
+                            @click.stop="removePhoto(index)" 
+                            class="no-print p-1 text-paho-gray-medium hover:text-red-600 hover:bg-red-50 rounded transition" 
+                            title="Eliminar foto"
+                          >
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                          </button>
                         </div>
                       </div>
-                      <button @click="removePhoto(index)" class="no-print p-1.5 text-paho-gray-medium hover:text-red-500 transition-colors">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                      </button>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -1629,7 +1663,53 @@
 
     </div>
 
-  </div>
+    <!-- VENTANA MODAL / VISOR DE IMAGEN EN PANTALLA COMPLETA (LIGHTBOX) -->
+    <div 
+      v-if="selectedPhoto" 
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 no-print"
+      @click.self="closePhotoModal"
+    >
+      <div class="relative max-w-4xl w-full bg-white rounded-none border border-paho-grid shadow-2xl flex flex-col max-h-[90vh]">
+        
+        <!-- Cabecera del Modal -->
+        <div class="px-5 py-3 bg-paho-very-dark-blue text-white flex justify-between items-center">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="image" class="w-4 h-4 text-paho-light-blue"></i>
+            <h3 class="text-xs font-bold tracking-wide truncate">{{ selectedPhoto.name }}</h3>
+          </div>
+          
+          <button 
+            @click="closePhotoModal" 
+            class="text-white/80 hover:text-white p-1 rounded hover:bg-white/10 transition"
+            title="Cerrar ventana"
+          >
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        
+        <!-- Contenido principal: Imagen full size -->
+        <div class="p-4 bg-slate-950 flex items-center justify-center overflow-auto max-h-[75vh]">
+          <img 
+            :src="selectedPhoto.url" 
+            :alt="selectedPhoto.name" 
+            class="max-w-full max-h-[70vh] object-contain shadow-lg"
+          />
+        </div>
+
+        <!-- Pie del Modal -->
+        <div class="px-5 py-2.5 bg-paho-card border-t border-paho-grid flex justify-between items-center text-xs">
+          <span class="text-paho-gray-medium font-semibold text-[11px]">Vista previa de la evidencia fotográfica</span>
+          <button 
+            @click="closePhotoModal" 
+            class="px-4 py-1.5 bg-paho-dark-blue hover:bg-paho-very-dark-blue text-white text-xs font-bold transition rounded-none"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- Cierre del div #app -->
 
   <!-- Scripts de datos e interacción -->
   <script src="js/data/indicators.js"></script>
