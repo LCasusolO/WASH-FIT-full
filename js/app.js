@@ -1,5 +1,51 @@
 const { createApp, ref, computed, onMounted, nextTick } = Vue;
 
+// Función auxiliar de compresión y redimensionado usando HTML5 Canvas
+const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.7) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        // Redimensionar proporcionalmente
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convertir a Base64 JPEG comprimido
+        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressedBase64);
+      };
+
+      img.onerror = (error) => reject(error);
+    };
+
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 createApp({
   setup() {
     // Active Navigation state
@@ -12,12 +58,27 @@ createApp({
     const sidebarCollapsed = ref(false);
     const isPrintingAll = ref(false);
 
+    // Estado y controles para la ventana modal (Lightbox) de fotografías
+    const selectedPhoto = ref(null);
+
+    const openPhotoModal = (photo) => {
+      selectedPhoto.value = photo;
+      nextTick(() => {
+        if (window.lucide) window.lucide.createIcons();
+      });
+    };
+
+    const closePhotoModal = () => {
+      selectedPhoto.value = null;
+    };
+
     // Opciones para el Nivel de Atención del Establecimiento
     const levelOptions = [
       'Primer Nivel (Atención Primaria / Puesto de Salud)',
       'Segundo Nivel (Atención Especializada / Hospital)',
       'Tercer Nivel (Alta Especialización / Hospital Especializado)'
     ];
+
     // Toast Notifications helper state
     const toast = ref({
       show: false,
@@ -512,9 +573,8 @@ createApp({
       });
     };
 
-// Lógica avanzada de visibilidad condicional según nivel y tipo de infraestructura
+    // Lógica avanzada de visibilidad condicional según nivel y tipo de infraestructura
     const shouldShowIndicator = (ind) => {
-      // Verifica si el nivel seleccionado incluye "Segundo" o "Tercer" (compatible con texto corto o largo)
       const currentLevel = generalInfo.value.level || '';
       const isHospital = currentLevel.includes('Segundo') || currentLevel.includes('Tercer');
 
@@ -629,30 +689,33 @@ createApp({
       }
     };
 
-    const handleFileChange = (event) => {
+    // Procesador asíncrono para imágenes comprimidas en Base64
+    const handleFileChange = async (event) => {
       const files = event.target.files;
       if (!files || files.length === 0) return;
 
-      Array.from(files).forEach(file => {
+      triggerToast('Procesando y optimizando imágenes...', 'info');
+
+      for (const file of Array.from(files)) {
         if (!file.type.startsWith('image/')) {
           triggerToast(`El archivo "${file.name}" no es una imagen válida.`, 'error');
-          return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-          triggerToast(`La imagen "${file.name}" supera el límite de 5MB.`, 'error');
-          return;
+          continue;
         }
 
-        const photoObject = {
-          name: file.name,
-          file: file,
-          url: URL.createObjectURL(file)
-        };
+        try {
+          const compressedBase64 = await compressImage(file, 1200, 1200, 0.7);
+          const cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
 
-        generalInfo.value.photos.push(photoObject);
-      });
+          generalInfo.value.photos.push({
+            name: `${cleanName}.jpg`,
+            url: compressedBase64
+          });
+        } catch (error) {
+          triggerToast(`Error al procesar la imagen "${file.name}".`, 'error');
+        }
+      }
 
-      triggerToast('Evidencia fotográfica cargada exitosamente.', 'success');
+      triggerToast('Evidencia fotográfica cargada y optimizada exitosamente.', 'success');
       event.target.value = '';
 
       nextTick(() => {
@@ -661,10 +724,6 @@ createApp({
     };
 
     const removePhoto = (index) => {
-      const photo = generalInfo.value.photos[index];
-      if (photo && photo.url && photo.url.startsWith('blob:')) {
-        URL.revokeObjectURL(photo.url);
-      }
       generalInfo.value.photos.splice(index, 1);
       triggerToast('Evidencia fotográfica removida.', 'error');
     };
@@ -908,7 +967,12 @@ createApp({
       shouldShowIndicator,
       setSanitationSystem,
       facilityValuation,
-      isPrintingAll
+      isPrintingAll,
+
+      // Estado y métodos expuestos para la ventana modal (Lightbox)
+      selectedPhoto,
+      openPhotoModal,
+      closePhotoModal
     };
   }
 }).mount('#app');
