@@ -748,9 +748,9 @@
                       </div>
                       
                       <div class="flex items-center gap-2 flex-shrink-0">
-                        <span v-if="ind.score === 2" class="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-none"></span>
-                        <span v-else-if="ind.score === 1" class="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-300 text-xs font-bold rounded-none"></span>
-                        <span v-else-if="ind.score === 0" class="px-3 py-1 bg-rose-50 text-rose-800 border border-rose-300 text-xs font-bold rounded-none"></span>
+                        <span v-if="ind.score === 2" class="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-none">Cumple</span>
+                        <span v-else-if="ind.score === 1" class="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-300 text-xs font-bold rounded-none">Cumple parcialmente</span>
+                        <span v-else-if="ind.score === 0" class="px-3 py-1 bg-rose-50 text-rose-800 border border-rose-300 text-xs font-bold rounded-none">No cumple</span>
                         <span v-else class="px-3 py-1 bg-paho-card text-paho-gray-medium border border-paho-grid text-xs font-semibold rounded-none">Sin evaluar</span>
                       </div>
                     </div>
