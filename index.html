@@ -740,7 +740,6 @@
                     <div class="flex flex-col md:flex-row justify-between items-start gap-4">
                       <div class="space-y-1">
                         <div class="flex items-center gap-2.5">
-                          <span class="px-2.5 py-0.5 bg-paho-card border border-paho-grid text-paho-dark-blue font-bold text-xs tracking-wide rounded-none">{{ ind.code }}</span>
                           <span v-if="ind.jmp" class="px-2 py-0.5 bg-paho-light-blue/25 text-paho-dark-blue text-[10px] font-extrabold uppercase rounded-none">Indicador Core JMP</span>
                           <span class="px-2 py-0.5 bg-paho-gray-light text-paho-gray-dark text-[10px] font-bold rounded-none">{{ ind.module }}</span>
                         </div>
@@ -749,9 +748,9 @@
                       </div>
                       
                       <div class="flex items-center gap-2 flex-shrink-0">
-                        <span v-if="ind.score === 2" class="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-none">2 Puntos - Cumplimiento Completo</span>
-                        <span v-else-if="ind.score === 1" class="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-300 text-xs font-bold rounded-none">1 Punto - Avance Parcial</span>
-                        <span v-else-if="ind.score === 0" class="px-3 py-1 bg-rose-50 text-rose-800 border border-rose-300 text-xs font-bold rounded-none">0 Puntos - Brecha Crítica</span>
+                        <span v-if="ind.score === 2" class="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-none"></span>
+                        <span v-else-if="ind.score === 1" class="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-300 text-xs font-bold rounded-none"></span>
+                        <span v-else-if="ind.score === 0" class="px-3 py-1 bg-rose-50 text-rose-800 border border-rose-300 text-xs font-bold rounded-none"></span>
                         <span v-else class="px-3 py-1 bg-paho-card text-paho-gray-medium border border-paho-grid text-xs font-semibold rounded-none">Sin evaluar</span>
                       </div>
                     </div>
@@ -768,7 +767,7 @@
                           </div>
                         </div>
                         <div>
-                          <span class="block text-xs font-bold text-paho-very-dark-blue uppercase tracking-wide">Puntaje 0 — No cumple</span>
+                          <span class="block text-xs font-bold text-paho-very-dark-blue uppercase tracking-wide">No cumple</span>
                           <p class="text-[11px] text-paho-gray-dark mt-0.5 leading-relaxed">{{ ind.eval0 }}</p>
                         </div>
                       </button>
@@ -784,7 +783,7 @@
                           </div>
                         </div>
                         <div>
-                          <span class="block text-xs font-bold text-paho-very-dark-blue uppercase tracking-wide">Puntaje 1 — Cumple parcialmente</span>
+                          <span class="block text-xs font-bold text-paho-very-dark-blue uppercase tracking-wide">Cumple parcialmente</span>
                           <p class="text-[11px] text-paho-gray-dark mt-0.5 leading-relaxed">{{ ind.eval1 }}</p>
                         </div>
                       </button>
@@ -800,7 +799,7 @@
                           </div>
                         </div>
                         <div>
-                          <span class="block text-xs font-bold text-paho-very-dark-blue uppercase tracking-wide">Puntaje 2 — Cumple</span>
+                          <span class="block text-xs font-bold text-paho-very-dark-blue uppercase tracking-wide">Cumple</span>
                           <p class="text-[11px] text-paho-gray-dark mt-0.5 leading-relaxed">{{ ind.eval2 }}</p>
                         </div>
                       </button>
