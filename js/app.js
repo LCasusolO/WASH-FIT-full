@@ -653,7 +653,7 @@ createApp({
         if (ind.likelihood === undefined) ind.likelihood = null;
       }
       
-      triggerToast(`Indicador puntuado con éxito.`, 'success');
+      triggerToast(`Indicador marcado con éxito.`, 'success');
       
       nextTick(() => {
         if (window.lucide) window.lucide.createIcons();
