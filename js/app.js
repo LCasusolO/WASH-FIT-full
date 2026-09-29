@@ -630,7 +630,7 @@ createApp({
         ind.cost = null;
         ind.trackingStatus = 'No Iniciado';
         
-        triggerToast(`Se desmarcó la puntuación del indicador ${ind.code}.`, 'info');
+        triggerToast(`Se desmarcó el indicador.`, 'info');
         
         nextTick(() => {
           if (window.lucide) window.lucide.createIcons();
@@ -653,7 +653,7 @@ createApp({
         if (ind.likelihood === undefined) ind.likelihood = null;
       }
       
-      triggerToast(`Indicador ${ind.code} puntuado con éxito (${score} pts).`, 'success');
+      triggerToast(`Indicador puntuado con éxito (${score} pts).`, 'success');
       
       nextTick(() => {
         if (window.lucide) window.lucide.createIcons();
