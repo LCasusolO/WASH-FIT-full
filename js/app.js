@@ -106,12 +106,42 @@ createApp({
       { id: 'management', name: 'Gestión y Administración', shortName: 'Gestión (M)', color: 'bg-indigo-600', hex: '#4f46e5' }
     ];
 
+    // Opciones oficiales de la escala de Gravedad (0 a 10)
+    const severityOptions = [
+      { val: 0, label: '0 - Nula' },
+      { val: 1, label: '1 - Insignificante' },
+      { val: 2, label: '2 - Muy baja' },
+      { val: 3, label: '3 - Baja' },
+      { val: 4, label: '4 - Moderada-baja' },
+      { val: 5, label: '5 - Moderada' },
+      { val: 6, label: '6 - Moderada-alta' },
+      { val: 7, label: '7 - Alta' },
+      { val: 8, label: '8 - Muy alta' },
+      { val: 9, label: '9 - Crítica' },
+      { val: 10, label: '10 - Catastrófica' }
+    ];
+
+    // Opciones oficiales de la escala de Probabilidad (0 a 10)
+    const likelihoodOptions = [
+      { val: 0, label: '0 - Imposible' },
+      { val: 1, label: '1 - Extremadamente rara' },
+      { val: 2, label: '2 - Muy rara' },
+      { val: 3, label: '3 - Rara' },
+      { val: 4, label: '4 - Poco probable' },
+      { val: 5, label: '5 - Ocasional' },
+      { val: 6, label: '6 - Moderadamente probable' },
+      { val: 7, label: '7 - Probable' },
+      { val: 8, label: '8 - Muy probable' },
+      { val: 9, label: '9 - Casi segura' },
+      { val: 10, label: '10 - Continua' }
+    ];
+
     const generalInfo = ref({
       facilityName: 'Hospital Materno Infantil San José',
       district: 'Lima, Perú',
       latitude: -12.1485,
       longitude: -76.9841,
-      level: 'Primer Nivel', // Acepta: 'Primer Nivel', 'Segundo Nivel', 'Tercer Nivel'
+      level: 'Primer Nivel',
       type: 'Público',
       setting: 'Urbano',
       populationServed: 15000,
@@ -121,7 +151,7 @@ createApp({
         over18to59: null,
         over60: null,
       },
-      sanitationSystem: null, // 'alcantarillado' | 'insitu'
+      sanitationSystem: null,
       selectedS9Option: null,
       evaluationDate: new Date().toISOString().substr(0, 10),
       summary: '',
@@ -187,6 +217,43 @@ createApp({
       }
     };
 
+    // Cálculo oficial: Riesgo Total = Gravedad (G) + Probabilidad (P)
+    const calculateRiskScore = (ind) => {
+      if (
+        ind.severity === null || 
+        ind.severity === undefined || 
+        ind.severity === '' || 
+        ind.likelihood === null || 
+        ind.likelihood === undefined || 
+        ind.likelihood === ''
+      ) {
+        return null;
+      }
+      return Number(ind.severity) + Number(ind.likelihood);
+    };
+
+    // Escala oficial: 0-7 Bajo | 8-14 Medio | 15-20 Alto
+    const getRiskColorClass = (score) => {
+      if (score === null || score === undefined) return 'bg-gray-50 text-gray-400 border-gray-200';
+      if (score >= 15) return 'bg-red-50 text-red-700 border-red-300';
+      if (score >= 8) return 'bg-amber-50 text-amber-800 border-amber-300';
+      return 'bg-emerald-50 text-emerald-700 border-emerald-300';
+    };
+
+    const getRiskLabel = (score) => {
+      if (score === null || score === undefined) return 'Sin evaluar';
+      if (score >= 15) return 'Alto';
+      if (score >= 8) return 'Medio';
+      return 'Bajo';
+    };
+
+    const getRiskMeaning = (score) => {
+      if (score === null || score === undefined) return '';
+      if (score >= 15) return 'Riesgo inaceptable con probabilidad elevada de daños importantes.';
+      if (score >= 8) return 'Riesgo significativo que puede afectar la calidad del servicio o la salud.';
+      return 'Riesgo aceptable con impacto limitado.';
+    };
+
     const getSortedGaps = computed(() => {
       let list = indicators.value.filter(ind => shouldShowIndicator(ind));
       if (filterOnlyGaps.value) {
@@ -199,8 +266,10 @@ createApp({
 
       if (sortRiskOrder.value !== 'none') {
         result.sort((a, b) => {
-          const riskA = (a.severity && a.likelihood) ? (a.severity * a.likelihood) : 0;
-          const riskB = (b.severity && b.likelihood) ? (b.severity * b.likelihood) : 0;
+          const scoreA = calculateRiskScore(a);
+          const scoreB = calculateRiskScore(b);
+          const riskA = scoreA !== null ? scoreA : -1;
+          const riskB = scoreB !== null ? scoreB : -1;
           return sortRiskOrder.value === 'desc' ? riskB - riskA : riskA - riskB;
         });
       }
@@ -272,7 +341,7 @@ createApp({
       }
     };
 
-    // Estado JMP Dinámico y adaptado según Nivel de Atención
+    // Estado JMP Dinámico adaptado según Nivel de Atención
     const jmpCalculatedStatus = computed(() => {
       const getScore = (codes) => {
         const codeArray = Array.isArray(codes) ? codes : [codes];
@@ -359,7 +428,7 @@ createApp({
       return { water, sanitation, hygiene, waste, cleaning };
     });
 
-    // Gráfico de telaraña/radar dinámico para N módulos
+    // Gráfico de radar dinámico para N módulos
     const radarChartData = computed(() => {
       const cx = 375;
       const cy = 240;
@@ -492,27 +561,6 @@ createApp({
       nextTick(() => {
         if (window.lucide) window.lucide.createIcons();
       });
-    };
-
-    const calculateRiskScore = (ind) => {
-      if (ind.severity === null || ind.likelihood === null || ind.severity === '' || ind.likelihood === '') {
-        return null;
-      }
-      return ind.severity * ind.likelihood;
-    };
-
-    const getRiskColorClass = (score) => {
-      if (score === null || score === undefined) return 'bg-gray-50 text-gray-400 border-gray-200';
-      if (score >= 15) return 'bg-red-50 text-red-900 border-red-300';
-      if (score >= 8) return 'bg-amber-50 text-amber-900 border-amber-300';
-      return 'bg-emerald-50 text-emerald-900 border-emerald-300';
-    };
-
-    const getRiskLabel = (score) => {
-      if (score === null || score === undefined) return 'Sin evaluar';
-      if (score >= 15) return 'Extremo';
-      if (score >= 8) return 'Moderado';
-      return 'Bajo';
     };
 
     const getStatusColorClass = (status) => {
@@ -689,7 +737,6 @@ createApp({
       }
     };
 
-    // Procesador asíncrono para imágenes comprimidas en Base64
     const handleFileChange = async (event) => {
       const files = event.target.files;
       if (!files || files.length === 0) return;
@@ -913,7 +960,12 @@ createApp({
       filterOnlyGaps,
       sortRiskOrder,
       toggleRiskSort,
+      severityOptions,
+      likelihoodOptions,
       calculateRiskScore,
+      getRiskColorClass,
+      getRiskLabel,
+      getRiskMeaning,
       toast,
       modulesList,
       levelOptions,
@@ -938,8 +990,6 @@ createApp({
       getModuleScoreAchieved,
       getModulePercentage,
       navigateNextModule,
-      getRiskColorClass,
-      getRiskLabel,
       addTeamMember,
       confirmTeamMember,
       editTeamMember,
