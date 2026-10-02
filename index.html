@@ -70,7 +70,7 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <!-- BOTÓN DE IMPRIMIR EN MÓVIL (SÓLO EN MÓDULO RESUMEN) -->
+        <!-- BOTÓN DE IMPRIMIR EN MÓVIL (SÓLO EN dominio RESUMEN) -->
         <button v-if="activeView === 'dashboard'" 
                 @click="printReport" 
                 class="flex items-center gap-1.5 px-3 py-1.5 bg-paho-dark-blue hover:bg-paho-blue text-white text-xs font-extrabold border border-white/20 transition-all rounded-none cursor-pointer">
@@ -227,7 +227,7 @@
             <span class="text-sm font-extrabold text-paho-dark-blue">{{ overallCompliance }}%</span>
           </div>
           
-          <!-- BOTÓN DE IMPRIMIR REPORTE (SOLO VISIBLE EN MÓDULO RESUMEN) -->
+          <!-- BOTÓN DE IMPRIMIR REPORTE (SOLO VISIBLE EN dominio RESUMEN) -->
           <button v-if="activeView === 'dashboard'" 
                   @click="printReport" 
                   class="no-print flex items-center gap-2 px-4 py-2 bg-paho-dark-blue hover:bg-paho-very-dark-blue text-white text-xs font-extrabold border border-paho-dark-blue transition-all shadow-sm rounded-none cursor-pointer">
@@ -277,7 +277,7 @@
                   <div class="w-10 h-10 bg-paho-light-blue/20 text-paho-dark-blue flex items-center justify-center font-bold text-sm">02</div>
                   <h4 class="text-sm font-bold text-paho-very-dark-blue">Paso 2: Evaluación de la situación</h4>
                   <p class="text-xs text-paho-gray-dark leading-relaxed text-justify">
-                    Evalúe los 5 módulos de la herramienta, asignando una calificación de los indicadores de la siguiente manera: 
+                    Evalúe los 7 dominios de la herramienta, asignando una calificación de los indicadores de la siguiente manera: 
                     (0: No cumple) (1: Cumple parcialmente) (2: Cumple)
                   </p>
                 </div>
@@ -681,7 +681,7 @@
             <div class="no-print p-8 bg-white border border-paho-grid flex flex-col sm:flex-row justify-between items-center gap-6 mt-8">
               <div class="space-y-1 text-center sm:text-left">
                 <h4 class="text-base font-bold text-paho-very-dark-blue">¿Ha completado los Datos Generales?</h4>
-                <p class="text-xs text-paho-gray-medium">Avance al Paso 2 para comenzar con la evaluación de la situación por módulos.</p>
+                <p class="text-xs text-paho-gray-medium">Avance al Paso 2 para comenzar con la evaluación de la situación por dominios.</p>
               </div>
               
               <button @click="switchView('assessment')" class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-paho-dark-blue hover:bg-paho-very-dark-blue text-white text-xs font-bold transition-colors rounded-none">
@@ -694,7 +694,7 @@
             </div>
           </div>
 
-          <!-- MODULE 2: EVALUACIÓN DE MÓDULOS -->
+          <!-- MODULE 2: EVALUACIÓN DE dominioS -->
           <div v-show="activeView === 'assessment' || isPrintingAll" class="space-y-8">
             
             <!-- Tabbed Sub-navigation -->
@@ -712,20 +712,20 @@
             <!-- Current Module Banner -->
             <div class="p-6 bg-paho-dark-blue text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h3 class="text-2xl font-extrabold tracking-tight">Módulo: {{ isPrintingAll ? 'Evaluación de Situación Consolidada' : getActiveModuleName }}</h3>
+                <h3 class="text-2xl font-extrabold tracking-tight">Dominio: {{ isPrintingAll ? 'Evaluación de Situación Consolidada' : getActiveModuleName }}</h3>
               </div>
               
               <div class="flex items-center gap-6 bg-paho-very-dark-blue p-4 border border-white/10 w-full md:w-auto justify-around">
                 <div class="text-center min-w-[110px]">
                   <span class="block text-[10px] text-paho-light-blue uppercase font-bold tracking-wider mb-1">Avance Global</span>
                   <span class="text-2xl font-extrabold text-white">{{ progressPercentage }}%</span>
-                  <span class="block text-[9px] text-paho-gray-medium mt-0.5">5 Módulos</span>
+                  <span class="block text-[9px] text-paho-gray-medium mt-0.5">7 Dominios</span>
                 </div>
                 <div class="w-px h-10 bg-white/10"></div>
                 <div class="text-center min-w-[110px]">
-                  <span class="block text-[10px] text-paho-light-blue uppercase font-bold tracking-wider mb-1">Avance Módulo</span>
+                  <span class="block text-[10px] text-paho-light-blue uppercase font-bold tracking-wider mb-1">Avance Dominio</span>
                   <span class="text-2xl font-extrabold text-paho-light-blue">{{ getActiveModuleProgressPercentage }}%</span>
-                  <span class="block text-[9px] text-paho-gray-medium mt-0.5">Módulo Activo</span>
+                  <span class="block text-[9px] text-paho-gray-medium mt-0.5">Dominio Activo</span>
                 </div>
               </div>
             </div>
@@ -869,21 +869,21 @@
               </template>
             </div>
 
-            <!-- Pie de página del Módulo de Evaluación de Situación (Paso 2) -->
+            <!-- Pie de página del dominio de Evaluación de Situación (Paso 2) -->
             <div class="no-print p-8 bg-white border border-paho-grid flex flex-col sm:flex-row justify-between items-center gap-6">
               <div class="space-y-1 text-center sm:text-left">
                 <h4 class="text-base font-bold text-paho-very-dark-blue">
-                  {{ activeModuleTab === 'management' ? '¿Ha completado la evaluación de la situación?' : '¿Ha completado este Módulo?' }}
+                  {{ activeModuleTab === 'management' ? '¿Ha completado la evaluación de la situación?' : '¿Ha completado este Dominio?' }}
                 </h4>
                 <p class="text-xs text-paho-gray-medium">
-                  {{ activeModuleTab === 'management' ? 'Puede avanzar al Paso 3 para desarrollar la matriz de evaluación de riesgos.' : 'Puede continuar completando otros módulos utilizando la barra superior o reiniciar el progreso actual.' }}
+                  {{ activeModuleTab === 'management' ? 'Puede avanzar al Paso 3 para desarrollar la matriz de evaluación de riesgos.' : 'Puede continuar completando otros dominios utilizando la barra superior o reiniciar el progreso actual.' }}
                 </p>
               </div>
               
               <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-                <button @click="clearCurrentModule" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold border border-red-200 transition-colors rounded-none" title="Eliminar todo el llenado de este módulo">
+                <button @click="clearCurrentModule" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold border border-red-200 transition-colors rounded-none" title="Eliminar todo el llenado de este dominio">
                   <i data-lucide="trash-2" class="w-4 h-4"></i>
-                  <span>Reiniciar el llenado del Módulo</span>
+                  <span>Reiniciar el llenado del Dominio</span>
                 </button>
                 
                 <button v-if="activeModuleTab === 'management'" 
@@ -899,7 +899,7 @@
                 <button v-else 
                         @click="navigateNextModule" 
                         class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-paho-dark-blue hover:bg-paho-very-dark-blue text-white text-xs font-bold transition-colors rounded-none">
-                  <span>Siguiente Módulo</span>
+                  <span>Siguiente Dominio</span>
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -939,7 +939,7 @@
       <table class="w-full text-left border-collapse min-w-[1150px]">
         <thead class="sticky top-0 z-20 bg-paho-card border-b border-paho-grid">
           <tr class="text-[11px] uppercase tracking-wider font-extrabold text-paho-gray-dark">
-            <th class="py-4 px-6 w-80 min-w-[280px] max-w-[320px] text-center bg-paho-card">Módulo / Indicador</th>
+            <th class="py-4 px-6 w-80 min-w-[280px] max-w-[320px] text-center bg-paho-card">Dominio / Indicador</th>
             <th class="py-4 px-4 min-w-[280px] text-center bg-paho-card">Problema</th>
             <th class="py-4 px-4 min-w-[280px] text-center bg-paho-card">Riesgos Asociados</th>
             <th class="py-4 px-3 w-36 min-w-[145px] text-center bg-paho-card" title="Consecuencias para los usuarios del establecimiento y el entorno">
@@ -962,11 +962,11 @@
         <tbody class="divide-y divide-paho-grid text-xs">
           <tr v-for="ind in getSortedGaps" :key="ind.id" class="hover:bg-paho-card/20 align-top">
             
-            <!-- Columna Unificada: Módulo en Box / Indicador / Estado -->
+            <!-- Columna Unificada: dominio en Box / Indicador / Estado -->
             <td class="py-5 px-6 align-top">
               <div class="flex flex-col items-center text-center gap-2.5">
                 
-                <!-- Box del Módulo con color oficial de modulesList -->
+                <!-- Box del dominio con color oficial de modulesList -->
                 <span 
                   class="inline-block px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-none shadow-xs"
                   :class="{
@@ -1129,7 +1129,7 @@
       <table class="w-full text-left border-collapse min-w-[1300px]">
         <thead class="sticky top-0 z-20 bg-paho-card border-b border-paho-grid">
           <tr class="text-[11px] uppercase tracking-wider font-extrabold text-paho-gray-dark">
-            <th class="py-4 px-6 w-80 min-w-[280px] max-w-[320px] text-center bg-paho-card">Módulo / Indicador</th>
+            <th class="py-4 px-6 w-80 min-w-[280px] max-w-[320px] text-center bg-paho-card">Dominio / Indicador</th>
             <th class="py-4 px-4 min-w-[260px] text-center bg-paho-card">Descripción del Problema</th>
             <th class="py-4 px-4 min-w-[260px] text-center bg-paho-card">Acción de Mitigación</th>
             <th class="py-4 px-4 w-40 min-w-[150px] text-center bg-paho-card">Fecha de Realización</th>
@@ -1142,11 +1142,11 @@
         <tbody class="divide-y divide-paho-grid text-xs">
           <tr v-for="ind in getSortedGaps" :key="ind.id" class="hover:bg-paho-card/20 align-top">
             
-            <!-- Columna Unificada: Módulo en Box / Indicador / Badge de Riesgo y Puntos -->
+            <!-- Columna Unificada: dominio en Box / Indicador / Badge de Riesgo y Puntos -->
             <td class="py-5 px-6 align-top">
               <div class="flex flex-col items-center text-center gap-2.5">
                 
-                <!-- 1. Box del Módulo con color oficial -->
+                <!-- 1. Box del dominio con color oficial -->
                 <span 
                   class="inline-block px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-none shadow-xs"
                   :class="{
@@ -1332,7 +1332,7 @@
       <table class="w-full text-left border-collapse min-w-[1300px]">
         <thead class="sticky top-0 z-20 bg-paho-card border-b border-paho-grid">
           <tr class="text-[11px] uppercase tracking-wider font-extrabold text-paho-gray-dark">
-            <th class="py-4 px-6 w-80 min-w-[280px] max-w-[320px] text-center bg-paho-card">Módulo / Indicador</th>
+            <th class="py-4 px-6 w-80 min-w-[280px] max-w-[320px] text-center bg-paho-card">Dominio / Indicador</th>
             <th class="py-4 px-4 min-w-[260px] text-center bg-paho-card">Descripción del Problema</th>
             <th class="py-4 px-4 min-w-[260px] text-center bg-paho-card">Acción de Mitigación</th>
             <th class="py-4 px-4 w-48 min-w-[190px] text-center bg-paho-card">¿Ha mejorado, empeorado o no ha cambiado?</th>
@@ -1344,11 +1344,11 @@
         <tbody class="divide-y divide-paho-grid text-xs">
           <tr v-for="ind in getSortedGaps" :key="ind.id" class="hover:bg-paho-card/20 align-top">
             
-            <!-- Columna Unificada: Módulo en Box / Indicador -->
+            <!-- Columna Unificada: dominio en Box / Indicador -->
             <td class="py-5 px-6 align-top">
               <div class="flex flex-col items-center text-center gap-2.5">
                 
-                <!-- 1. Box del Módulo con color oficial -->
+                <!-- 1. Box del dominio con color oficial -->
                 <span 
                   class="inline-block px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-none shadow-xs"
                   :class="{
@@ -1544,7 +1544,7 @@
               <!-- Radar Chart -->
               <div class="bg-paho-card border border-paho-grid p-8 space-y-6">
                 <div class="border-b border-paho-grid pb-4">
-                  <h3 class="text-base font-bold text-paho-very-dark-blue">Porcentaje de Desempeño por Módulo (Radar)</h3>
+                  <h3 class="text-base font-bold text-paho-very-dark-blue">Porcentaje de Desempeño por Dominio (Radar)</h3>
                   <p class="text-xs text-paho-gray-medium mt-1">Alineación multidimensional de las áreas evaluadas en la herramienta WASH FIT.</p>
                 </div>
 
@@ -1610,15 +1610,15 @@
               <!-- Consolidated Modules Summary Data Table -->
               <div class="bg-paho-card border border-paho-grid p-8 space-y-6">
                 <div class="border-b border-paho-grid pb-4">
-                  <h3 class="text-base font-bold text-paho-very-dark-blue">Consolidado por Módulos (WASH)</h3>
-                  <p class="text-xs text-paho-gray-medium mt-1">Resumen cuantitativo del progreso y puntajes de cumplimiento de los módulos.</p>
+                  <h3 class="text-base font-bold text-paho-very-dark-blue">Consolidado por Dominios (WASH)</h3>
+                  <p class="text-xs text-paho-gray-medium mt-1">Resumen cuantitativo del progreso y puntajes de cumplimiento de los dominios</p>
                 </div>
 
                 <div class="overflow-x-auto bg-white border border-paho-grid">
                   <table class="w-full text-left border-collapse">
                     <thead>
                       <tr class="border-b border-paho-grid text-[10px] font-extrabold uppercase tracking-wider text-paho-gray-medium">
-                        <th class="py-2.5 px-4 bg-paho-card">Módulo</th>
+                        <th class="py-2.5 px-4 bg-paho-card">Dominio</th>
                         <th class="py-2.5 text-center bg-paho-card">Indicadores</th>
                         <th class="py-2.5 text-center bg-paho-card">Evaluados</th>
                         <th class="py-2.5 text-center bg-paho-card">Puntos Logrados</th>
@@ -1742,7 +1742,7 @@
               <!-- JMP Service Ladders Status Section -->
               <div class="bg-paho-card border border-paho-grid p-8 space-y-6">
                 <div class="border-b border-paho-grid pb-4">
-                  <h3 class="text-base font-bold text-paho-very-dark-blue">Estado de las Escaleras de Servicio JMP (OMS/UNICEF) - Consolidado de los 5 Módulos</h3>
+                  <h3 class="text-base font-bold text-paho-very-dark-blue">Estado de las Escaleras de Servicio JMP (OMS/UNICEF) - Consolidado de los 7 Dominios</h3>
                   <p class="text-xs text-paho-gray-medium mt-1">Estatus calculado en base a las reglas y directrices de monitoreo de las Naciones Unidas para Agua, Saneamiento, Residuos, Higiene de Manos y Limpieza.</p>
                 </div>
 
