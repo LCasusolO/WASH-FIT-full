@@ -126,7 +126,7 @@
               <div class="bg-paho-blue h-2 transition-all duration-500" :style="{ width: progressPercentage + '%' }"></div>
             </div>
             <div class="flex justify-between items-center mt-3 text-[11px] text-paho-gray-medium font-semibold">
-              <span>{{ answeredCount }} de {{ indicators.length }} Eval.</span>
+              <span>{{ answeredCount }} de {{ totalVisibleIndicators }} Eval.</span>
               <span>Brechas: {{ totalGaps }}</span>
             </div>
           </div>
@@ -154,7 +154,7 @@
                 <div class="w-6 h-6 flex items-center justify-center flex-shrink-0"><i data-lucide="check-square" class="w-5 h-5"></i></div>
                 <span v-show="!sidebarCollapsed" class="whitespace-nowrap">Evaluación Situación</span>
               </div>
-              <span v-show="!sidebarCollapsed" class="px-2 py-0.5 text-[10px] bg-paho-gray-light text-paho-gray-dark font-extrabold flex-shrink-0">{{ answeredCount }}/{{ indicators.length }}</span>
+              <span v-show="!sidebarCollapsed" class="px-2 py-0.5 text-[10px] bg-paho-gray-light text-paho-gray-dark font-extrabold flex-shrink-0">{{ answeredCount }}/{{ totalVisibleIndicators }}</span>
             </button>
 
             <button @click="switchView('step3')" :class="['w-full flex items-center py-3 font-semibold text-xs uppercase tracking-wider transition-all duration-150 border', sidebarCollapsed ? 'justify-center px-0' : 'justify-between px-4', activeView === 'step3' ? 'bg-paho-dark-blue text-white border-paho-dark-blue' : 'text-paho-gray-dark border-transparent hover:bg-white hover:text-paho-dark-blue']">
@@ -1635,7 +1635,8 @@
                         <th class="py-2.5 text-right px-4 bg-paho-card">Porcentaje (%)</th>
                       </tr>
                     </thead>
-                    <tbody class="divide-y divide-paho-grid text-xs">
+                   
+<tbody class="divide-y divide-paho-grid text-xs">
                       <tr v-for="mod in modulesList" :key="mod.id" class="hover:bg-paho-card">
                         <td class="py-3.5 px-4 font-bold text-paho-very-dark-blue flex items-center gap-2">
                           <span class="w-2.5 h-2.5 rounded-full" :class="mod.color"></span>
@@ -1643,17 +1644,20 @@
                         </td>
                         <td class="py-3.5 text-center font-semibold text-paho-gray-dark">{{ getModuleTotalCount(mod.name) }}</td>
                         <td class="py-3.5 text-center font-semibold text-paho-gray-dark">{{ getModuleAnsweredCount(mod.name) }}</td>
-                        <td class="py-3.5 text-center font-bold text-paho-very-dark-blue">{{ getModuleScoreAchieved(mod.name) }} / {{ getModuleAnsweredCount(mod.name) * 2 }}</td>
+                        <!-- Solo puntos efectivos logrados por dominio -->
+                        <td class="py-3.5 text-center font-bold text-paho-very-dark-blue">{{ getModuleScoreAchieved(mod.name) }}</td>
                         <td class="py-3.5 text-right px-4 font-extrabold text-paho-dark-blue">{{ getModulePercentage(mod.name) }}%</td>
                       </tr>
                       <tr class="bg-paho-card font-bold text-paho-very-dark-blue border-t-2 border-paho-grid">
                         <td class="py-4 px-4">TOTAL</td>
-                        <td class="py-4 text-center">{{ indicators.length }}</td>
+                        <td class="py-4 text-center">{{ totalVisibleIndicators }}</td>
                         <td class="py-4 text-center">{{ answeredCount }}</td>
-                        <td class="py-4 text-center">{{ totalScoreAchieved }} / {{ answeredCount * 2 }}</td>
+                        <!-- Solo total de puntos efectivos -->
+                        <td class="py-4 text-center">{{ totalScoreAchieved }}</td>
                         <td class="py-4 text-right px-4 text-paho-dark-blue font-extrabold">{{ overallCompliance }}%</td>
                       </tr>
                     </tbody>
+                    
                   </table>
                 </div>
               </div>
