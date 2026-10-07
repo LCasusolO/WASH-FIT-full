@@ -1000,14 +1000,14 @@
 
                 <!-- Badge de Cumplimiento -->
                 <div>
-                  <span v-if="ind.score == 0" class="inline-block px-3 py-1.5 text-[11px] font-bold bg-rose-50 border border-rose-300 text-rose-700 rounded-none">
-                    No cumple
+                  <span v-else class="inline-block px-3 py-1.5 text-[11px] font-bold bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-none">
+                    Cumple totalmente
                   </span>
                   <span v-else-if="ind.score == 1" class="inline-block px-3 py-1.5 text-[11px] font-bold bg-amber-50 border border-amber-300 text-amber-800 rounded-none">
                     Cumple parcialmente
                   </span>
-                  <span v-else class="inline-block px-3 py-1.5 text-[11px] font-bold bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-none">
-                    Cumple totalmente
+                  <span v-if="ind.score == 0" class="inline-block px-3 py-1.5 text-[11px] font-bold bg-rose-50 border border-rose-300 text-rose-700 rounded-none">
+                    No cumple
                   </span>
                 </div>
               </div>
