@@ -765,24 +765,24 @@
                       </div>
                     </div>
 
-                    <div class="space-y-3">
-                      <!-- Score 0 -->
-                      <button @click="setIndicatorScore(ind, 0)" 
+<div class="space-y-3">
+                      <!-- 1. CUMPLE (Score 2) -->
+                      <button @click="setIndicatorScore(ind, 2)" 
                               :class="['w-full p-4 border text-left transition-all duration-150 outline-none flex items-start gap-4 rounded-none cursor-pointer', 
-                                       ind.score === 0 ? 'bg-rose-50 border-rose-300 text-paho-gray-dark' : 'border-paho-grid text-paho-gray-dark bg-white hover:bg-paho-card']">
+                                       ind.score === 2 ? 'bg-emerald-50 border-emerald-300 text-paho-gray-dark' : 'border-paho-grid text-paho-gray-dark bg-white hover:bg-paho-card']">
                         <div class="flex items-center h-5 mt-0.5 flex-shrink-0">
                           <div class="w-4 h-4 rounded-full border flex items-center justify-center bg-white transition-all duration-150"
-                               :class="ind.score === 0 ? 'border-rose-500 bg-rose-50' : 'border-paho-gray-medium'">
-                            <div v-if="ind.score === 0" class="w-2 h-2 rounded-full bg-rose-600"></div>
+                               :class="ind.score === 2 ? 'border-emerald-500 bg-emerald-50' : 'border-paho-gray-medium'">
+                            <div v-if="ind.score === 2" class="w-2 h-2 rounded-full bg-emerald-600"></div>
                           </div>
                         </div>
                         <div>
-                          <span class="block text-xs font-bold text-paho-very-dark-blue uppercase tracking-wide">No cumple</span>
-                          <p class="text-[11px] text-paho-gray-dark mt-0.5 leading-relaxed">{{ ind.eval0 }}</p>
+                          <span class="block text-xs font-bold text-paho-very-dark-blue uppercase tracking-wide">Cumple</span>
+                          <p class="text-[11px] text-paho-gray-dark mt-0.5 leading-relaxed">{{ ind.eval2 }}</p>
                         </div>
                       </button>
 
-                      <!-- Score 1 -->
+                      <!-- 2. CUMPLE PARCIALMENTE (Score 1) -->
                       <button @click="setIndicatorScore(ind, 1)" 
                               :class="['w-full p-4 border text-left transition-all duration-150 outline-none flex items-start gap-4 rounded-none cursor-pointer', 
                                        ind.score === 1 ? 'bg-amber-50 border-amber-300 text-paho-gray-dark' : 'border-paho-grid text-paho-gray-dark bg-white hover:bg-paho-card']">
@@ -798,23 +798,23 @@
                         </div>
                       </button>
 
-                      <!-- Score 2 -->
-                      <button @click="setIndicatorScore(ind, 2)" 
+                      <!-- 3. NO CUMPLE (Score 0) -->
+                      <button @click="setIndicatorScore(ind, 0)" 
                               :class="['w-full p-4 border text-left transition-all duration-150 outline-none flex items-start gap-4 rounded-none cursor-pointer', 
-                                       ind.score === 2 ? 'bg-emerald-50 border-emerald-300 text-paho-gray-dark' : 'border-paho-grid text-paho-gray-dark bg-white hover:bg-paho-card']">
+                                       ind.score === 0 ? 'bg-rose-50 border-rose-300 text-paho-gray-dark' : 'border-paho-grid text-paho-gray-dark bg-white hover:bg-paho-card']">
                         <div class="flex items-center h-5 mt-0.5 flex-shrink-0">
                           <div class="w-4 h-4 rounded-full border flex items-center justify-center bg-white transition-all duration-150"
-                               :class="ind.score === 2 ? 'border-emerald-500 bg-emerald-50' : 'border-paho-gray-medium'">
-                            <div v-if="ind.score === 2" class="w-2 h-2 rounded-full bg-emerald-600"></div>
+                               :class="ind.score === 0 ? 'border-rose-500 bg-rose-50' : 'border-paho-gray-medium'">
+                            <div v-if="ind.score === 0" class="w-2 h-2 rounded-full bg-rose-600"></div>
                           </div>
                         </div>
                         <div>
-                          <span class="block text-xs font-bold text-paho-very-dark-blue uppercase tracking-wide">Cumple</span>
-                          <p class="text-[11px] text-paho-gray-dark mt-0.5 leading-relaxed">{{ ind.eval2 }}</p>
+                          <span class="block text-xs font-bold text-paho-very-dark-blue uppercase tracking-wide">No cumple</span>
+                          <p class="text-[11px] text-paho-gray-dark mt-0.5 leading-relaxed">{{ ind.eval0 }}</p>
                         </div>
                       </button>
                     </div>
-
+                    
                     <div class="flex items-start gap-2.5">
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-paho-gray-medium mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
