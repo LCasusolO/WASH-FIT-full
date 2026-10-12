@@ -13,17 +13,21 @@ function loadApp() {
       computed: getter => ({ get value() { return getter(); } }),
       onMounted() {},
       nextTick() {},
+      watch() {},
       createApp: options => ({ mount() { app = options.setup(); } })
     },
-    window: {},
+    window: { innerWidth: 1200 },
+    navigator: { onLine: true },
+    WashStorage: { createStore: () => ({ save: async data => data.savedAt }) },
     setTimeout() {},
+    clearTimeout() {},
     Date,
     Intl,
     FileReader: class {
-      readAsText(file) { this.onload({ target: { result: file.text } }); }
+      readAsText(file) { return this.onload({ target: { result: file.text } }); }
     }
   });
-  for (const file of ['js/data/indicators.js', 'js/app.js']) {
+  for (const file of ['js/core.js', 'js/data/indicators.js', 'js/app.js']) {
     vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), context);
   }
   return app;
@@ -61,7 +65,7 @@ test('renaming module and indicator labels preserves filtering, progress, scores
   assert.equal(app.getModuleAnsweredCount('water'), 1);
 });
 
-test('legacy JSON with either waste label migrates to the stable ID without losing answers', () => {
+test('legacy JSON with either waste label migrates to the stable ID without losing answers', async () => {
   for (const label of ['Gestión de Residuos', 'Residuos Hospitalarios']) {
     const app = loadApp();
     const data = JSON.parse(JSON.stringify({ generalInfo: app.generalInfo.value, indicators: app.indicators.value }));
@@ -70,7 +74,7 @@ test('legacy JSON with either waste label migrates to the stable ID without losi
       if (ind.code.startsWith('RES_')) ind.module = label;
     });
     data.indicators.find(ind => ind.code === 'RES_2').score = 2;
-    app.importData({ target: { files: [{ text: JSON.stringify(data) }] } });
+    await app.importData({ target: { files: [{ text: JSON.stringify(data) }] } });
     app.activeModuleTab.value = 'waste';
     assert.equal(app.getFilteredIndicatorsByModule.value.length, 18);
     assert.equal(app.getModuleAnsweredCount('waste'), 1);

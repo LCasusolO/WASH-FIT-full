@@ -2,7 +2,7 @@ tailwind.config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+        sans: ['system-ui', 'Segoe UI', 'sans-serif'],
       },
       colors: {
         paho: {

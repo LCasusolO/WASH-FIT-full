@@ -1,0 +1,97 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const vm = require('node:vm');
+const fs = require('node:fs');
+const { execFileSync } = require('node:child_process');
+const Core = require('../js/core.js');
+const context = vm.createContext({});
+vm.runInContext(fs.readFileSync('js/data/indicators.js','utf8')+';globalThis.catalog=INDICATORS_DATA;',context);
+const catalog = Core.clone(context.catalog);
+function fixture(scores={}) { return { generalInfo:Core.defaults(), indicators:catalog.map(item=>({...item,score:scores[item.code]??null})) }; }
+const jmp = data => Core.calculateJmp(data.generalInfo,data.indicators);
+test('no responses never imply no service or a facility diagnosis',()=>{
+  const statuses=jmp(fixture());
+  assert.ok(Object.values(statuses).every(value=>value.status==='Sin evaluar'));
+  assert.equal(Core.valuation(0,89,0).label,'Sin evaluar');
+  assert.equal(Core.valuation(1,89,100).label,'Evaluación incompleta');
+  assert.equal(Core.valuation(89,89,100).label,'Mejora Avanzada');
+});
+test('water uses real codes, admits improved source in the grounds and distinguishes visit availability',()=>{
+  assert.equal(jmp(fixture({A_1a:1,A_3:2})).water.status,'Básico');
+  const data=fixture({A_1b:2,A_3:2});data.generalInfo.level='Tercer Nivel (Alta Especialización / Hospital Especializado)';
+  assert.equal(jmp(data).water.status,'Básico');
+  const partial=fixture({A_1a:2,A_3:1});
+  assert.equal(jmp(partial).water.status,'Evaluación incompleta');
+  partial.generalInfo.jmpWater.available='no';assert.equal(jmp(partial).water.status,'Limitado');
+  partial.generalInfo.jmpWater.source='unimproved';assert.equal(jmp(partial).water.status,'Sin Servicio');
+});
+test('off-premises water follows distance and never turns lack of continuity into lack of source',()=>{
+  const data=fixture();data.generalInfo.jmpWater={source:'improved',location:'near',available:'yes'};
+  assert.equal(jmp(data).water.status,'Limitado');
+  data.generalInfo.jmpWater.location='far';assert.equal(jmp(data).water.status,'Sin Servicio');
+});
+test('hygiene requires care points and toilet stations; public areas cannot replace toilets',()=>{
+  assert.equal(jmp(fixture({H_1:2,H_2:2,S_3:0})).hygiene.status,'Limitado');
+  assert.equal(jmp(fixture({H_1:2,S_3:2})).hygiene.status,'Básico');
+  assert.equal(jmp(fixture({H_1:2})).hygiene.status,'Evaluación incompleta');
+});
+test('waste requires effective segregation and treatment, excluding flood protection as substitute',()=>{
+  assert.equal(jmp(fixture({RES_2:2,RES_12:2})).waste.status,'Básico');
+  assert.notEqual(jmp(fixture({RES_1:2,RES_14:2})).waste.status,'Básico');
+  const data=fixture({RES_2:2,RES_10:2,RES_11:2,RES_13:2});data.generalInfo.wasteTreatmentRoute='onsite';
+  assert.equal(jmp(data).waste.status,'Evaluación incompleta');
+  data.generalInfo.wasteSafeTreatment='yes';assert.equal(jmp(data).waste.status,'Básico');
+  data.generalInfo.wasteSafeTreatment='no';assert.equal(jmp(data).waste.status,'Limitado');
+});
+test('cleaning and sanitation need their required responses before issuing a category',()=>{
+  assert.equal(jmp(fixture({L_1:2})).cleaning.status,'Evaluación incompleta');
+  assert.equal(jmp(fixture({L_1:2,L_5:2})).cleaning.status,'Básico');
+  assert.equal(jmp(fixture({S_1:2})).sanitation.status,'Evaluación incompleta');
+});
+test('legacy files merge into canonical catalog and fill missing fields',()=>{
+  const data=fixture({A_1a:2});delete data.generalInfo.ageGroups;data.indicators=data.indicators.slice(0,2);data.indicators[0].title='Texto alterado';
+  const restored=Core.normalizeDataset(data,catalog);
+  assert.equal(restored.indicators.length,99);assert.equal(restored.indicators[0].score,2);
+  assert.equal(restored.indicators[0].title,catalog[0].title);assert.equal(restored.generalInfo.ageGroups.under5,null);
+  assert.equal(restored.schemaVersion,2);
+});
+test('reject invalid score, risk, schema, dates, coordinates, unknown codes and duplicates without changing input',()=>{
+  for(const alter of [d=>d.indicators[0].score=99,d=>d.indicators[0].severity=11,d=>d.schemaVersion=999,d=>d.generalInfo.evaluationDate='2026-02-30',d=>d.generalInfo.latitude=91,d=>d.indicators[0].code='unknown',d=>d.indicators[1].code=d.indicators[0].code,d=>d.generalInfo.populationServed=-1]){
+    const data=fixture();alter(data);const before=JSON.stringify(data);assert.throws(()=>Core.normalizeDataset(data,catalog));assert.equal(JSON.stringify(data),before);
+  }
+});
+test('unsafe images and excessive images are rejected',()=>{
+  const data=fixture();data.generalInfo.photos=[{name:'x',url:'https://example.com/x'}];assert.throws(()=>Core.normalizeDataset(data,catalog));
+  data.generalInfo.photos=Array.from({length:21},()=>({name:'x',url:'data:image/jpeg;base64,YQ=='}));assert.throws(()=>Core.normalizeDataset(data,catalog));
+});
+test('responsible uses stable team ID, survives renaming and history preserves the former name',()=>{
+  const ind={...catalog[0],responsibleId:'person',action:'Reparar',history:[]};const team=[{id:'person',name:'Ana'}];
+  Core.recordReview(ind,team,'2026-10-12T15:00:00Z');team[0].name='Ana Pérez';
+  assert.equal(Core.responsibleName(ind,team),'Ana Pérez');assert.equal(ind.history[0].responsible,'Ana');
+  ind.action='Otra acción';assert.equal(ind.history[0].action,'Reparar');
+});
+test('past deadlines are delayed unless completed',()=>{
+  assert.equal(Core.trackingStatus({trackingStatus:'En Progreso',targetDate:'2026-10-01'},'2026-10-12'),'Retrasado');
+  assert.equal(Core.trackingStatus({trackingStatus:'Completado',targetDate:'2026-10-01'},'2026-10-12'),'Completado');
+});
+test('population, money and local dates validate boundaries including zero',()=>{
+  assert.equal(Core.parseNonNegative('0',true),0);assert.equal(Core.parseNonNegative('1,200',true),1200);
+  assert.equal(Core.parseNonNegative('-5'),undefined);assert.equal(Core.parseNonNegative('12junk'),undefined);assert.equal(Core.parseNonNegative('1.5',true),undefined);
+  assert.equal(Core.localDate(new Date(2026,9,12,23,59)),'2026-10-12');
+  const data=fixture();data.generalInfo.latitude=0;data.generalInfo.longitude=0;assert.equal(Core.normalizeDataset(data,catalog).generalInfo.latitude,0);
+  data.generalInfo.populationServed=10;data.generalInfo.ageGroups.under5=11;assert.ok(Core.populationWarning(data.generalInfo));
+});
+test('excluded points preserve their original functions, level choices and risk badge conditions',()=>{
+  const old=execFileSync('git',['show','84a71ba:js/app.js'],{encoding:'utf8'}).replace(/\r\n/g,'\n');
+  const current=fs.readFileSync('js/app.js','utf8').replace(/\r\n/g,'\n');
+  for(const [start,end] of [['    const shouldShowIndicator =','    const setIndicatorScore ='],['    const setIndicatorScore =','    const setSanitationSystem ='],['    const setSanitationSystem =','    const getModuleTotalCount ='],['    const levelOptions =','    // Toast Notifications']]){
+    const extract=source=>source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start)));
+    assert.equal(extract(current),extract(old));
+  }
+  assert.equal(Core.defaults().level,'Primer Nivel');
+  const oldHtml=execFileSync('git',['show','84a71ba:index.html'],{encoding:'utf8'});
+  const currentHtml=fs.readFileSync('index.html','utf8');
+  const badge=source=>source.slice(source.indexOf('<!-- Badge de Cumplimiento -->'),source.indexOf('</div>',source.indexOf('<!-- Badge de Cumplimiento -->'))).replace(/\r\n/g,'\n');
+  assert.equal(badge(currentHtml),badge(oldHtml));
+  assert.ok(currentHtml.includes('sumará la gravedad'));assert.ok(!currentHtml.includes('multiplicará la gravedad'));
+});
