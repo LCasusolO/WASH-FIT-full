@@ -99,7 +99,7 @@ createApp({
     const modulesList = [
       { id: 'water', name: 'Agua', shortName: 'Agua (A)', color: 'bg-paho-blue', hex: '#008DC9' },
       { id: 'sanitation', name: 'Saneamiento', shortName: 'Saneam. (S)', color: 'bg-emerald-600', hex: '#059669' },
-      { id: 'waste', name: 'Residuos Hospitalarios', shortName: 'Residuos (RES)', color: 'bg-amber-600', hex: '#d97706' },
+      { id: 'waste', name: 'Gestión de Residuos', shortName: 'Residuos (RES)', color: 'bg-amber-600', hex: '#d97706' },
       { id: 'hygiene', name: 'Higiene de Manos', shortName: 'Higiene (H)', color: 'bg-purple-600', hex: '#7c3aed' },
       { id: 'cleaning', name: 'Limpieza Hospitalaria', shortName: 'Limpieza (L)', color: 'bg-teal-600', hex: '#0d9488' },
       { id: 'energy', name: 'Energía', shortName: 'Energía (E)', color: 'bg-yellow-500', hex: '#eab308' },
