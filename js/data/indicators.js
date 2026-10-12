@@ -476,7 +476,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_1',
     code: 'RES_1',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Disponibilidad de contenedores funcionales y diferenciados para la segregación de residuos en los puntos de generación',
     desc: 'Separación • Esencial • Sala',
     guidance: 'Tres recipientes inmediatos al punto de atención: 1) Punzocortantes (caja rígida), 2) Infecciosos (bolsa roja) y 3) Comunes/Generales (bolsa negra). Deben tener tapa, no superar el 75% de llenado y estar rotulados.',
@@ -490,7 +490,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_2',
     code: 'RES_2',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Segregación correcta de los residuos hospitalarios según su clase en los puntos de atención',
     desc: 'Separación • Esencial • Sala • Gestión de Residuos en Establecimientos de Salud',
     guidance: 'Verificación directa en el interior de los recipientes: ausencia de residuos comunes en bolsas rojas, ausencia de gasas/sangre en bolsas negras y cajas de punzocortantes exclusivas para agujas/bisturís.',
@@ -504,7 +504,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_3',
     code: 'RES_3',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Instrucciones visuales e afiches de segregación de residuos claramente visibles en los puntos de generación',
     desc: 'Separación • Esencial • Sala',
     guidance: 'Señaletica gráfica y legible que indique el código de colores normativo y el tipo de desecho correspondiente a cada recipiente.',
@@ -518,7 +518,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_4',
     code: 'RES_4',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Disponibilidad de EPP e insumos para higiene de manos para todo el personal que manipula residuos',
     desc: 'Personal • Tratamiento en el sitio o fuera del sitio',
     guidance: 'EPP para manejo de residuos: guantes de nitrilo/caucho industrial de manga larga, delantal impermeable, mascarilla, protección ocular (gafas/careta) y botas de hule con suela antideslizante.',
@@ -532,7 +532,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_5',
     code: 'RES_5',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Promoción y capacitación continua sobre el uso racional e higiénico del Equipo de Protección Personal (EPP)',
     desc: 'Reducción de Residuos',
     guidance: 'Capacitación para evitar el uso innecesario o incorrecto de EPP (como el uso indiscriminado de guantes en tareas limpias), reduciendo la generación superflua de desechos plásticos infecciosos.',
@@ -546,7 +546,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_6',
     code: 'RES_6',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Implementación de estrategias para la minimización y reducción de residuos en la fuente',
     desc: 'Reducción de Residuos • Tratamiento fuera del sitio',
     guidance: 'Políticas de compras verdes, desempaque previo de insumos en almacén central y eliminación progresiva de plásticos de un solo uso no médicos.',
@@ -560,7 +560,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_7',
     code: 'RES_7',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Segregación y reciclaje formal de residuos comunes no peligrosos (papel, cartón, plástico, vidrio)',
     desc: 'Reducción de Residuos • Clima',
     guidance: 'Recolección selectiva de materiales reciclables limpios y entrega a asociaciones formalizadas de recicladores o programas municipales de segregación en la fuente.',
@@ -574,7 +574,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_8',
     code: 'RES_8',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Almacén central de residuos delimitado, techado, cercado, seguro y con separación de áreas de almacenamiento',
     desc: 'Almacenamiento • Tratamiento en el sitio o fuera del sitio',
     guidance: 'Área aislada de pacientes, con acceso restringido, impermeabilizada, ventilada, protegida de la intemperie y de vectores, con sectores claramente divididos para residuos infecciosos y comunes.',
@@ -588,7 +588,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_9',
     code: 'RES_9',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Cumplimiento de los tiempos máximos de almacenamiento temporal de residuos biocontaminados según el clima',
     desc: 'Almacenamiento',
     guidance: 'Tiempos máximos de acopio sin refrigeración: Clima templado (72 h en invierno / 48 h en verano); Clima cálido/tropical (48 h en estación fresca / 24 h en temporada calurosa).',
@@ -602,7 +602,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_10',
     code: 'RES_10',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'El equipo de tratamiento in situ de residuos (autoclave, incinerador u otro) está operativo y con capacidad adecuada',
     desc: 'Tratamiento • Tratamiento en el sitio',
     guidance: 'El equipamiento propio (autoclave con trituradora, microondas o incinerador de doble cámara) debe someterse a mantenimiento preventivo y cubrir el volumen total generado.',
@@ -616,7 +616,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_11',
     code: 'RES_11',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Suministro continuo de energía o combustible asignado para la operación del sistema de tratamiento de residuos',
     desc: 'Tratamiento • Tratamiento en el sitio • Avanzado',
     guidance: 'Garantía de presupuesto y stock de insumos (petróleo, gas, energía eléctrica trifásica) para evitar la interrupción del tratamiento in situ.',
@@ -630,7 +630,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_12',
     code: 'RES_12',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Recolección, transporte externo y tratamiento fuera del sitio realizado por una Empresa Operadora autorizada',
     desc: 'Tratamiento • Tratamiento fuera del sitio • Gestión de Residuos en Establecimientos de Salud',
     guidance: 'Contratación de Empresas Operadoras de Residuos Sólidos (EO-RS) registradas ante la autoridad ambiental nacional, con manifiestos de transporte y certificados de tratamiento/disposición.',
@@ -644,7 +644,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_13',
     code: 'RES_13',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Disposición final segura mediante fosa de entierro controlada, relleno sanitario o recolección municipal de comunes',
     desc: 'Disposición Final',
     guidance: 'Fosas de entierro sanitario in situ deben estar cercadas, techadas, con losa impermeable y ubicadas a > 1,5 m sobre el nivel freático. Los residuos comunes van al relleno sanitario municipal.',
@@ -658,7 +658,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_14',
     code: 'RES_14',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: '[En zonas de riesgo de inundación] Las fosas de entierro están elevadas, protegidas y existe espacio de almacenamiento de reserva',
     desc: 'Disposición Final • Tratamiento en el sitio • Clima',
     guidance: 'Fosas construidas en plataformas elevadas con canales perimetrales de desvío de aguas pluviales para impedir la contaminación de acuíferos o el desborde de residuos en emergencias.',
@@ -672,7 +672,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_15',
     code: 'RES_15',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: '[Donde se utilicen incineradores] Disposición segura de cenizas en pozo de cenizas especial con losa de sellado',
     desc: 'Disposición Final • Tratamiento en el sitio',
     guidance: 'Las cenizas de incineración contienen metales pesados y cenizas tóxicas. Deben depositarse en una fosa de cenizas exclusiva, revestida o impermeabilizada, con tapa con candado.',
@@ -686,7 +686,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_16',
     code: 'RES_16',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: '[Hospitales y salas de parto] Disposición final biosegura de residuos anatómicos y placentas (fosa de placentas/cementerio)',
     desc: 'Disposición Final • Tratamiento en el sitio • Solo para Hospitales',
     guidance: 'Fosa de placentas impermeabilizada con tubo de ventilación, losa de hormigón y tapa sellada bajo llave, o cremación/entierro normado en cementerio municipal.',
@@ -700,7 +700,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_17',
     code: 'RES_17',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: '[Hospitales] Manejo y eliminación segura de residuos farmacéuticos y citostáticos',
     desc: 'Residuos farmacéuticos • Solo hospitales',
     guidance: 'Tratamiento por incineración a alta temperatura (> 1200 °C), neutralización química, devolución al fabricante (Logística Inversa) o gestor especializado autorizados.',
@@ -714,7 +714,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_18',
     code: 'RES_18',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Designación de un responsable o comité técnico capacitado para la gestión de residuos sólidos',
     desc: 'Personal',
     guidance: 'Designación formal del responsable del Plan de Gestión de Residuos Sólidos (Jefe de Salud Ambiental, Enfermera de PCI o Administrador) con funciones registradas.',
@@ -728,7 +728,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_19',
     code: 'RES_19',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: 'Inmunización completa (Hepatitis B, Tétanos y otras) del personal asistencial y de limpieza/residuos',
     desc: 'Personal',
     guidance: 'Esquema de 3 dosis de vacuna contra Hepatitis B y refuerzos de Tétanos/Difteria gratuitos para todo el personal con exposición laboral a sangre o fluidos.',
@@ -742,7 +742,7 @@ const INDICATORS_DATA = [
   {
     id: 'RES_20',
     code: 'RES_20',
-    module: 'Residuos Hospitalarios',
+    module: 'Gestión de Residuos',
     title: '[Ante emergencias o brotes] Plan de contingencia operativo para el manejo de volúmenes extraordinarios de residuos',
     desc: 'Preparación ante Emergencias • Avanzado',
     guidance: 'Mecanismos para incrementar contenedores, aumentar la frecuencia de evacuación y habilitar zonas de acopio de contingencia durante epidemias o desastres.',
