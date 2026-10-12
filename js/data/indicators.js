@@ -1,4 +1,16 @@
 // Archivo JS con la lista corregida, redactada y estandarizada de indicadores WASH-FIT
+// Identificadores estables; incluye el nombre utilizado por exportaciones anteriores.
+const MODULE_ID_BY_NAME = {
+  'Agua': 'water',
+  'Saneamiento': 'sanitation',
+  'Gestión de Residuos': 'waste',
+  'Residuos Hospitalarios': 'waste',
+  'Higiene de Manos': 'hygiene',
+  'Limpieza Hospitalaria': 'cleaning',
+  'Energía': 'energy',
+  'Gestión y Administración': 'management'
+};
+
 const INDICATORS_DATA = [
   // ==========================================
   // 💧 MÓDULO: AGUA (A)
@@ -1428,5 +1440,6 @@ const INDICATORS_DATA = [
   nextReviewDate: '',
   monitoringComments: '',
   trackingStatus: '',
-  ...ind
+  ...ind,
+  moduleId: MODULE_ID_BY_NAME[ind.module]
 }));

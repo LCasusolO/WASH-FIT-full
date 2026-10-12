@@ -714,7 +714,7 @@
                 <span class="w-2.5 h-2.5 rounded-full" :class="mod.color"></span>
                 <span>{{ mod.name }}</span>
                 <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded-none" :class="activeModuleTab === mod.id ? 'bg-paho-very-dark-blue text-paho-light-blue' : 'bg-paho-gray-light text-paho-gray-dark'">
-                  {{ getModuleAnsweredCount(mod.name) }}/{{ getModuleTotalCount(mod.name) }}
+                  {{ getModuleAnsweredCount(mod.id) }}/{{ getModuleTotalCount(mod.id) }}
                 </span>
               </button>
             </div>
@@ -1642,11 +1642,11 @@
                           <span class="w-2.5 h-2.5 rounded-full" :class="mod.color"></span>
                           <span>{{ mod.name }}</span>
                         </td>
-                        <td class="py-3.5 text-center font-semibold text-paho-gray-dark">{{ getModuleTotalCount(mod.name) }}</td>
-                        <td class="py-3.5 text-center font-semibold text-paho-gray-dark">{{ getModuleAnsweredCount(mod.name) }}</td>
+                        <td class="py-3.5 text-center font-semibold text-paho-gray-dark">{{ getModuleTotalCount(mod.id) }}</td>
+                        <td class="py-3.5 text-center font-semibold text-paho-gray-dark">{{ getModuleAnsweredCount(mod.id) }}</td>
                         <!-- Solo puntos efectivos logrados por dominio -->
-                        <td class="py-3.5 text-center font-bold text-paho-very-dark-blue">{{ getModuleScoreAchieved(mod.name) }}</td>
-                        <td class="py-3.5 text-right px-4 font-extrabold text-paho-dark-blue">{{ getModulePercentage(mod.name) }}%</td>
+                        <td class="py-3.5 text-center font-bold text-paho-very-dark-blue">{{ getModuleScoreAchieved(mod.id) }}</td>
+                        <td class="py-3.5 text-right px-4 font-extrabold text-paho-dark-blue">{{ getModulePercentage(mod.id) }}%</td>
                       </tr>
                       <tr class="bg-paho-card font-bold text-paho-very-dark-blue border-t-2 border-paho-grid">
                         <td class="py-4 px-4">TOTAL</td>

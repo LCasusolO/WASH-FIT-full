@@ -163,6 +163,13 @@ createApp({
 
     const indicators = ref(INDICATORS_DATA);
 
+    // Los nombres son etiquetas; las relaciones y los cálculos usan IDs estables.
+    // El fallback permite abrir JSON anteriores que solo incluían `module`.
+    const getIndicatorModuleId = (ind) => {
+      if (modulesList.some(mod => mod.id === ind.moduleId)) return ind.moduleId;
+      return MODULE_ID_BY_NAME[ind.module];
+    };
+
     const answeredCount = computed(() => {
       return indicators.value.filter(ind => shouldShowIndicator(ind) && ind.score !== null).length;
     });
@@ -197,14 +204,14 @@ createApp({
     const getFilteredIndicatorsByModule = computed(() => {
       const dom = modulesList.find(d => d.id === activeModuleTab.value);
       if (!dom) return [];
-      return indicators.value.filter(ind => ind.module === dom.name && shouldShowIndicator(ind));
+      return indicators.value.filter(ind => getIndicatorModuleId(ind) === dom.id && shouldShowIndicator(ind));
     });
 
     const getActiveModuleProgressPercentage = computed(() => {
-      const name = getActiveModuleName.value;
-      const total = getModuleTotalCount(name);
+      const moduleId = activeModuleTab.value;
+      const total = getModuleTotalCount(moduleId);
       if (total === 0) return 0;
-      return Math.round((getModuleAnsweredCount(name) / total) * 100);
+      return Math.round((getModuleAnsweredCount(moduleId) / total) * 100);
     });
 
     const toggleRiskSort = () => {
@@ -452,7 +459,7 @@ createApp({
       }));
 
       const points = modulesList.map((mod, i) => {
-        const pct = getModulePercentage(mod.name);
+        const pct = getModulePercentage(mod.id);
         const r = rMax * (pct / 100);
         const angle = angles[i];
         const x = cx + r * Math.cos(angle);
@@ -504,20 +511,20 @@ createApp({
       return found ? found.name : 'Agua';
     });
 
-    const getModuleAnsweredCount = (moduleName) => {
-      return indicators.value.filter(i => i.module === moduleName && shouldShowIndicator(i) && i.score !== null).length;
+    const getModuleAnsweredCount = (moduleId) => {
+      return indicators.value.filter(i => getIndicatorModuleId(i) === moduleId && shouldShowIndicator(i) && i.score !== null).length;
     };
 
-    const getModuleScoreAchieved = (moduleName) => {
+    const getModuleScoreAchieved = (moduleId) => {
       return indicators.value
-        .filter(i => i.module === moduleName && shouldShowIndicator(i) && i.score !== null)
+        .filter(i => getIndicatorModuleId(i) === moduleId && shouldShowIndicator(i) && i.score !== null)
         .reduce((sum, i) => sum + i.score, 0);
     };
 
-    const getModulePercentage = (moduleName) => {
-      const answered = getModuleAnsweredCount(moduleName);
+    const getModulePercentage = (moduleId) => {
+      const answered = getModuleAnsweredCount(moduleId);
       if (answered === 0) return 0;
-      const score = getModuleScoreAchieved(moduleName);
+      const score = getModuleScoreAchieved(moduleId);
       return Math.round((score / (answered * 2)) * 100);
     };
 
@@ -534,7 +541,7 @@ createApp({
 
     const clearCurrentModule = () => {
       const currentModuleName = getActiveModuleName.value;
-      const moduleIndicators = indicators.value.filter(i => i.module === currentModuleName);
+      const moduleIndicators = indicators.value.filter(i => getIndicatorModuleId(i) === activeModuleTab.value);
       
       moduleIndicators.forEach(ind => {
         ind.score = null;
@@ -726,8 +733,8 @@ createApp({
       }
     };
 
-    const getModuleTotalCount = (moduleName) => {
-      return indicators.value.filter(i => i.module === moduleName && shouldShowIndicator(i)).length;
+    const getModuleTotalCount = (moduleId) => {
+      return indicators.value.filter(i => getIndicatorModuleId(i) === moduleId && shouldShowIndicator(i)).length;
     };
 
     const triggerMockUpload = () => {
@@ -805,6 +812,7 @@ createApp({
               });
             }
             imported.indicators.forEach(ind => {
+              ind.moduleId = getIndicatorModuleId(ind);
               if (ind.trackingStatus === undefined) ind.trackingStatus = 'No Iniciado';
               if (ind.revisionNotes === undefined) ind.revisionNotes = '';
               if (ind.associatedRisks === undefined) ind.associatedRisks = '';
