@@ -114,9 +114,12 @@ button, [role=button], summary { cursor: pointer; }
 .sidebar-actions { display: flex; flex-direction: column; gap: .6rem; }
 .sidebar-actions button { display: flex; align-items: center; gap: .5rem; font-size: .75rem; text-align: left; color: #004C97; }
 .sidebar-actions button span { text-decoration: underline; font-weight: 700; }
-.sidebar-menu { max-height: 100dvh; scrollbar-width: none; -ms-overflow-style: none; }
-.sidebar-menu::-webkit-scrollbar { display: none; width: 0; }
-@media (min-width: 1024px) { .sidebar-menu { position: sticky; top: 0; height: 100dvh; align-self: flex-start; } }
+.sidebar-menu { height: 100dvh; max-height: 100dvh; overflow: hidden; }
+.sidebar-content { flex: 1; min-height: 0; overflow-y: auto; }
+.sidebar-footer { flex-shrink: 0; max-height: 45%; overflow-y: auto; }
+.sidebar-content, .sidebar-footer { scrollbar-width: none; -ms-overflow-style: none; }
+.sidebar-content::-webkit-scrollbar, .sidebar-footer::-webkit-scrollbar { display: none; width: 0; }
+@media (min-width: 1024px) { .sidebar-menu { position: sticky; top: 0; height: calc(100dvh - 96px); align-self: flex-start; } }
 .report-step { margin-top: 2rem; padding-top: .5rem; border-top: 2px solid #004C97; }
 @media print {
   .report-step { border: 0; margin-top: 0; padding-top: 0; }
