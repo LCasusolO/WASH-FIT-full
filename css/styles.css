@@ -96,7 +96,14 @@ button, [role=button], summary { cursor: pointer; }
   #report-map { height: 45mm; }
 }
 
-.sidebar-draft { font-size: .75rem; color: #4D4D4D; overflow-wrap: anywhere; }
+.compliance-status { display: flex; flex-direction: column; gap: .25rem; }
+.evaluation-draft-row { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; }
+.draft-status { font-size: .75rem; color: #4D4D4D; overflow-wrap: anywhere; }
+.evaluation-actions { display: flex; gap: .25rem; }
+.evaluation-actions button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: #004C97; border: 1px solid #E6E6E6; background: white; }
+.evaluation-actions button:hover:not(:disabled) { background: #F7F9FB; }
+.evaluation-actions button:disabled { opacity: .4; cursor: not-allowed; }
+@media (max-width: 1023px) { .evaluation-header { justify-content: flex-end; } }
 .sidebar-actions { display: flex; flex-direction: column; gap: .6rem; }
 .sidebar-actions button { display: flex; align-items: center; gap: .5rem; font-size: .75rem; text-align: left; color: #004C97; }
 .sidebar-actions button span { text-decoration: underline; font-weight: 700; }
