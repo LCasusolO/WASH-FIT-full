@@ -33,7 +33,7 @@ Solo un borrador activo por navegador/origen. Evite editar la misma evaluación 
 
 ## Uso sin conexión
 
-Tras la primera visita por HTTPS (o localhost) y el mensaje «Disponible sin conexión», el service worker conserva la interfaz, scripts, estilos e imágenes institucionales. La evaluación y sus borradores pueden seguir utilizándose sin internet. El mapa OpenStreetMap requiere red; las coordenadas siguen en el borrador y el reporte. No se descargan mapas para uso offline.
+Tras la primera visita por HTTPS (o localhost), el service worker conserva la interfaz, scripts, estilos e imágenes institucionales. La evaluación y sus borradores pueden seguir utilizándose sin internet. El mapa OpenStreetMap requiere red; las coordenadas siguen en el borrador y el reporte. No se descargan mapas para uso offline. Los mensajes de conexión se retiraron de la interfaz por solicitud del propietario.
 
 Las actualizaciones se activan al cerrar las pestañas de esta aplicación y volver a abrirla. Si hay una versión esperando, «Guardar y actualizar aplicación» conserva el borrador antes de recargar. Los borradores están en una base independiente del caché estático. No se utiliza Google Fonts ni un compilador CSS remoto.
 
@@ -41,7 +41,7 @@ Las actualizaciones se activan al cerrar las pestañas de esta aplicación y vol
 
 Referencia: [definiciones JMP para establecimientos de salud](https://washdata.org/topics/health-care-facilities).
 
-- **Agua:** usa `A_1a` o `A_1b` según el nivel y `A_3`. Una fuente mejorada en el predio y agua disponible en la visita representan servicio básico. `A_3 = 2` permite inferir disponibilidad durante las horas de operación. Una respuesta de continuidad parcial no demuestra disponibilidad el día de visita: se completa la observación de fuente, ubicación o disponibilidad. Una respuesta hospitalaria `A_1b = 0` tampoco demuestra ausencia de cualquier fuente mejorada, por lo que se requieren observaciones.
+- **Agua:** usa `A_1a` o `A_1b` según el nivel y `A_3`. Una fuente mejorada en el predio y agua disponible en la visita representan servicio básico. `A_3 = 2` permite inferir disponibilidad durante las horas de operación. Una respuesta de continuidad parcial no demuestra disponibilidad el día de visita; sin información suficiente, la categoría permanece incompleta. El panel de observaciones adicionales se retiró por solicitud del propietario; los valores guardados en archivos anteriores se conservan para compatibilidad.
 - **Residuos:** usa segregación efectiva `RES_2` y la ruta de tratamiento. Fuera del centro usa `RES_12`. Dentro del centro usa `RES_10`, `RES_11`, `RES_13` y una confirmación explícita de tratamiento/disposición seguros de infecciosos y punzocortantes. `RES_14` no reemplaza el tratamiento.
 - **Higiene:** usa `H_1` y `S_3`. Las estaciones de zonas públicas (`H_2`) no sustituyen las de los baños.
 - **Limpieza:** usa `L_1` y `L_5`. Saneamiento conserva los criterios anteriores; se exige información suficiente antes de mostrar categoría.
@@ -53,7 +53,7 @@ Referencia: [definiciones JMP para establecimientos de salud](https://washdata.o
 
 Los responsables se vinculan al equipo por ID. Renombrar un integrante actualiza la etiqueta del plan; removerlo conserva su nombre como responsable no vinculado. «Registrar revisión» guarda una instantánea fechada de respuestas, riesgos, acción, responsable, costos, plazos y comentarios, hasta 200 revisiones por indicador. El estado visible se considera retrasado al vencer su plazo, salvo que esté completado.
 
-El reporte tiene una vista de lectura separada: textos completos, equipo, cobertura, resultados, observaciones JMP, indicadores, planes, historial, coordenadas, mapa de referencia y fotografías. Use «Vista previa del reporte» o «Imprimir / guardar PDF». El navegador controla la paginación final; antes de compartir, revise el PDF, especialmente si tiene textos o historiales extensos.
+El reporte tiene una vista de lectura separada en seis pasos: Datos Generales, Evaluación de la Situación, Evaluación del Riesgo, Plan de Mejora, Monitoreo y Revisión, y Resumen. Cada paso empieza en una página nueva al imprimir. Use «Vista previa del reporte» o «Imprimir / guardar PDF». El navegador controla la paginación final; antes de compartir, revise el PDF, especialmente si tiene textos o historiales extensos.
 
 ## Alcance de esta actualización
 
@@ -61,10 +61,9 @@ Se implementan los puntos 2–8, 12 y 14–20 del análisis. El punto 1 ya fue i
 
 - Punto 9: filtros y elección del sistema de saneamiento.
 - Punto 10: comportamiento de desmarcar respuestas y reiniciar módulos.
-- Punto 11: cadena condicional de etiquetas en la tabla de riesgo (incluidos los avisos Vue conocidos).
 - Punto 13: opciones/valor inicial del nivel y reglas de aplicabilidad.
 
-La vista de impresión es independiente de la tabla interactiva de riesgos; no cambia las condiciones excluidas de esa tabla. La validación conserva los niveles existentes y no cambia qué preguntas se muestran.
+En la revisión posterior se autorizó corregir el punto 11. La tabla de riesgo ahora muestra un único resultado por indicador: «Cumple», «Cumple Parcialmente» o «No Cumple», tomado de la misma respuesta de la evaluación de situación. La validación conserva los niveles existentes y no cambia qué preguntas se muestran. El estado de guardado, Nueva evaluación y Recuperar respaldo anterior se encuentran en el menú lateral. Se retiraron del Plan de Mejora los contadores de avance y del Resumen el panel de observaciones JMP, manteniendo la vista previa.
 
 Se aclararon límites de respuesta de `A_2`, `A_3`, `A_8` y `RES_2`, y se corrigieron errores editoriales. Los umbrales sanitarios específicos y las adaptaciones nacionales requieren una validación metodológica independiente; esta actualización no declara certificación del catálogo por OPS/OMS.
 

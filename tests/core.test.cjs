@@ -81,7 +81,7 @@ test('population, money and local dates validate boundaries including zero',()=>
   const data=fixture();data.generalInfo.latitude=0;data.generalInfo.longitude=0;assert.equal(Core.normalizeDataset(data,catalog).generalInfo.latitude,0);
   data.generalInfo.populationServed=10;data.generalInfo.ageGroups.under5=11;assert.ok(Core.populationWarning(data.generalInfo));
 });
-test('excluded points preserve their original functions, level choices and risk badge conditions',()=>{
+test('excluded points 9, 10 and 13 preserve their original functions and level choices',()=>{
   const old=execFileSync('git',['show','84a71ba:js/app.js'],{encoding:'utf8'}).replace(/\r\n/g,'\n');
   const current=fs.readFileSync('js/app.js','utf8').replace(/\r\n/g,'\n');
   for(const [start,end] of [['    const shouldShowIndicator =','    const setIndicatorScore ='],['    const setIndicatorScore =','    const setSanitationSystem ='],['    const setSanitationSystem =','    const getModuleTotalCount ='],['    const levelOptions =','    // Toast Notifications']]){
@@ -89,9 +89,28 @@ test('excluded points preserve their original functions, level choices and risk 
     assert.equal(extract(current),extract(old));
   }
   assert.equal(Core.defaults().level,'Primer Nivel');
-  const oldHtml=execFileSync('git',['show','84a71ba:index.html'],{encoding:'utf8'});
   const currentHtml=fs.readFileSync('index.html','utf8');
-  const badge=source=>source.slice(source.indexOf('<!-- Badge de Cumplimiento -->'),source.indexOf('</div>',source.indexOf('<!-- Badge de Cumplimiento -->'))).replace(/\r\n/g,'\n');
-  assert.equal(badge(currentHtml),badge(oldHtml));
   assert.ok(currentHtml.includes('sumará la gravedad'));assert.ok(!currentHtml.includes('multiplicará la gravedad'));
+});
+test('assessment results have exactly the requested labels for the shared score',()=>{
+  assert.equal(Core.assessmentResult(2).label,'Cumple');
+  assert.equal(Core.assessmentResult(1).label,'Cumple Parcialmente');
+  assert.equal(Core.assessmentResult(0).label,'No Cumple');
+  assert.equal(Core.assessmentResult(null).label,'Sin evaluar');
+});
+test('template compiles without orphan conditionals, keeps sidebar actions and separates six report steps',()=>{
+  const html=fs.readFileSync('index.html','utf8');
+  const app=html.slice(html.indexOf('<div id="app"'),html.indexOf('<!-- Scripts de datos'));
+  require('@vue/compiler-dom').compile(app,{onError:error=>{throw error;}});
+  const sidebar=html.slice(html.indexOf('<aside'),html.indexOf('</aside>'));
+  for(const action of ['saveLabel','newEvaluation','restoreBackup'])assert.ok(sidebar.includes(action));
+  assert.ok(!html.includes('Disponible sin conexión'));
+  assert.ok(!html.includes('Observaciones para la clasificación JMP'));
+  assert.ok(!html.includes('No iniciados: {{ trackingSummary'));
+  assert.ok(html.includes('Vista previa del reporte'));
+  const steps=[...html.matchAll(/data-report-step="(\d)"/g)].map(match=>match[1]);
+  assert.deepEqual(steps,['1','2','3','4','5','6']);
+  const riskBlock=html.slice(html.indexOf('<div class="assessment-result">'),html.indexOf('</div>',html.indexOf('<div class="assessment-result">')));
+  assert.equal((riskBlock.match(/<span/g)||[]).length,1);
+  assert.ok(riskBlock.includes('getAssessmentResult(ind).label'));
 });

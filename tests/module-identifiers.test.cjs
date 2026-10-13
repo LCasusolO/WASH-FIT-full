@@ -89,3 +89,10 @@ test('assessment tabs and summary pass stable IDs to module calculations', () =>
     assert.ok(!html.includes(`${method}(mod.name)`));
   }
 });
+test('risk label changes with the same indicator response selected in assessment', () => {
+  const app=loadApp();
+  const ind=app.indicators.value.find(item=>item.code==='H_1');
+  app.setIndicatorScore(ind,0);assert.equal(app.getAssessmentResult(ind).label,'No Cumple');
+  app.setIndicatorScore(ind,1);assert.equal(app.getAssessmentResult(ind).label,'Cumple Parcialmente');
+  app.setIndicatorScore(ind,2);assert.equal(app.getAssessmentResult(ind).label,'Cumple');
+});

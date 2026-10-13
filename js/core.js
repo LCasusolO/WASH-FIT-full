@@ -205,6 +205,12 @@
     if (answered < total) return { label: 'Evaluación incompleta', colorClass: 'text-paho-gray-dark' };
     return compliance > 75 ? { label: 'Mejora Avanzada', colorClass: 'text-emerald-700' } : compliance >= 60 ? { label: 'En Proceso de Mejora', colorClass: 'text-amber-700' } : { label: 'Requiere Mejoras Prioritarias', colorClass: 'text-rose-700' };
   }
+  function assessmentResult(score) {
+    if (score === 2) return { label: 'Cumple', class: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
+    if (score === 1) return { label: 'Cumple Parcialmente', class: 'bg-amber-50 text-amber-800 border-amber-300' };
+    if (score === 0) return { label: 'No Cumple', class: 'bg-rose-50 text-rose-700 border-rose-300' };
+    return { label: 'Sin evaluar', class: 'bg-gray-50 text-gray-600 border-gray-300' };
+  }
   function responsibleName(indicator, team) {
     return team.find(member => member.id === indicator.responsibleId)?.name || indicator.responsible || '';
   }
@@ -219,5 +225,5 @@
     indicator.history = [...(indicator.history || []), snapshot];
     return snapshot;
   }
-  return { SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });

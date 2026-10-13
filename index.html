@@ -79,7 +79,7 @@
     <div class="flex-1 flex flex-col lg:flex-row relative">
 
       <!-- SIDEBAR NAVIGATION -->
-      <aside id="main-navigation" :inert="isMobile && !mobileMenuOpen" :class="['bg-paho-card text-paho-gray-dark flex-shrink-0 flex flex-col justify-between z-40 fixed lg:static inset-y-0 left-0 transform transition-all duration-300 ease-in-out border-r border-paho-grid no-print overflow-hidden',
+      <aside id="main-navigation" class="sidebar-menu" :inert="isMobile && !mobileMenuOpen" :class="['bg-paho-card text-paho-gray-dark flex-shrink-0 flex flex-col justify-between z-40 fixed lg:static inset-y-0 left-0 transform transition-all duration-300 ease-in-out border-r border-paho-grid no-print overflow-y-auto',
                       sidebarCollapsed ? 'w-20' : 'w-80',
                       mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0']">
 
@@ -191,6 +191,16 @@
               <input type="file" id="import-file" @change="importData" class="hidden" accept=".json">
             </label>
           </div>
+          <div class="sidebar-draft" role="status" aria-live="polite" :title="saveLabel" :aria-label="saveLabel">
+            <span v-show="!sidebarCollapsed" :class="saveState === 'error' ? 'text-red-700 font-bold' : ''">{{ saveLabel }}</span>
+            <i v-if="sidebarCollapsed" data-lucide="save" class="w-4 h-4"></i>
+          </div>
+          <div class="sidebar-actions">
+            <button v-if="saveState === 'error'" @click="saveDraft()" title="Reintentar guardado" aria-label="Reintentar guardado"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span v-show="!sidebarCollapsed">Reintentar guardado</span></button>
+            <button @click="newEvaluation" title="Nueva evaluación" aria-label="Nueva evaluación"><i data-lucide="file-plus" class="w-4 h-4"></i><span v-show="!sidebarCollapsed">Nueva evaluación</span></button>
+            <button v-if="hasBackup" @click="restoreBackup" title="Recuperar respaldo anterior" aria-label="Recuperar respaldo anterior"><i data-lucide="history" class="w-4 h-4"></i><span v-show="!sidebarCollapsed">Recuperar respaldo anterior</span></button>
+            <button v-if="updateAvailable" @click="updateApplication" title="Guardar y actualizar aplicación" aria-label="Guardar y actualizar aplicación"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span v-show="!sidebarCollapsed">Guardar y actualizar aplicación</span></button>
+          </div>
           <div class="text-[11px] text-paho-gray-medium text-center font-semibold whitespace-nowrap overflow-hidden transition-all duration-300">
             <span v-if="sidebarCollapsed">v2.1</span>
             <span v-else>WASH FIT v2.1 • OPS 2026</span>
@@ -228,14 +238,6 @@
         </div>
       </header>
 
-        <div class="no-print draft-bar" role="status" aria-live="polite">
-          <span :class="saveState === 'error' ? 'text-red-700 font-bold' : ''">{{ saveLabel }}</span>
-          <span>{{ isOnline ? (offlineReady ? 'Disponible sin conexión' : 'Preparando uso sin conexión…') : 'Sin conexión: los datos se guardan en este dispositivo' }}</span>
-          <button v-if="saveState === 'error'" @click="saveDraft()">Reintentar guardado</button>
-          <button @click="newEvaluation">Nueva evaluación</button>
-          <button v-if="hasBackup" @click="restoreBackup">Recuperar respaldo anterior</button>
-          <button v-if="updateAvailable" @click="updateApplication">Guardar y actualizar aplicación</button>
-        </div>
         <!-- PANELS FRAME -->
         <div class="flex-1 p-6 lg:p-10 space-y-8">
 
@@ -754,10 +756,7 @@
                       </div>
 
                       <div class="flex items-center gap-2 flex-shrink-0">
-                        <span v-if="ind.score === 2" class="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-none">Cumple</span>
-                        <span v-else-if="ind.score === 1" class="px-3 py-1 bg-amber-50 text-amber-800 border border-amber-300 text-xs font-bold rounded-none">Cumple parcialmente</span>
-                        <span v-else-if="ind.score === 0" class="px-3 py-1 bg-rose-50 text-rose-800 border border-rose-300 text-xs font-bold rounded-none">No cumple</span>
-                        <span v-else class="px-3 py-1 bg-paho-card text-paho-gray-medium border border-paho-grid text-xs font-semibold rounded-none">Sin evaluar</span>
+                        <span data-assessment-badge :data-indicator-code="ind.code" :class="['inline-block px-3 py-1.5 text-[11px] font-bold border rounded-none', getAssessmentResult(ind).class]">{{ getAssessmentResult(ind).label }}</span>
                       </div>
                     </div>
 
@@ -994,18 +993,8 @@
                   {{ ind.title }}
                 </h4>
 
-                <!-- Badge de Cumplimiento -->
-                <div>
-                  <span v-else class="inline-block px-3 py-1.5 text-[11px] font-bold bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-none">
-                    Cumple totalmente
-                  </span>
-                  <span v-else-if="ind.score == 1" class="inline-block px-3 py-1.5 text-[11px] font-bold bg-amber-50 border border-amber-300 text-amber-800 rounded-none">
-                    Cumple parcialmente
-                  </span>
-                  <span v-if="ind.score == 0" class="inline-block px-3 py-1.5 text-[11px] font-bold bg-rose-50 border border-rose-300 text-rose-700 rounded-none">
-                    No cumple
-                  </span>
-                </div>
+                <!-- Resultado de la Evaluación de Situación: uno por indicador -->
+                <div class="assessment-result"><span data-assessment-badge :data-indicator-code="ind.code" :class="['inline-block px-3 py-1.5 text-[11px] font-bold border rounded-none', getAssessmentResult(ind).class]">{{ getAssessmentResult(ind).label }}</span></div>
               </div>
             </td>
 
@@ -1129,11 +1118,6 @@
     </div>
   </div>
 
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs bg-paho-card border border-paho-grid p-4">
-    <span>No iniciados: {{ trackingSummary.noIniciado }}</span><span>En progreso: {{ trackingSummary.enProgreso }}</span>
-    <span>Completados: {{ trackingSummary.completado }}</span><span>Retrasados: {{ trackingSummary.retrasado }}</span>
-    <span>Avance del plan: {{ totalGaps ? planProgressPercentage + '%' : 'Sin brechas evaluadas' }}</span>
-  </div>
   <!-- Contenedor de la Tabla -->
   <div class="bg-white border border-paho-grid overflow-hidden">
     <div class="overflow-x-auto max-h-[70vh]">
@@ -1491,17 +1475,8 @@
           <!-- MODULE 6: EXECUTIVE DASHBOARD (RESUMEN) -->
           <div v-show="activeView === 'dashboard' || isPrintingAll" class="space-y-8">
 
-            <div class="bg-paho-card border border-paho-grid p-5 space-y-4">
-              <div class="flex justify-between gap-3 flex-wrap"><h3 class="font-bold">Observaciones para la clasificación JMP</h3><button @click="reportPreview = true" class="no-print border border-paho-grid px-3 py-2 text-xs">Vista previa del reporte</button></div>
-              <p class="text-xs">Se usan A_1a/A_1b y A_3 para agua. Complete estas observaciones cuando las respuestas no permitan confirmar la fuente, su ubicación o la disponibilidad durante la visita.</p>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <label class="text-xs">Fuente de agua observada<select v-model="generalInfo.jmpWater.source" class="block w-full border border-paho-grid p-2 mt-1"><option :value="null">Según indicadores / por confirmar</option><option value="improved">Fuente mejorada</option><option value="unimproved">Fuente no mejorada</option><option value="none">Sin fuente</option></select></label>
-                <label class="text-xs">Ubicación de la fuente<select v-model="generalInfo.jmpWater.location" class="block w-full border border-paho-grid p-2 mt-1"><option :value="null">Según indicadores / por confirmar</option><option value="premises">Dentro del predio</option><option value="near">Fuera del predio, hasta 500 m</option><option value="far">A más de 500 m</option></select></label>
-                <label class="text-xs">Agua disponible durante la visita<select v-model="generalInfo.jmpWater.available" class="block w-full border border-paho-grid p-2 mt-1"><option :value="null">Según indicadores / por confirmar</option><option value="yes">Sí</option><option value="no">No</option></select></label>
-                <label class="text-xs">Ruta de tratamiento de residuos<select v-model="generalInfo.wasteTreatmentRoute" class="block w-full border border-paho-grid p-2 mt-1"><option :value="null">Según RES_12 / por confirmar</option><option value="external">Operador externo (RES_12)</option><option value="onsite">En el centro (RES_10, RES_11 y RES_13)</option><option value="none">Sin tratamiento seguro</option></select></label>
-                <label v-if="generalInfo.wasteTreatmentRoute === 'onsite'" class="text-xs">Tratamiento y disposición seguros de infecciosos y punzocortantes<select v-model="generalInfo.wasteSafeTreatment" class="block w-full border border-paho-grid p-2 mt-1"><option :value="null">Por confirmar</option><option value="yes">Sí, verificado</option><option value="no">No</option></select></label>
-              </div>
-              <p class="text-xs">Clasificación orientada a las definiciones JMP. Con información faltante, se muestra «Sin evaluar» o «Evaluación incompleta».</p>
+            <div class="no-print flex justify-end">
+              <button @click="reportPreview = true" class="border border-paho-grid px-4 py-2 text-sm">Vista previa del reporte</button>
             </div>
             <!-- KPI Summary Cards Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1930,28 +1905,82 @@
       <div class="report-content">
         <h1>WASH FIT · Reporte consolidado</h1>
         <p>Generado: {{ new Date().toLocaleString('es') }} · Evaluación: {{ formatDate(generalInfo.evaluationDate) }}</p>
-        <h2>Datos del establecimiento</h2>
-        <dl class="report-info"><div><dt>Nombre</dt><dd>{{ generalInfo.facilityName || 'Sin registrar' }}</dd></div><div><dt>Ciudad / país</dt><dd>{{ generalInfo.district || 'Sin registrar' }}</dd></div><div><dt>Nivel</dt><dd>{{ generalInfo.level }}</dd></div><div><dt>Tipo / ámbito</dt><dd>{{ generalInfo.type }} / {{ generalInfo.setting }}</dd></div><div><dt>Población</dt><dd>{{ formatThousands(generalInfo.populationServed) || 'Sin registrar' }}</dd></div><div><dt>Coordenadas</dt><dd>{{ generalInfo.latitude ?? 'Sin registrar' }}, {{ generalInfo.longitude ?? 'Sin registrar' }}</dd></div></dl>
-        <div v-if="Number.isFinite(generalInfo.latitude) && Number.isFinite(generalInfo.longitude)" class="report-location"><div id="report-map"></div><p>Mapa de referencia; requiere conexión. Las coordenadas registradas permanecen disponibles sin conexión.</p></div><p>Grupos etarios: &lt;5: {{ generalInfo.ageGroups.under5 ?? '—' }} · 5–17: {{ generalInfo.ageGroups.age5to17 ?? '—' }} · 18–59: {{ generalInfo.ageGroups.over18to59 ?? '—' }} · 60+: {{ generalInfo.ageGroups.over60 ?? '—' }}</p>
-        <p v-if="populationWarning">{{ populationWarning }}</p>
-        <h2>Equipo implementador</h2><table><thead><tr><th>Nombre</th><th>Cargo / institución</th><th>Responsabilidad</th><th>Correo</th></tr></thead><tbody><tr v-for="member in generalInfo.team" :key="member.id"><td data-label="Nombre">{{ member.name }}</td><td data-label="Cargo / institución">{{ member.role }} / {{ member.institution }}</td><td data-label="Responsabilidad">{{ member.responsibility }}</td><td data-label="Correo">{{ member.email }}</td></tr></tbody></table>
-        <h2>Resultados</h2><p>Cobertura: {{ answeredCount }}/{{ totalVisibleIndicators }} ({{ progressPercentage }}%). Cumplimiento de los respondidos: {{ answeredCount ? overallCompliance + '%' : 'Sin evaluar' }}. Valoración: {{ facilityValuation.label }}.</p>
-        <table><thead><tr><th>Dominio</th><th>Aplicables según filtros actuales</th><th>Respondidos</th><th>Puntos</th><th>Cumplimiento de respondidos</th></tr></thead><tbody><tr v-for="mod in modulesList" :key="mod.id"><td data-label="Dominio">{{ mod.name }}</td><td data-label="Aplicables según filtros actuales">{{ getModuleTotalCount(mod.id) }}</td><td data-label="Respondidos">{{ getModuleAnsweredCount(mod.id) }}</td><td data-label="Puntos">{{ getModuleScoreAchieved(mod.id) }}</td><td data-label="Cumplimiento de respondidos">{{ getModuleAnsweredCount(mod.id) ? getModulePercentage(mod.id) + '%' : 'Sin evaluar' }}</td></tr></tbody></table>
-        <h2>Servicios JMP</h2><table><thead><tr><th>Agua</th><th>Saneamiento</th><th>Residuos</th><th>Higiene</th><th>Limpieza</th></tr></thead><tbody><tr><td data-label="Agua">{{ jmpCalculatedStatus.water.status }}</td><td data-label="Saneamiento">{{ jmpCalculatedStatus.sanitation.status }}</td><td data-label="Residuos">{{ jmpCalculatedStatus.waste.status }}</td><td data-label="Higiene">{{ jmpCalculatedStatus.hygiene.status }}</td><td data-label="Limpieza">{{ jmpCalculatedStatus.cleaning.status }}</td></tr></tbody></table>
-        <p>Observaciones de agua: fuente {{ generalInfo.jmpWater.source || 'según indicadores / por confirmar' }}, ubicación {{ generalInfo.jmpWater.location || 'según indicadores / por confirmar' }}, disponibilidad {{ generalInfo.jmpWater.available || 'según indicadores / por confirmar' }}. Residuos: ruta {{ generalInfo.wasteTreatmentRoute || 'según RES_12 / por confirmar' }}, tratamiento in situ seguro {{ generalInfo.wasteSafeTreatment || 'por confirmar' }}.</p>
-        <h2>Resumen y conclusiones</h2><p class="report-text">{{ generalInfo.summary || 'Sin registrar' }}</p>
-        <h2>Evaluación de situación</h2><table><thead><tr><th>Código / dominio</th><th>Indicador</th><th>Resultado</th><th>Hallazgos</th></tr></thead><tbody><tr v-for="ind in reportIndicators" :key="ind.id"><td data-label="Código / dominio">{{ ind.code }} / {{ ind.module }}</td><td data-label="Indicador">{{ ind.title }}</td><td data-label="Resultado">{{ ind.score === null ? 'Sin evaluar' : ind.score === 2 ? 'Cumple' : ind.score === 1 ? 'Cumple parcialmente' : 'No cumple' }}</td><td data-label="Hallazgos" class="report-text">{{ ind.notes }}</td></tr></tbody></table>
-        <h2>Riesgos, plan de mejora y monitoreo</h2><p>Riesgo = gravedad + probabilidad (0–20). Brechas: {{ totalGaps }}. Avance del plan: {{ totalGaps ? planProgressPercentage + '%' : 'Sin brechas evaluadas' }}.</p>
-        <article v-for="ind in reportPlans" :key="ind.id" class="report-plan"><h3>{{ ind.code }} · {{ ind.title }}</h3>
-          <p class="report-text"><strong>Problema:</strong> {{ ind.problemDesc || '—' }}</p><p class="report-text"><strong>Riesgos:</strong> {{ ind.associatedRisks || '—' }}</p><p>Gravedad: {{ ind.severity ?? '—' }} · Probabilidad: {{ ind.likelihood ?? '—' }} · Suma: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p>
-          <p class="report-text"><strong>Acción:</strong> {{ ind.action || '—' }}</p><p class="report-text"><strong>Recursos:</strong> {{ ind.resources || '—' }}</p><p>Responsable: {{ getResponsibleName(ind) || 'Sin responsable' }} · Costo USD: {{ formatThousands(ind.cost) || '—' }} · Plazo: {{ formatDate(ind.targetDate) || '—' }} · Estado: {{ getTrackingStatus(ind) }}</p>
-          <p>Cambio: {{ ind.indicatorChange || 'sin_cambios' }} · Próxima revisión: {{ formatDate(ind.nextReviewDate) || '—' }}</p><p class="report-text"><strong>Medidas:</strong> {{ ind.correctiveMeasures || '—' }}</p><p class="report-text"><strong>Comentarios:</strong> {{ ind.monitoringComments || '—' }}</p>
-          <div v-for="(entry, index) in ind.history || []" :key="index" class="report-history"><h4>Revisión {{ new Date(entry.recordedAt).toLocaleString('es') }}</h4><p>{{ entry.trackingStatus }} · {{ entry.responsible }}</p><p class="report-text">Acción: {{ entry.action }}
-Medidas: {{ entry.correctiveMeasures }}
-Comentarios: {{ entry.monitoringComments }}</p></div>
-        </article>
-        <h2 v-if="generalInfo.photos.length">Evidencias fotográficas</h2><div class="report-photos"><figure v-for="(photo, index) in generalInfo.photos" :key="index"><img :src="photo.url" :alt="photo.name"><figcaption>{{ photo.name }}</figcaption></figure></div>
-        <p>Ubicación registrada en coordenadas. El mapa interactivo requiere conexión y se consulta en Datos Generales.</p>
+
+        <section class="report-step" data-report-step="1" aria-labelledby="report-step-1">
+          <h2 id="report-step-1">Paso 1: Datos Generales</h2>
+          <dl class="report-info">
+            <div><dt>Nombre</dt><dd>{{ generalInfo.facilityName || 'Sin registrar' }}</dd></div>
+            <div><dt>Ciudad / país</dt><dd>{{ generalInfo.district || 'Sin registrar' }}</dd></div>
+            <div><dt>Nivel</dt><dd>{{ generalInfo.level }}</dd></div>
+            <div><dt>Tipo / ámbito</dt><dd>{{ generalInfo.type }} / {{ generalInfo.setting }}</dd></div>
+            <div><dt>Población</dt><dd>{{ generalInfo.populationServed === null ? 'Sin registrar' : formatThousands(generalInfo.populationServed) }}</dd></div>
+            <div><dt>Coordenadas</dt><dd>{{ generalInfo.latitude ?? 'Sin registrar' }}, {{ generalInfo.longitude ?? 'Sin registrar' }}</dd></div>
+          </dl>
+          <p>Grupos etarios: &lt;5: {{ generalInfo.ageGroups.under5 ?? '—' }} · 5–17: {{ generalInfo.ageGroups.age5to17 ?? '—' }} · 18–59: {{ generalInfo.ageGroups.over18to59 ?? '—' }} · 60+: {{ generalInfo.ageGroups.over60 ?? '—' }}</p>
+          <p v-if="populationWarning">{{ populationWarning }}</p>
+          <div v-if="Number.isFinite(generalInfo.latitude) && Number.isFinite(generalInfo.longitude)" class="report-location"><div id="report-map"></div><p>Mapa de referencia. La ubicación registrada se conserva en las coordenadas.</p></div>
+          <h3>Equipo implementador</h3>
+          <table><thead><tr><th>Nombre</th><th>Cargo / institución</th><th>Responsabilidad</th><th>Correo</th></tr></thead><tbody>
+            <tr v-for="member in generalInfo.team" :key="member.id"><td>{{ member.name }}</td><td>{{ member.role }} / {{ member.institution }}</td><td>{{ member.responsibility }}</td><td>{{ member.email }}</td></tr>
+            <tr v-if="!generalInfo.team.length"><td colspan="4">Sin integrantes registrados.</td></tr>
+          </tbody></table>
+          <h3>Resumen y conclusiones registrados</h3><p class="report-text">{{ generalInfo.summary || 'Sin registrar' }}</p>
+          <h3 v-if="generalInfo.photos.length">Evidencias fotográficas</h3>
+          <div class="report-photos"><figure v-for="(photo, index) in generalInfo.photos" :key="index"><img :src="photo.url" :alt="photo.name"><figcaption>{{ photo.name }}</figcaption></figure></div>
+        </section>
+
+        <section class="report-step" data-report-step="2" aria-labelledby="report-step-2">
+          <h2 id="report-step-2">Paso 2: Evaluación de la Situación</h2>
+          <table><thead><tr><th>Código / dominio</th><th>Indicador</th><th>Resultado</th><th>Hallazgos</th></tr></thead><tbody>
+            <tr v-for="ind in reportIndicators" :key="ind.id"><td>{{ ind.code }} / {{ ind.module }}</td><td>{{ ind.title }}</td><td>{{ getAssessmentResult(ind).label }}</td><td class="report-text">{{ ind.notes || '—' }}</td></tr>
+          </tbody></table>
+        </section>
+
+        <section class="report-step" data-report-step="3" aria-labelledby="report-step-3">
+          <h2 id="report-step-3">Paso 3: Evaluación del Riesgo</h2>
+          <p>Riesgo = gravedad + probabilidad (0–20).</p>
+          <table><thead><tr><th>Código / indicador</th><th>Resultado de situación</th><th>Problema</th><th>Riesgos asociados</th><th>Gravedad</th><th>Probabilidad</th><th>Riesgo</th></tr></thead><tbody>
+            <tr v-for="ind in reportRisks" :key="ind.id"><td>{{ ind.code }} · {{ ind.title }}</td><td>{{ getAssessmentResult(ind).label }}</td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ ind.associatedRisks || '—' }}</td><td>{{ ind.severity ?? '—' }}</td><td>{{ ind.likelihood ?? '—' }}</td><td>{{ calculateRiskScore(ind) ?? '—' }} · {{ getRiskLabel(calculateRiskScore(ind)) }}</td></tr>
+            <tr v-if="!reportRisks.length"><td colspan="7">Sin indicadores evaluados.</td></tr>
+          </tbody></table>
+        </section>
+
+        <section class="report-step" data-report-step="4" aria-labelledby="report-step-4">
+          <h2 id="report-step-4">Paso 4: Plan de Mejora</h2>
+          <article v-for="ind in reportPlans" :key="ind.id" class="report-plan">
+            <h3>{{ ind.code }} · {{ ind.title }}</h3><p>Resultado: {{ getAssessmentResult(ind).label }} · Riesgo: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p>
+            <p class="report-text"><strong>Problema:</strong> {{ ind.problemDesc || '—' }}</p>
+            <p class="report-text"><strong>Acción:</strong> {{ ind.action || '—' }}</p>
+            <p class="report-text"><strong>Recursos:</strong> {{ ind.resources || '—' }}</p>
+            <p>Responsable: {{ getResponsibleName(ind) || 'Sin responsable' }} · Costo USD: {{ ind.cost === null ? '—' : formatThousands(ind.cost) }} · Plazo: {{ formatDate(ind.targetDate) || '—' }} · Estado: {{ getTrackingStatus(ind) }}</p>
+          </article>
+          <p v-if="!reportPlans.length">Sin acciones o brechas registradas.</p>
+        </section>
+
+        <section class="report-step" data-report-step="5" aria-labelledby="report-step-5">
+          <h2 id="report-step-5">Paso 5: Monitoreo y Revisión</h2>
+          <article v-for="ind in reportPlans" :key="ind.id" class="report-plan">
+            <h3>{{ ind.code }} · {{ ind.title }}</h3><p>Resultado: {{ getAssessmentResult(ind).label }} · Estado: {{ getTrackingStatus(ind) }}</p>
+            <p class="report-text"><strong>Acción en seguimiento:</strong> {{ ind.action || '—' }}</p>
+            <p>Cambio: {{ ind.indicatorChange === 'mejorado' ? 'Ha mejorado' : ind.indicatorChange === 'empeorado' ? 'Ha empeorado' : 'No ha cambiado' }} · Próxima revisión: {{ formatDate(ind.nextReviewDate) || '—' }}</p>
+            <p class="report-text"><strong>Medidas correctivas:</strong> {{ ind.correctiveMeasures || '—' }}</p>
+            <p class="report-text"><strong>Comentarios:</strong> {{ ind.monitoringComments || '—' }}</p>
+            <div v-for="(entry, index) in ind.history || []" :key="index" class="report-history">
+              <h4>Revisión {{ new Date(entry.recordedAt).toLocaleString('es') }}</h4><p>Estado: {{ entry.trackingStatus }} · Responsable: {{ entry.responsible || 'Sin responsable' }}</p>
+              <p class="report-text">Acción: {{ entry.action || '—' }}
+Medidas: {{ entry.correctiveMeasures || '—' }}
+Comentarios: {{ entry.monitoringComments || '—' }}</p>
+            </div>
+          </article>
+          <p v-if="!reportPlans.length">Sin acciones en seguimiento.</p>
+        </section>
+
+        <section class="report-step" data-report-step="6" aria-labelledby="report-step-6">
+          <h2 id="report-step-6">Paso 6: Resumen</h2>
+          <p>Cobertura: {{ answeredCount }}/{{ totalVisibleIndicators }} ({{ progressPercentage }}%). Cumplimiento de los respondidos: {{ answeredCount ? overallCompliance + '%' : 'Sin evaluar' }}. Valoración: {{ facilityValuation.label }}.</p>
+          <table><thead><tr><th>Dominio</th><th>Indicadores</th><th>Respondidos</th><th>Puntos</th><th>Cumplimiento de respondidos</th></tr></thead><tbody><tr v-for="mod in modulesList" :key="mod.id"><td>{{ mod.name }}</td><td>{{ getModuleTotalCount(mod.id) }}</td><td>{{ getModuleAnsweredCount(mod.id) }}</td><td>{{ getModuleScoreAchieved(mod.id) }}</td><td>{{ getModuleAnsweredCount(mod.id) ? getModulePercentage(mod.id) + '%' : 'Sin evaluar' }}</td></tr></tbody></table>
+          <h3>Servicios JMP</h3><table><thead><tr><th>Agua</th><th>Saneamiento</th><th>Residuos</th><th>Higiene</th><th>Limpieza</th></tr></thead><tbody><tr><td>{{ jmpCalculatedStatus.water.status }}</td><td>{{ jmpCalculatedStatus.sanitation.status }}</td><td>{{ jmpCalculatedStatus.waste.status }}</td><td>{{ jmpCalculatedStatus.hygiene.status }}</td><td>{{ jmpCalculatedStatus.cleaning.status }}</td></tr></tbody></table>
+        </section>
       </div>
     </section>
   </div> <!-- Cierre del contenedor reactivo -->

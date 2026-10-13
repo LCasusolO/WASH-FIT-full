@@ -790,6 +790,7 @@ createApp({
       window.print();
     };
     const getResponsibleName = ind => WashCore.responsibleName(ind, generalInfo.value.team);
+    const getAssessmentResult = ind => WashCore.assessmentResult(ind.score);
     const assignResponsible = ind => { ind.responsible = getResponsibleName(ind); };
     const getTrackingStatus = ind => WashCore.trackingStatus(ind);
     const recordReview = ind => {
@@ -797,7 +798,8 @@ createApp({
       catch (error) { triggerToast(error.message, 'error'); }
     };
     const reportIndicators = computed(() => indicators.value.filter(shouldShowIndicator));
-    const reportPlans = computed(() => reportIndicators.value.filter(ind => ind.score === 0 || ind.score === 1 || ind.action));
+    const reportRisks = computed(() => reportIndicators.value.filter(ind => ind.score !== null));
+    const reportPlans = computed(() => reportIndicators.value.filter(ind => ind.score === 0 || ind.score === 1 || ind.action || ind.history?.length));
     let reportMap = null;
     let reportMarker = null;
     let reportTilesReady = Promise.resolve();
@@ -922,8 +924,8 @@ createApp({
     return {
       loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile, updateAvailable, updateApplication,
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
-      populationWarning, reportPreview, reportIndicators, reportPlans,
-      getResponsibleName, assignResponsible, getTrackingStatus, recordReview,
+      populationWarning, reportPreview, reportIndicators, reportRisks, reportPlans,
+      getResponsibleName, getAssessmentResult, assignResponsible, getTrackingStatus, recordReview,
       activeView,
       activeModuleTab,
       mobileMenuOpen,
