@@ -857,6 +857,23 @@ createApp({
       window.addEventListener('afterprint', () => { document.title = previousTitle; }, {once: true});
       window.print();
     };
+    const bulletValue = value => value ? WashCore.bulletEdit(value).value : '';
+    const focusBulletField = event => { if (!event.target.value) { event.target.value = '• '; event.target.setSelectionRange(2, 2); } };
+    const updateBulletField = (event, ind, field) => {
+      if (event.isComposing) return;
+      const el = event.target;
+      const edit = WashCore.bulletEdit(el.value, el.selectionStart);
+      ind[field] = WashCore.bulletHasContent(edit.value) ? edit.value : '';
+      el.value = edit.value;
+      nextTick(() => { el.value = edit.value; el.setSelectionRange(edit.caret, edit.caret); });
+    };
+    const enterBulletField = (event, ind, field) => {
+      if (event.key !== 'Enter' || event.isComposing) return;
+      event.preventDefault();
+      event.target.setRangeText('\n• ', event.target.selectionStart, event.target.selectionEnd, 'end');
+      updateBulletField(event, ind, field);
+    };
+    const blurBulletField = event => { if (!WashCore.bulletHasContent(event.target.value)) event.target.value = ''; };
     const getResponsibleName = ind => WashCore.responsibleName(ind, generalInfo.value.team);
     const getAssessmentResult = ind => WashCore.assessmentResult(ind.score);
     const getTrackingStatus = ind => WashCore.trackingStatus(ind);
@@ -1029,7 +1046,7 @@ createApp({
       loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile, updateAvailable, updateApplication,
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
       populationWarning, reportPreview, reportIndicators, reportRisks, reportPlans,
-      getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview,
+      getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview, bulletValue, focusBulletField, updateBulletField, enterBulletField, blurBulletField,
       activeView,
       activeModuleTab,
       mobileMenuOpen,

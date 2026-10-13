@@ -217,7 +217,7 @@
           <h2 class="text-xl font-extrabold text-paho-very-dark-blue tracking-tight">{{ getViewTitle }}</h2>
         </div>
 
-        <div class="header-controls flex items-center gap-6">
+        <div v-if="activeView !== 'instructions'" class="header-controls flex items-center gap-6">
           <div class="compliance-status">
             <div class="compliance-value flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-paho-blue animate-pulse"></span>
@@ -1035,7 +1035,7 @@
             <!-- Riesgos Asociados -->
             <td data-label="Riesgos Asociados" class="py-5 px-4 align-top">
               <textarea aria-label="Riesgos asociados"
-                v-model="ind.associatedRisks"
+                :value="bulletValue(ind.associatedRisks)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'associatedRisks')" @keydown="enterBulletField($event, ind, 'associatedRisks')" @blur="blurBulletField"
                 rows="6"
                 placeholder="Especifique consecuencias en salud de pacientes, personal o dignidad. Ej.: Infecciones neonatales por falta de higiene de manos."
                 class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white focus:border-paho-blue focus:ring-1 focus:ring-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
@@ -1217,7 +1217,7 @@
             <!-- Acción de Mitigación -->
             <td data-label="Acción de Mitigación" class="py-5 px-4 align-top">
               <textarea aria-label="Acción de mitigación"
-                v-model="ind.action"
+                :value="bulletValue(ind.action)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'action')" @keydown="enterBulletField($event, ind, 'action')" @blur="blurBulletField"
                 rows="6"
                 placeholder="Inicie con un verbo en infinitivo indicando la solución técnica o conductual. Ej.: Instalar nueva línea de PVC y dos grifos clínicos."
                 class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue focus:ring-1 focus:ring-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
@@ -1236,7 +1236,7 @@
             <!-- Recursos Necesarios -->
             <td data-label="Recursos Necesarios" class="py-5 px-4 align-top">
               <textarea aria-label="Recursos"
-                v-model="ind.resources"
+                :value="bulletValue(ind.resources)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'resources')" @keydown="enterBulletField($event, ind, 'resources')" @blur="blurBulletField"
                 rows="6"
                 placeholder="Detalle los materiales, herramientas y perfiles humanos requeridos. Ej.: Tanque 1.000 L, tubos PVC, herramientas y fontanero institucional."
                 class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
@@ -1245,7 +1245,7 @@
 
             <!-- Responsable -->
             <td data-label="Responsable" class="py-5 px-4 align-top">
-              <input type="text" v-model="ind.responsible" aria-label="Responsables" placeholder="Escriba uno o varios responsables" class="w-full min-w-0 p-2 border border-paho-grid text-xs">
+              <textarea :value="bulletValue(ind.responsible)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'responsible')" @keydown="enterBulletField($event, ind, 'responsible')" @blur="blurBulletField" aria-label="Responsables" rows="3" placeholder="Escriba uno o varios responsables" class="w-full min-w-0 h-24 p-2 border border-paho-grid text-xs resize-none overflow-y-auto"></textarea>
             </td>
 
             <!-- Presupuesto (USD) -->
@@ -1401,7 +1401,7 @@
             <!-- Acción de Mitigación (Solo lectura / Bloqueado) -->
             <td data-label="Acción de Mitigación" class="py-5 px-4 align-top">
               <textarea aria-label="Acción de mitigación"
-                v-model="ind.action"
+                :value="bulletValue(ind.action)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'action')" @keydown="enterBulletField($event, ind, 'action')" @blur="blurBulletField"
                 rows="6"
                 disabled
                 placeholder="— Sin medida redactada aún —"
@@ -1424,7 +1424,7 @@
             <!-- Medidas Correctivas -->
             <td data-label="Medidas Correctivas o Adicionales" class="py-5 px-4 align-top">
               <textarea aria-label="Medidas correctivas"
-                v-model="ind.correctiveMeasures"
+                :value="bulletValue(ind.correctiveMeasures)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'correctiveMeasures')" @keydown="enterBulletField($event, ind, 'correctiveMeasures')" @blur="blurBulletField"
                 rows="6"
                 placeholder="Describa las acciones correctivas o de sostenibilidad..."
                 class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue focus:ring-1 focus:ring-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
@@ -1443,7 +1443,7 @@
             <!-- Comentarios / Notas Adicionales -->
             <td data-label="Comentarios y Notas Adicionales" class="py-5 px-4 align-top">
               <textarea aria-label="Comentarios de monitoreo"
-                v-model="ind.monitoringComments"
+                :value="bulletValue(ind.monitoringComments)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'monitoringComments')" @keydown="enterBulletField($event, ind, 'monitoringComments')" @blur="blurBulletField"
                 rows="6"
                 placeholder="Notas adicionales de control o auditoría técnica..."
                 class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
@@ -1972,7 +1972,7 @@
             <p class="report-text"><strong>Problema:</strong> {{ ind.problemDesc || '—' }}</p>
             <p class="report-text"><strong>Acción:</strong> {{ ind.action || '—' }}</p>
             <p class="report-text"><strong>Recursos:</strong> {{ ind.resources || '—' }}</p>
-            <p>Responsable: {{ getResponsibleName(ind) || 'Sin responsable' }} · Costo USD: {{ ind.cost === null ? '—' : formatThousands(ind.cost) }} · Plazo: {{ formatDate(ind.targetDate) || '—' }} · Estado: {{ getTrackingStatus(ind) }}</p>
+            <p class="report-text">Responsable: {{ getResponsibleName(ind) || 'Sin responsable' }} · Costo USD: {{ ind.cost === null ? '—' : formatThousands(ind.cost) }} · Plazo: {{ formatDate(ind.targetDate) || '—' }} · Estado: {{ getTrackingStatus(ind) }}</p>
           </article>
           <p v-if="!reportPlans.length">Sin acciones o brechas registradas.</p>
         </section>

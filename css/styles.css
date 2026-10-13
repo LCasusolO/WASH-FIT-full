@@ -98,7 +98,7 @@ button, [role=button], summary { cursor: pointer; }
 
 .compliance-status { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .25rem .75rem; min-width: 260px; }
 .compliance-value { white-space: nowrap; }
-.draft-status { grid-column: 1 / -1; text-align: right; font-size: .625rem; color: #4D4D4D; overflow-wrap: anywhere; }
+.draft-status { grid-column: 1 / -1; text-align: right; font-size: .5625rem; color: #4D4D4D; overflow-wrap: anywhere; }
 .evaluation-actions { display: flex; gap: .25rem; }
 .evaluation-actions button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: #004C97; border: 0; background: white; }
 .evaluation-actions button:hover:not(:disabled) { background: #F7F9FB; }
@@ -119,7 +119,11 @@ button, [role=button], summary { cursor: pointer; }
 .sidebar-footer { flex-shrink: 0; max-height: 45%; overflow-y: auto; }
 .sidebar-content, .sidebar-footer { scrollbar-width: none; -ms-overflow-style: none; }
 .sidebar-content::-webkit-scrollbar, .sidebar-footer::-webkit-scrollbar { display: none; width: 0; }
-@media (min-width: 1024px) { .sidebar-menu { position: sticky; top: 0; height: calc(100dvh - 96px); align-self: flex-start; } }
+@media (min-width: 1024px) {
+  .sidebar-menu { position: static; height: auto; max-height: none; align-self: stretch; justify-content: flex-start; overflow: visible; }
+  .sidebar-content { flex: 0 0 auto; overflow: visible; }
+  .sidebar-footer { max-height: none; overflow: visible; }
+}
 
 .report-step { margin-top: 2rem; padding-top: .5rem; border-top: 2px solid #004C97; }
 @media print {
