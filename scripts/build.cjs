@@ -23,10 +23,20 @@ if (result.status !== 0) process.exit(result.status || 1);
 const files = ['index.html', 'css/styles.css', 'js/core.js', 'js/storage.js', 'js/app.js', 'js/config/tailwind-config.js', 'js/data/indicators.js', 'img/barra.png', 'img/paho-logo-blanco.png', ...fs.readdirSync('vendor', { recursive: true }).filter(file => fs.statSync(path.join('vendor', file)).isFile()).map(file => 'vendor/' + file.replace(/\\/g, '/'))];
 const hash = require('node:crypto').createHash('sha256');
 for (const file of files) hash.update(fs.readFileSync(file));
-fs.writeFileSync('sw.js', `const CACHE = 'wash-fit-${hash.digest('hex').slice(0,12)}';\nconst ASSETS = ${JSON.stringify(['./', ...files.map(file=>'./'+file)])};\n` + fs.readFileSync('scripts/sw-template.js', 'utf8'));
+const revision = hash.digest('hex').slice(0,12);
+const linkedFiles = new Set();
+const deployedHtml = fs.readFileSync('index.html', 'utf8').replace(/(src|href)="((?:css|js|vendor|img)\/[^"?]+)"/g, (match, attribute, file) => {
+  if (!files.includes(file)) throw new Error('Recurso no incluido en el despliegue: ' + file);
+  linkedFiles.add(file);
+  return `${attribute}="${file}?v=${revision}"`;
+});
+// Cada HTML solicita su propia versión; un worker anterior no puede mezclar JS/CSS.
+const assets = ['./', ...files.map(file => './' + file + (linkedFiles.has(file) ? '?v=' + revision : ''))];
+fs.writeFileSync('sw.js', `const CACHE = 'wash-fit-${revision}';\nconst ASSETS = ${JSON.stringify(assets)};\n` + fs.readFileSync('scripts/sw-template.js', 'utf8'));
 for (const file of [...files, 'sw.js']) {
   const destination = path.join('dist', file);
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   fs.copyFileSync(file, destination);
 }
+fs.writeFileSync('dist/index.html', deployedHtml);
 console.log('Recursos locales y caché offline generados.');

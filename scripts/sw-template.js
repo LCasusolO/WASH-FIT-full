@@ -7,7 +7,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   // Solo recursos estáticos de esta aplicación; los datos permanecen en IndexedDB.
-  if (event.request.method !== 'GET' || url.origin !== self.location.origin || url.search || !ASSETS.some(asset => new URL(asset, self.registration.scope).pathname === url.pathname)) return;
+  if (event.request.method !== 'GET' || url.origin !== self.location.origin || !ASSETS.some(asset => new URL(asset, self.registration.scope).href === url.href)) return;
   event.respondWith(caches.open(CACHE).then(cache => cache.match(event.request).then(cached => cached || fetch(event.request))));
 });
 self.addEventListener('message', event => {
