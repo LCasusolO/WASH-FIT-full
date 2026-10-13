@@ -96,3 +96,15 @@ test('risk label changes with the same indicator response selected in assessment
   app.setIndicatorScore(ind,1);assert.equal(app.getAssessmentResult(ind).label,'Cumple Parcialmente');
   app.setIndicatorScore(ind,2);assert.equal(app.getAssessmentResult(ind).label,'Cumple');
 });
+test('legacy linked responsible becomes independent text without losing the name', async () => {
+  const app=loadApp();
+  const data=JSON.parse(JSON.stringify({generalInfo:app.generalInfo.value,indicators:app.indicators.value}));
+  data.generalInfo.team=[{id:'member-1',name:'Responsable anterior',email:'',isEditing:false}];
+  data.indicators[0].responsibleId='member-1';
+  await app.importData({target:{files:[{text:JSON.stringify(data)}]}});
+  const ind=app.indicators.value[0];
+  assert.equal(ind.responsible,'Responsable anterior');assert.equal(ind.responsibleId,'');
+  app.generalInfo.value.team[0].name='Nombre nuevo';
+  assert.equal(app.getResponsibleName(ind),'Responsable anterior');
+  ind.responsible='Ana; Luis';assert.equal(app.getResponsibleName(ind),'Ana; Luis');
+});

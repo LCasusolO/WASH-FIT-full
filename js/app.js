@@ -54,8 +54,6 @@ createApp({
     const mobileMenuOpen = ref(false);
     
     const filterOnlyGaps = ref(false); 
-    const riskDomain = ref('');
-    const riskPriority = ref('');
     const countries = WashCore.countries;
     const sortRiskOrder = ref('none'); // 'none' | 'desc' | 'asc'
     const sidebarCollapsed = ref(false);
@@ -186,7 +184,7 @@ createApp({
     }, { deep: true, flush: 'sync' });
     const applyDataset = (dataset) => {
       generalInfo.value = dataset.generalInfo;
-      indicators.value = dataset.indicators;
+      indicators.value = dataset.indicators.map(ind => ({...ind, responsible: WashCore.responsibleName(ind, dataset.generalInfo.team), responsibleId: ''}));
       nextTick(() => { onCoordinatesInput(); if (window.lucide) window.lucide.createIcons(); });
     };
     const newEvaluation = async () => {
@@ -341,7 +339,6 @@ createApp({
       return result;
     });
 
-    const getFilteredRisks = computed(() => WashCore.filterRisks(getSortedGaps.value.map(ind => ({...ind, moduleId: getIndicatorModuleId(ind)})), riskDomain.value, riskPriority.value, sortRiskOrder.value).map(ind => indicators.value.find(original => original.id === ind.id)));
     const trackingSummary = computed(() => {
       const gaps = indicators.value.filter(ind => shouldShowIndicator(ind) && (ind.score === 0 || ind.score === 1));
       const counts = { noIniciado: 0, enProgreso: 0, completado: 0, retrasado: 0 };
@@ -862,7 +859,6 @@ createApp({
     };
     const getResponsibleName = ind => WashCore.responsibleName(ind, generalInfo.value.team);
     const getAssessmentResult = ind => WashCore.assessmentResult(ind.score);
-    const assignResponsible = ind => { ind.responsible = getResponsibleName(ind); };
     const getTrackingStatus = ind => WashCore.trackingStatus(ind);
     const recordReview = ind => {
       try { WashCore.recordReview(ind, generalInfo.value.team); triggerToast('Revisión agregada al historial.'); }
@@ -1033,13 +1029,13 @@ createApp({
       loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile, updateAvailable, updateApplication,
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
       populationWarning, reportPreview, reportIndicators, reportRisks, reportPlans,
-      getResponsibleName, getAssessmentResult, assignResponsible, getTrackingStatus, recordReview,
+      getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview,
       activeView,
       activeModuleTab,
       mobileMenuOpen,
       sidebarCollapsed,
       filterOnlyGaps,
-      sortRiskOrder, riskDomain, riskPriority, countries, getFilteredRisks,
+      sortRiskOrder, countries,
       toggleRiskSort,
       severityOptions,
       likelihoodOptions,

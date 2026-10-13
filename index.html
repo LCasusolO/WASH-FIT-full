@@ -209,7 +209,7 @@
       </aside>
 
       <!-- MAIN CONTENT SUITE -->
-      <main class="flex-1 flex flex-col min-h-screen bg-white print-page overflow-auto">
+      <main class="flex-1 flex flex-col min-h-screen bg-white print-page overflow-auto lg:border-l lg:border-paho-grid">
 
       <!-- TOP NAVIGATION BAR -->
       <header class="evaluation-header flex items-center justify-between gap-4 px-4 lg:px-10 py-3 border-b border-paho-grid bg-white z-20 no-print flex-shrink-0">
@@ -310,7 +310,7 @@
                   <div class="w-10 h-10 bg-paho-light-blue/20 text-paho-dark-blue flex items-center justify-center font-bold text-sm">04</div>
                   <h4 class="text-sm font-bold text-paho-very-dark-blue">Paso 4: Plan de Mejora</h4>
                   <p class="text-xs text-paho-gray-dark leading-relaxed text-justify">
-                    Formule un plan de mejora con medidas y acciones para cada brecha. Asigne plazos de entrega, recursos y responsables de manera dinámica utilizando los integrantes cargados en el equipo de trabajo.
+                    Formule un plan de mejora con medidas y acciones para cada brecha. Asigne plazos de entrega y recursos, y escriba uno o varios responsables para cada acción.
                   </p>
                 </div>
                 <button @click="switchView('step4')" class="mt-4 w-full flex items-center justify-between px-4 py-2.5 bg-paho-dark-blue hover:bg-paho-very-dark-blue text-white text-xs font-bold transition-colors rounded-none">
@@ -963,11 +963,6 @@
     </div>
   </div>
 
-  <div class="no-print grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5 p-4 bg-white border border-paho-grid">
-    <div><label for="risk-order" class="block text-sm font-bold mb-2">Ordenar por riesgo</label><select id="risk-order" v-model="sortRiskOrder" class="w-full border border-paho-grid p-3 text-sm bg-white"><option value="none">Orden de indicadores</option><option value="desc">Mayor a menor</option><option value="asc">Menor a mayor</option></select></div>
-    <div><label for="risk-domain" class="block text-sm font-bold mb-2">Dominio</label><select id="risk-domain" v-model="riskDomain" class="w-full border border-paho-grid p-3 text-sm bg-white"><option value="">Todos los dominios</option><option v-for="mod in modulesList" :key="mod.id" :value="mod.id">{{ mod.name }}</option></select></div>
-    <div><label for="risk-priority" class="block text-sm font-bold mb-2">Prioridad</label><select id="risk-priority" v-model="riskPriority" class="w-full border border-paho-grid p-3 text-sm bg-white"><option value="">Todas las prioridades</option><option value="high">Alto (15–20)</option><option value="medium">Medio (8–14)</option><option value="low">Bajo (0–7)</option><option value="pending">Sin evaluar riesgo</option></select></div>
-  </div>
   <div class="bg-white border border-paho-grid overflow-hidden">
     <div class="overflow-x-auto max-h-[70vh]">
       <table class="w-full text-left border-collapse min-w-[1150px]">
@@ -994,7 +989,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-paho-grid text-xs">
-          <tr v-for="ind in getFilteredRisks" :key="ind.id" class="hover:bg-paho-card/20 align-top">
+          <tr v-for="ind in getSortedGaps" :key="ind.id" class="hover:bg-paho-card/20 align-top">
 
             <!-- Columna Unificada: dominio en Box / Indicador / Estado -->
             <td data-label="Dominio / Indicador" class="py-5 px-6 align-top">
@@ -1090,7 +1085,7 @@
             </td>
           </tr>
 
-          <tr v-if="getFilteredRisks.length === 0">
+          <tr v-if="getSortedGaps.length === 0">
             <td data-label="Dominio / Indicador" colspan="6" class="py-12 text-center text-xs text-paho-gray-medium">
               No hay indicadores que coincidan con los filtros seleccionados.
             </td>
@@ -1250,12 +1245,7 @@
 
             <!-- Responsable -->
             <td data-label="Responsable" class="py-5 px-4 align-top">
-              <select v-model="ind.responsibleId" @change="assignResponsible(ind)" aria-label="Responsable del equipo" class="w-full p-2 border border-paho-grid bg-white text-xs">
-                <option value="">Sin vincular al equipo</option>
-                <option v-for="member in generalInfo.team.filter(m => !m.isEditing && m.name)" :key="member.id" :value="member.id">{{ member.name }}</option>
-              </select>
-              <input v-if="!ind.responsibleId" v-model="ind.responsible" aria-label="Responsable escrito" placeholder="Responsable anterior o externo" class="w-full p-2 mt-2 border border-paho-grid text-xs">
-              <p class="text-xs mt-2">{{ getResponsibleName(ind) || 'Sin responsable' }}</p>
+              <input type="text" v-model="ind.responsible" aria-label="Responsables" placeholder="Escriba uno o varios responsables" class="w-full min-w-0 p-2 border border-paho-grid text-xs">
             </td>
 
             <!-- Presupuesto (USD) -->
