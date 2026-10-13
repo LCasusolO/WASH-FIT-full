@@ -410,20 +410,6 @@
                     </div>
                   </div>
 
-                  <div class="space-y-2 lg:col-span-2">
-                    <div class="min-h-[32px] flex items-center justify-center">
-                      <label class="text-xs font-bold text-paho-gray-dark uppercase tracking-wider leading-tight text-center">Población Atendida Total</label>
-                    </div>
-                    <input
-                      type="text"
-                      :value="isPopFocused ? generalInfo.populationServed : formatThousands(generalInfo.populationServed)"
-                      @input="e => updatePopulation(e.target.value)"
-                      @focus="isPopFocused = true"
-                      @blur="isPopFocused = false"
-                      placeholder="Ej: 15,000 habitantes"
-                      class="w-full px-4 py-3 border border-paho-grid text-sm focus:border-paho-blue outline-none transition-all bg-white text-paho-gray-dark">
-                  </div>
-
                   <div class="space-y-2 lg:col-span-3">
                     <div class="min-h-[32px] flex items-center justify-center">
                       <label class="text-xs font-bold text-paho-gray-dark uppercase tracking-wider leading-tight text-center">Ámbito de Intervención</label>
@@ -438,7 +424,21 @@
                     </div>
                   </div>
 
-                  <div class="lg:col-span-5 pt-4 border-t border-paho-grid space-y-3">
+                  <div class="population-total space-y-2 lg:col-span-2 pt-4 border-t border-paho-grid">
+                    <div class="min-h-[32px] flex items-center justify-center">
+                      <label class="text-xs font-bold text-paho-gray-dark uppercase tracking-wider leading-tight text-center">Población Atendida Total</label>
+                    </div>
+                    <input
+                      type="text"
+                      :value="isPopFocused ? generalInfo.populationServed : formatThousands(generalInfo.populationServed)"
+                      @input="e => updatePopulation(e.target.value)"
+                      @focus="isPopFocused = true"
+                      @blur="isPopFocused = false"
+                      placeholder="Ej: 15,000 habitantes"
+                      class="w-full px-4 py-3 border border-paho-grid text-sm focus:border-paho-blue outline-none transition-all bg-white text-paho-gray-dark">
+                  </div>
+
+                  <div class="population-age-groups lg:col-span-4 pt-4 border-t border-paho-grid space-y-3">
                     <label class="text-xs font-bold text-paho-gray-dark uppercase tracking-wider block">Población por Grupos Etarios</label>
                     <p v-if="populationWarning" role="status" class="text-xs text-amber-800">{{ populationWarning }}</p>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
