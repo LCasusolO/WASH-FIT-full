@@ -14,3 +14,10 @@ test('invalid or full-history review drafts leave the indicator unchanged',()=>{
  ind.history=Array.from({length:200},()=>({recordedAt:'2026-01-01T00:00:00Z'}));const full=JSON.stringify(ind);
  assert.throws(()=>Core.saveReviewDraft(ind,draft,[]),/200/);assert.equal(JSON.stringify(ind),full);
 });
+test('review state is captured from the plan and cannot be changed by the review form',()=>{
+ const ind={score:0,trackingStatus:'En Progreso',history:[]};
+ Core.saveReviewDraft(ind,{...draft,trackingStatus:'Completado'},[],'2026-10-15T10:00:00Z');
+ assert.equal(ind.trackingStatus,'En Progreso');assert.equal(ind.history[0].trackingStatus,'En Progreso');
+ ind.trackingStatus='Completado';Core.saveReviewDraft(ind,{...draft,trackingStatus:'No Iniciado'},[],'2026-10-16T10:00:00Z');
+ assert.equal(ind.history[1].trackingStatus,'Completado');assert.equal(ind.history[0].trackingStatus,'En Progreso');
+});
