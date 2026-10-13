@@ -7,11 +7,11 @@ http.createServer((req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
   if (pathname === '/api/drive-archive') {
     const chunks = []; let size = 0;
-    req.on('data', chunk => { size += chunk.length; if (size <= 8192) chunks.push(chunk); });
+    req.on('data', chunk => { size += chunk.length; if (size <= 2 * 1024 * 1024) chunks.push(chunk); });
     req.on('end', async () => {
       res.status = code => {res.statusCode = code; return res;};
       res.json = data => {res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data));};
-      if (size > 8192) return res.status(413).json({error:'Solicitud demasiado grande.'});
+      if (size > 2 * 1024 * 1024) return res.status(413).json({error:'Solicitud demasiado grande.'});
       req.body = Buffer.concat(chunks).toString();
       await require('../api/drive-archive.js')(req, res);
     });

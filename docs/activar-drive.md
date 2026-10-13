@@ -29,7 +29,7 @@ En la web desplegada, crea una evaluación de prueba sin datos personales y puls
 
 Cada pulsación crea un nuevo par con fecha, hora e identificador. **Reintentar Drive** conserva la evaluación que falló y sus sesiones, y evita volver a subir un JSON ya confirmado. Un nuevo Exportar o Imprimir inicia otra captura de la evaluación actual. El JSON se descarga localmente como antes; imprimir sigue disponible aunque la subida falle, mostrando el error.
 
-Los datos grandes viajan directamente al destino de subida temporal de Google, por fragmentos de 1 MB, sin pasar por el límite de cuerpo de las funciones de Vercel. Se admite hasta 40 MB por archivo. Las credenciales del propietario nunca se envían al navegador. El servicio es público, según el alcance solicitado: cualquier visitante puede agregar reportes; un control de origen no identifica al visitante. Para limitar el volumen total se puede configurar una regla de rate limiting de Vercel Firewall sobre `/api/drive-archive`; la cuota sigue perteneciendo al propietario del repositorio.
+Los datos grandes se envían por fragmentos de hasta 1 MB al servidor de Vercel, que los transmite a la sesión de subida de Google. Cada petición queda por debajo del límite de cuerpo de las funciones y la confirmación no depende del acceso CORS a Google desde el navegador. Se admite hasta 40 MB por archivo. Las credenciales del propietario nunca se envían al navegador. El servicio es público, según el alcance solicitado: cualquier visitante puede agregar reportes; un control de origen no identifica al visitante. Para limitar el volumen total se puede configurar una regla de rate limiting de Vercel Firewall sobre `/api/drive-archive`; la cuota sigue perteneciendo al propietario del repositorio.
 
 ## Reporte guardado
 

@@ -41,12 +41,12 @@ test('interrupted PDF resumes without uploading a second JSON or creating anothe
   const job={dataset:{generalInfo:{facilityName:'Hospital'}},json:new Blob(['json']),pdf:new Blob(['pdf'])};
   let starts=0,jsonPuts=0,pdfPuts=0,interrupted=true;
   const request=async (url,options) => {
-    if (url === '/api/drive-archive') {
-      if (JSON.parse(options.body).action==='start') { starts++; return Response.json({receipt:'receipt',files:[{session:'https://www.googleapis.com/json',mime:'application/json'},{session:'https://www.googleapis.com/pdf',mime:'application/pdf'}]}); }
-      return Response.json({saved:true});
-    }
-    if (options.headers['Content-Range'].includes('*/')) return new Response('',{status:308});
-    if (url.endsWith('/json')) {jsonPuts++;return Response.json({id:'file-json'});}
+    assert.equal(url,'/api/drive-archive');
+    const body=JSON.parse(options.body);
+    if (body.action==='start') {starts++;return Response.json({receipt:'receipt'});}
+    if (body.action==='verify') return Response.json({saved:true});
+    if (body.action==='status') return Response.json({offset:0});
+    if (body.kind==='json') {jsonPuts++;return Response.json({id:'file-json'});}
     pdfPuts++;
     if (interrupted) {interrupted=false;throw Error('Disconnected');}
     return Response.json({id:'file-pdf'});
@@ -55,6 +55,24 @@ test('interrupted PDF resumes without uploading a second JSON or creating anothe
   assert.equal(job.ids[0],'file-json');
   assert.equal((await Archive.save(job,()=>{},request)).saved,true);
   assert.equal(starts,1);assert.equal(jsonPuts,1);assert.equal(pdfPuts,2);
+});
+test('server proxies signed upload chunks and recovers a confirmed file after a lost browser response', async () => {
+  let uploaded;
+  const handler=createHandler({env,request:async(url,options)=>{
+    if(url.includes('oauth2'))return Response.json({access_token:'owner-token',expires_in:3600});
+    if(options.method==='POST')return new Response('',{headers:{location:'https://www.googleapis.com/upload/session'}});
+    assert.equal(options.headers.Authorization,'Bearer owner-token');
+    if(options.headers['Content-Range'].includes('*/'))return uploaded ? Response.json({id:'file-json'}) : new Response('',{status:308});
+    assert.equal(options.headers['Content-Range'],'bytes 0-3/4');
+    uploaded=options.body.toString();return Response.json({id:'file-json'});
+  }});
+  const started=await run(handler,{action:'start',facility:'Hospital',jsonBytes:4,pdfBytes:3});
+  const common={receipt:started.data.receipt,kind:'json'};
+  assert.equal((await run(handler,{...common,action:'status'})).data.offset,0);
+  assert.equal((await run(handler,{...common,action:'upload',offset:0,data:Buffer.from('json').toString('base64')})).data.id,'file-json');
+  assert.equal(uploaded,'json');
+  assert.equal((await run(handler,{...common,action:'status'})).data.id,'file-json');
+  assert.equal((await run(handler,{...common,action:'upload',offset:1,data:Buffer.from('json').toString('base64')})).code,400);
 });
 test('PDF retains six separated steps, excludes hidden indicators and preserves sum scoring',()=>{
   const dataset={savedAt:new Date().toISOString(),generalInfo:Core.defaults(),indicators:[{code:'A_1a',title:'Visible',module:'Agua',moduleId:'water',score:1,severity:3,likelihood:4,history:[]},{code:'HIDDEN',title:'Hidden',score:2}]};
