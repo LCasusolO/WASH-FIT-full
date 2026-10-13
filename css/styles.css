@@ -98,7 +98,7 @@ button, [role=button], summary { cursor: pointer; }
 
 .compliance-status { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: .25rem .75rem; min-width: 260px; }
 .compliance-value { white-space: nowrap; }
-.draft-status { grid-column: 1 / -1; text-align: right; font-size: .75rem; color: #4D4D4D; overflow-wrap: anywhere; }
+.draft-status { grid-column: 1 / -1; text-align: right; font-size: .625rem; color: #4D4D4D; overflow-wrap: anywhere; }
 .evaluation-actions { display: flex; gap: .25rem; }
 .evaluation-actions button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: #004C97; border: 0; background: white; }
 .evaluation-actions button:hover:not(:disabled) { background: #F7F9FB; }
@@ -114,7 +114,8 @@ button, [role=button], summary { cursor: pointer; }
 .sidebar-actions { display: flex; flex-direction: column; gap: .6rem; }
 .sidebar-actions button { display: flex; align-items: center; gap: .5rem; font-size: .75rem; text-align: left; color: #004C97; }
 .sidebar-actions button span { text-decoration: underline; font-weight: 700; }
-.sidebar-menu { max-height: 100dvh; }
+.sidebar-menu { max-height: 100dvh; scrollbar-width: none; -ms-overflow-style: none; }
+.sidebar-menu::-webkit-scrollbar { display: none; width: 0; }
 @media (min-width: 1024px) { .sidebar-menu { position: sticky; top: 0; height: 100dvh; align-self: flex-start; } }
 .report-step { margin-top: 2rem; padding-top: .5rem; border-top: 2px solid #004C97; }
 @media print {
