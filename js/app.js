@@ -1046,7 +1046,7 @@ createApp({
       loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile, updateAvailable, updateApplication,
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
       populationWarning, reportPreview, reportIndicators, reportRisks, reportPlans,
-      getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview, bulletValue, focusBulletField, updateBulletField, enterBulletField, blurBulletField,
+      getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview, bulletValue, focusBulletField, updateBulletField, enterBulletField, blurBulletField, reviewBullets: WashCore.reviewBullets, changeLabel: WashCore.changeLabel,
       activeView,
       activeModuleTab,
       mobileMenuOpen,

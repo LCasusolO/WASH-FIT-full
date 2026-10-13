@@ -32,7 +32,7 @@
     if (!plans.length) content.push({text: 'Sin acciones en seguimiento.'});
     for (const i of plans) {
       content.push({text: `${i.code} - ${i.title}`, style: 'subheading'}, line('Resultado / estado', `${Core.assessmentResult(i.score).label} / ${Core.trackingStatus(i)}`), line('Acción en seguimiento', i.action), line('Cambio / próxima revisión', `${i.indicatorChange === 'mejorado' ? 'Ha mejorado' : i.indicatorChange === 'empeorado' ? 'Ha empeorado' : 'No ha cambiado'} / ${value(i.nextReviewDate)}`), line('Medidas correctivas', i.correctiveMeasures), line('Comentarios', i.monitoringComments));
-      for (const h of i.history || []) content.push(line('Revisión', h.recordedAt), line('Estado / responsable', `${value(h.trackingStatus)} / ${value(h.responsible)}`), line('Acción', h.action), line('Medidas', h.correctiveMeasures), line('Comentarios', h.monitoringComments));
+      for (const h of i.history || []) content.push(line('Revisión', h.recordedAt), line('Estado / cambio / responsable', `${value(h.trackingStatus)} / ${Core.changeLabel(h.indicatorChange)} / ${value(Core.reviewBullets(h.responsible))}`), line('Acción', Core.reviewBullets(h.action)), line('Medidas', Core.reviewBullets(h.correctiveMeasures)), line('Comentarios', Core.reviewBullets(h.monitoringComments)));
     }
     step(6, 'Resumen');
     const compliance = evaluated.length ? Math.round(evaluated.reduce((n, i) => n + i.score, 0) / (evaluated.length * 2) * 100) : 0;
