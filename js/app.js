@@ -740,7 +740,60 @@ createApp({
       document.body.appendChild(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     };
-    const exportData = () => { downloadDataset(snapshot()); triggerToast('Respaldo JSON descargado.'); };
+    const archiveBusy = ref(false);
+    const archiveFailed = ref(false);
+    const archiveStatus = ref('');
+    let archiveJob = null;
+    const createArchiveJob = async dataset => {
+      const visibleCodes = dataset.indicators.filter(shouldShowIndicator).map(i => i.code);
+      const pdfData = WashCore.clone(dataset);
+      // Validar y limitar las imágenes evita bloquear el PDF con evidencias dañadas.
+      for (const photo of pdfData.generalInfo.photos) {
+        photo.url = await new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => {
+            const scale = Math.min(1, 1200 / Math.max(image.width, image.height));
+            const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(image.width * scale)); canvas.height = Math.max(1, Math.round(image.height * scale));
+            const context = canvas.getContext('2d'); context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', .9));
+          };
+          image.onerror = () => reject(new Error('No se pudo incluir una fotografía en el PDF.'));
+          image.src = photo.url;
+        });
+      }
+      const definition = WashPdf.definition(pdfData, visibleCodes, modulesList);
+      const pdf = await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('No se pudo preparar el PDF a tiempo. Reintente el guardado.')), 60000);
+        try { pdfMake.createPdf(definition).getBlob(blob => { clearTimeout(timer); resolve(blob); }); } catch (error) { clearTimeout(timer); reject(error); }
+      });
+      return {dataset, json: new Blob([JSON.stringify(dataset, null, 2)], {type: 'application/json'}), pdf};
+    };
+    const runArchive = async dataset => {
+      if (archiveBusy.value) return false;
+      archiveBusy.value = true;
+      archiveFailed.value = false;
+      archiveStatus.value = 'Preparando JSON y PDF…';
+      try {
+        if (dataset) { archiveJob = null; archiveJob = await createArchiveJob(dataset); }
+        if (!archiveJob) throw new Error('No hay una evaluación pendiente. Vuelva a Exportar.');
+        await WashArchive.save(archiveJob, text => { archiveStatus.value = text; });
+        archiveStatus.value = 'JSON y PDF guardados en Drive.';
+        archiveJob = null;
+        triggerToast(archiveStatus.value);
+        return true;
+      } catch (error) {
+        archiveFailed.value = true;
+        archiveStatus.value = (archiveJob?.ids?.[0] ? 'JSON guardado; PDF o confirmación pendientes. ' : 'Guardado en Drive pendiente. ') + error.message;
+        triggerToast(archiveStatus.value, 'error');
+        return false;
+      } finally { archiveBusy.value = false; nextTick(() => window.lucide?.createIcons()); }
+    };
+    const retryArchive = () => runArchive(archiveJob ? null : snapshot());
+    const exportData = async () => {
+      if (archiveBusy.value) return;
+      const dataset = snapshot();
+      downloadDataset(dataset);
+      await runArchive(dataset);
+    };
     const importData = event => {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -784,9 +837,12 @@ createApp({
     };
 
     const printReport = async () => {
+      if (archiveBusy.value) return;
+      const dataset = snapshot();
       reportPreview.value = true;
       await nextTick();
       await prepareReportMap();
+      await runArchive(dataset);
       window.print();
     };
     const getResponsibleName = ind => WashCore.responsibleName(ind, generalInfo.value.team);
@@ -972,6 +1028,7 @@ createApp({
       handleFileChange,
       removePhoto,
       exportData,
+      archiveBusy, archiveFailed, archiveStatus, retryArchive,
       importData,
       switchView,
       printReport,

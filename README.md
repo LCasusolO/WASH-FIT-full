@@ -67,6 +67,12 @@ En la revisión posterior se autorizó corregir el punto 11. La tabla de riesgo 
 
 Se aclararon límites de respuesta de `A_2`, `A_3`, `A_8` y `RES_2`, y se corrigieron errores editoriales. Los umbrales sanitarios específicos y las adaptaciones nacionales requieren una validación metodológica independiente; esta actualización no declara certificación del catálogo por OPS/OMS.
 
-## Pruebas
+## Repositorio central de Google Drive
+
+Exportar e Imprimir reporte preparan el JSON y un PDF de seis pasos desde una misma captura y los envían a la carpeta configurada. La aplicación confirma ambos archivos en Drive antes de anunciar el guardado. Si falla, conserva el par pendiente en memoria y permite reintentar sin duplicar los archivos confirmados. La descarga local de JSON y la impresión siguen disponibles.
+
+La subida requiere autorización del propietario en el servidor de Vercel. No usa la conexión Drive de un chat, y los visitantes no necesitan iniciar sesión con Google. Consulte [activar el repositorio](docs/activar-drive.md). Hasta completar esa configuración y una prueba real, el repositorio no está activado. El PDF archivado conserva coordenadas y enlace al mapa; los mosaicos interactivos permanecen en la vista previa.
+
+## Validación
 
 `npm test` verifica clasificaciones completas/incompletas, errores de importación, migración de JSON, responsabilidades/historial, límites numéricos, persistencia/respaldos y conservación de los puntos excluidos. Las pruebas de aplicación aíslan Vue para comprobar las reglas; la interfaz se verifica también en navegador.

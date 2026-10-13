@@ -181,7 +181,7 @@
         <!-- Acciones del pie del menú -->
         <div class="p-4 border-t border-paho-grid bg-white space-y-4 flex-shrink-0">
           <div :class="['flex gap-2 transition-all duration-300', sidebarCollapsed ? 'flex-col items-center' : 'flex-row']">
-            <button @click="exportData" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-paho-card text-paho-dark-blue text-xs font-bold border border-paho-grid transition-colors">
+            <button @click="exportData" :disabled="archiveBusy" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-paho-card text-paho-dark-blue text-xs font-bold border border-paho-grid transition-colors">
               <i data-lucide="download" class="w-4 h-4"></i>
               <span v-show="!sidebarCollapsed">Exportar</span>
             </button>
@@ -192,6 +192,8 @@
             </label>
           </div>
           <div class="sidebar-actions">
+            <p v-if="archiveStatus" role="status" aria-live="polite" class="text-xs" :class="archiveFailed ? 'text-red-700' : 'text-paho-dark-blue'">{{ archiveStatus }}</p>
+            <button v-if="archiveFailed" :disabled="archiveBusy" @click="retryArchive" title="Reintentar guardado en Drive" aria-label="Reintentar guardado en Drive"><i data-lucide="cloud-upload" class="w-4 h-4"></i><span>Reintentar Drive</span></button>
             <button v-if="saveState === 'error'" @click="saveDraft()" title="Reintentar guardado" aria-label="Reintentar guardado"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span v-show="!sidebarCollapsed">Reintentar guardado</span></button>
             <button v-if="updateAvailable" @click="updateApplication" title="Guardar y actualizar aplicación" aria-label="Guardar y actualizar aplicación"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span v-show="!sidebarCollapsed">Guardar y actualizar aplicación</span></button>
           </div>
@@ -1902,9 +1904,10 @@
 
     <section class="print-report" :class="{ 'report-open': reportPreview }" aria-label="Reporte consolidado">
       <div class="no-print flex justify-between gap-3 p-4 border-b border-paho-grid">
-        <button @click="reportPreview = false" class="border border-paho-grid px-4 py-2">Volver a la evaluación</button>
-        <button @click="printReport" class="bg-paho-dark-blue text-white px-4 py-2">Imprimir / guardar PDF</button>
+        <button @click="reportPreview = false" :disabled="archiveBusy" class="border border-paho-grid px-4 py-2">Volver a la evaluación</button>
+        <button @click="printReport" :disabled="archiveBusy" class="bg-paho-dark-blue text-white px-4 py-2">Imprimir / guardar PDF</button>
       </div>
+      <div v-if="archiveStatus" class="no-print p-4" role="status" aria-live="polite"><p>{{ archiveStatus }}</p><button v-if="archiveFailed" :disabled="archiveBusy" @click="retryArchive" class="text-paho-dark-blue underline">Reintentar guardado en Drive</button></div>
       <div class="report-content">
         <h1>WASH FIT · Reporte consolidado</h1>
         <p>Generado: {{ new Date().toLocaleString('es') }} · Evaluación: {{ formatDate(generalInfo.evaluationDate) }}</p>
@@ -1993,6 +1996,10 @@ Comentarios: {{ entry.monitoringComments || '—' }}</p>
   <script src="js/data/indicators.js"></script>
   <script src="js/core.js"></script>
   <script src="js/storage.js"></script>
+  <script src="vendor/pdfmake.min.js"></script>
+  <script src="vendor/vfs_fonts.js"></script>
+  <script src="js/pdf-report.js"></script>
+  <script src="js/drive-archive.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
