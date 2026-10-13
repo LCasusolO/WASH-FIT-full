@@ -1,4 +1,4 @@
-const CACHE = 'wash-fit-1aa6e52d677b';
+const CACHE = 'wash-fit-350134357cde';
 const ASSETS = ["./","./index.html","./css/styles.css","./js/core.js","./js/storage.js","./js/app.js","./js/config/tailwind-config.js","./js/data/indicators.js","./img/barra.png","./img/paho-logo-blanco.png","./vendor/leaflet-LICENSE","./vendor/leaflet.css","./vendor/leaflet.js","./vendor/lucide-LICENSE","./vendor/lucide.js","./vendor/tailwind.css","./vendor/vue-LICENSE","./vendor/vue.global.js","./vendor/images/layers-2x.png","./vendor/images/layers.png","./vendor/images/marker-icon-2x.png","./vendor/images/marker-icon.png","./vendor/images/marker-shadow.png"];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));

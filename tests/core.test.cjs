@@ -98,12 +98,16 @@ test('assessment results have exactly the requested labels for the shared score'
   assert.equal(Core.assessmentResult(0).label,'No Cumple');
   assert.equal(Core.assessmentResult(null).label,'Sin evaluar');
 });
-test('template compiles without orphan conditionals, keeps sidebar actions and separates six report steps',()=>{
+test('template compiles without orphan conditionals, keeps header actions and separates six report steps',()=>{
   const html=fs.readFileSync('index.html','utf8');
   const app=html.slice(html.indexOf('<div id="app"'),html.indexOf('<!-- Scripts de datos'));
   require('@vue/compiler-dom').compile(app,{onError:error=>{throw error;}});
   const sidebar=html.slice(html.indexOf('<aside'),html.indexOf('</aside>'));
-  for(const action of ['saveLabel','newEvaluation','restoreBackup'])assert.ok(sidebar.includes(action));
+  const header=html.slice(html.indexOf('<header class="evaluation-header'),html.indexOf('</header>',html.indexOf('<header class="evaluation-header')));
+  for(const action of ['saveLabel','newEvaluation','restoreBackup']) {
+    assert.ok(header.includes(action));
+    assert.ok(!sidebar.includes(action));
+  }
   assert.ok(!html.includes('Disponible sin conexión'));
   assert.ok(!html.includes('Observaciones para la clasificación JMP'));
   assert.ok(!html.includes('No iniciados: {{ trackingSummary'));
