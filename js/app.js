@@ -208,10 +208,10 @@ createApp({
       } catch (error) { triggerToast(error.message, 'error'); }
     };
     const saveLabel = computed(() => {
-      if (saveState.value === 'loading') return 'Recuperando borrador local…';
-      if (saveState.value === 'error') return 'Borrador local: error al guardar.';
-      if (saveState.value !== 'saved') return 'Guardando borrador local…';
-      return savedAt.value ? 'Borrador local guardado a las ' + new Date(savedAt.value).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }) : 'Borrador local listo';
+      if (saveState.value === 'loading') return 'Recuperando…';
+      if (saveState.value === 'error') return 'Error al guardar.';
+      if (saveState.value !== 'saved') return 'Guardando…';
+      return savedAt.value ? 'Guardado a las ' + new Date(savedAt.value).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }) : 'Listo';
     });
     const updateApplication = async () => {
       if (!serviceRegistration?.waiting) return;
