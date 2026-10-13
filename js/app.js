@@ -1,4 +1,4 @@
-const { createApp, ref, computed, onMounted, nextTick } = Vue;
+const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 
 // Función auxiliar de compresión y redimensionado usando HTML5 Canvas
 const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.7) => {
@@ -62,14 +62,17 @@ createApp({
     const selectedPhoto = ref(null);
 
     const openPhotoModal = (photo) => {
+      photoOrigin = document.activeElement;
       selectedPhoto.value = photo;
       nextTick(() => {
         if (window.lucide) window.lucide.createIcons();
+        document.getElementById('photo-close')?.focus();
       });
     };
 
     const closePhotoModal = () => {
       selectedPhoto.value = null;
+      nextTick(() => photoOrigin?.focus());
     };
 
     // Opciones para el Nivel de Atención del Establecimiento
@@ -136,32 +139,83 @@ createApp({
       { val: 10, label: '10 - Continua' }
     ];
 
-    const generalInfo = ref({
-      facilityName: 'Hospital Materno Infantil San José',
-      district: 'Lima, Perú',
-      latitude: -12.1485,
-      longitude: -76.9841,
-      level: 'Primer Nivel',
-      type: 'Público',
-      setting: 'Urbano',
-      populationServed: 15000,
-      ageGroups: {
-        under5: null,
-        age5to17: null,
-        over18to59: null,
-        over60: null,
-      },
-      sanitationSystem: null,
-      selectedS9Option: null,
-      evaluationDate: new Date().toISOString().substr(0, 10),
-      summary: '',
-      team: [
-        { name: 'Dra. Elena Rostova', role: 'Directora de Epidemiología', institution: 'MINSA', responsibility: 'Coordinador WASH', email: 'elena.rostova@minsa.gob.pe', isEditing: false }
-      ],
-      photos: []
+    const generalInfo = ref(WashCore.defaults());
+    const indicators = ref(WashCore.clone(INDICATORS_DATA));
+    const loadingDraft = ref(true);
+    const saveState = ref('loading');
+    const savedAt = ref('');
+    const hasBackup = ref(false);
+    const isOnline = ref(navigator.onLine);
+    const offlineReady = ref(false);
+    const updateAvailable = ref(false);
+    let serviceRegistration = null;
+    const photoBusy = ref(false);
+    const reportPreview = ref(false);
+    const isMobile = ref(window.innerWidth < 1024);
+    const populationWarning = computed(() => WashCore.populationWarning(generalInfo.value));
+    const store = WashStorage.createStore(window.indexedDB);
+    let saveTimer;
+    let saveQueue = Promise.resolve();
+    let revision = 0;
+    let persistedRevision = 0;
+    let photoOrigin = null;
+    const snapshot = () => ({ schemaVersion: WashCore.SCHEMA_VERSION, savedAt: new Date().toISOString(), generalInfo: WashCore.clone(generalInfo.value), indicators: WashCore.clone(indicators.value) });
+    const saveDraft = (backup = false) => {
+      clearTimeout(saveTimer);
+      const dataset = snapshot();
+      const savingRevision = revision;
+      saveState.value = 'saving';
+      saveQueue = saveQueue.catch(() => {}).then(() => store.save(dataset, backup)).then(time => {
+        persistedRevision = savingRevision;
+        savedAt.value = time;
+        saveState.value = savingRevision === revision ? 'saved' : 'pending';
+        if (backup) hasBackup.value = true;
+        return true;
+      }).catch(() => { saveState.value = 'error'; return false; });
+      return saveQueue;
+    };
+    watch([generalInfo, indicators], () => {
+      if (loadingDraft.value) return;
+      revision++;
+      saveState.value = 'pending';
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => saveDraft(), 800);
+    }, { deep: true, flush: 'sync' });
+    const applyDataset = (dataset) => {
+      generalInfo.value = dataset.generalInfo;
+      indicators.value = dataset.indicators;
+      nextTick(() => { onCoordinatesInput(); if (window.lucide) window.lucide.createIcons(); });
+    };
+    const newEvaluation = async () => {
+      if (!window.confirm('Se guardará el borrador actual como respaldo y se abrirá una evaluación nueva. ¿Continuar?')) return;
+      if (!await saveDraft(true)) { triggerToast('No se pudo guardar el respaldo. Exporte el JSON antes de comenzar otra evaluación.', 'error'); return; }
+      applyDataset({ generalInfo: WashCore.defaults(), indicators: WashCore.clone(INDICATORS_DATA) });
+      await saveDraft();
+    };
+    const restoreBackup = async () => {
+      try {
+        const backup = await store.read('backup');
+        if (!backup) throw new Error('No hay un respaldo previo.');
+        const restored = WashCore.normalizeDataset(backup, INDICATORS_DATA);
+        if (!window.confirm('Se recuperará el respaldo anterior. El borrador actual quedará como respaldo. ¿Continuar?')) return;
+        if (!await saveDraft(true)) throw new Error('No se pudo conservar el borrador actual.');
+        applyDataset(restored);
+        await saveDraft();
+        triggerToast('Respaldo recuperado.');
+      } catch (error) { triggerToast(error.message, 'error'); }
+    };
+    const saveLabel = computed(() => {
+      if (saveState.value === 'loading') return 'Recuperando borrador…';
+      if (saveState.value === 'error') return 'Error al guardar. Exporte un respaldo.';
+      if (saveState.value !== 'saved') return 'Guardando…';
+      return savedAt.value ? 'Guardado a las ' + new Date(savedAt.value).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }) : 'Borrador listo';
     });
-
-    const indicators = ref(INDICATORS_DATA);
+    const updateApplication = async () => {
+      if (!serviceRegistration?.waiting) return;
+      if (!await saveDraft()) { triggerToast('Guarde un respaldo antes de actualizar: el borrador no pudo guardarse.', 'error'); return; }
+      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
+      serviceRegistration.waiting.postMessage('activate-update');
+    };
 
     // Los nombres son etiquetas; las relaciones y los cálculos usan IDs estables.
     // El fallback permite abrir JSON anteriores que solo incluían `module`.
@@ -288,9 +342,9 @@ createApp({
       const gaps = indicators.value.filter(ind => shouldShowIndicator(ind) && (ind.score === 0 || ind.score === 1));
       const counts = { noIniciado: 0, enProgreso: 0, completado: 0, retrasado: 0 };
       gaps.forEach(g => {
-        if (g.trackingStatus === 'En Progreso') counts.enProgreso++;
-        else if (g.trackingStatus === 'Completado') counts.completado++;
-        else if (g.trackingStatus === 'Retrasado') counts.retrasado++;
+        if (getTrackingStatus(g) === 'En Progreso') counts.enProgreso++;
+        else if (getTrackingStatus(g) === 'Completado') counts.completado++;
+        else if (getTrackingStatus(g) === 'Retrasado') counts.retrasado++;
         else counts.noIniciado++;
       });
       return counts;
@@ -298,9 +352,9 @@ createApp({
 
     const planProgressPercentage = computed(() => {
       const gaps = indicators.value.filter(ind => shouldShowIndicator(ind) && (ind.score === 0 || ind.score === 1));
-      if (gaps.length === 0) return 100;
-      const completed = gaps.filter(g => g.trackingStatus === 'Completado').length;
-      const inProgress = gaps.filter(g => g.trackingStatus === 'En Progreso').length;
+      if (gaps.length === 0) return 0;
+      const completed = gaps.filter(g => getTrackingStatus(g) === 'Completado').length;
+      const inProgress = gaps.filter(g => getTrackingStatus(g) === 'En Progreso').length;
       const score = (completed * 1.0) + (inProgress * 0.5);
       return Math.round((score / gaps.length) * 100);
     });
@@ -308,26 +362,18 @@ createApp({
     const focusedCostId = ref(null);
     const isPopFocused = ref(false);
 
-    const updatePopulation = (value) => {
-      const cleanValue = value.replace(/,/g, '');
-      if (cleanValue === '') {
-        generalInfo.value.populationServed = null;
-      } else {
-        const parsed = parseInt(cleanValue, 10);
-        generalInfo.value.populationServed = isNaN(parsed) ? null : parsed;
-      }
+    const updatePopulation = value => {
+      const parsed = WashCore.parseNonNegative(value, true);
+      if (parsed === undefined) { triggerToast('Ingrese una población entera y no negativa.', 'error'); return; }
+      generalInfo.value.populationServed = parsed;
     };
 
     const focusedAgeGroup = ref(null);
 
     const updateAgeGroup = (key, value) => {
-      const cleanValue = value.replace(/,/g, '');
-      if (cleanValue === '') {
-        generalInfo.value.ageGroups[key] = null;
-      } else {
-        const parsed = parseInt(cleanValue, 10);
-        generalInfo.value.ageGroups[key] = isNaN(parsed) ? null : parsed;
-      }
+      const parsed = WashCore.parseNonNegative(value, true);
+      if (parsed === undefined) { triggerToast('Ingrese una cantidad entera y no negativa.', 'error'); return; }
+      generalInfo.value.ageGroups[key] = parsed;
     };
 
     const formatThousands = (val) => {
@@ -339,101 +385,12 @@ createApp({
     };
 
     const updateCost = (ind, value) => {
-      const cleanValue = value.replace(/,/g, '');
-      if (cleanValue === '') {
-        ind.cost = null;
-      } else {
-        const parsed = parseFloat(cleanValue);
-        ind.cost = isNaN(parsed) ? null : parsed;
-      }
+      const parsed = WashCore.parseNonNegative(value);
+      if (parsed === undefined) { triggerToast('Ingrese un costo no negativo con hasta dos decimales.', 'error'); return; }
+      ind.cost = parsed;
     };
 
-    // Estado JMP Dinámico adaptado según Nivel de Atención
-    const jmpCalculatedStatus = computed(() => {
-      const getScore = (codes) => {
-        const codeArray = Array.isArray(codes) ? codes : [codes];
-        const item = indicators.value.find(i => codeArray.includes(i.code));
-        return item && item.score !== null ? Number(item.score) : null;
-      };
-
-      const isHospital = generalInfo.value.level === 'Segundo Nivel' || generalInfo.value.level === 'Tercer Nivel';
-
-      // 1. MÓDULO AGUA
-      const w1a = getScore(['W_1a', 'A_1']);
-      const w1b = getScore(['W_1b']);
-      const w3 = getScore(['W_3', 'A_3']);
-
-      let water = { status: 'Sin Servicio', class: 'bg-red-50 text-red-800 border-red-300' };
-      const w1Score = isHospital ? (w1b !== null ? w1b : w1a) : (w1a !== null ? w1a : w1b);
-
-      if (w1Score === 2 && w3 === 2) {
-        water = { status: 'Básico', class: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
-      } else if (w1Score >= 1 || w3 >= 1) {
-        water = { status: 'Limitado', class: 'bg-amber-50 text-amber-800 border-amber-300' };
-      }
-
-      // 2. MÓDULO SANEAMIENTO
-      const s1 = getScore('S_1');
-      const s2 = getScore('S_2');
-      const s4 = getScore('S_4');
-      const s5 = getScore('S_5');
-      const s6 = getScore('S_6');
-      const s7 = getScore('S_7');
-
-      const hasImprovedToilets = (s1 !== null && s1 >= 1) || (s2 !== null && s2 >= 1);
-      const meetsAllBasicCriteria = (s1 === 2 || s2 === 2) && s4 === 2 && s5 === 2 && s6 === 2 && s7 === 2;
-
-      let sanitation = { status: 'Sin Servicio', class: 'bg-red-50 text-red-800 border-red-300' };
-      if (hasImprovedToilets) {
-        if (meetsAllBasicCriteria) {
-          sanitation = { status: 'Básico', class: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
-        } else {
-          sanitation = { status: 'Limitado', class: 'bg-amber-50 text-amber-800 border-amber-300' };
-        }
-      }
-
-      // 3. MÓDULO HIGIENE DE MANOS
-      const h1 = getScore('H_1');
-      const h2 = getScore('H_2');
-      const s3 = getScore('S_3');
-
-      const handCarePoint = (h1 === 2);
-      const handToilet = (h2 === 2 || s3 === 2);
-
-      let hygiene = { status: 'Sin Servicio', class: 'bg-red-50 text-red-800 border-red-300' };
-      if (handCarePoint && handToilet) {
-        hygiene = { status: 'Básico', class: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
-      } else if (handCarePoint || handToilet || h1 === 1 || h2 === 1 || s3 === 1) {
-        hygiene = { status: 'Limitado', class: 'bg-amber-50 text-amber-800 border-amber-300' };
-      }
-
-      // 4. MÓDULO RESIDUOS HOSPITALARIOS
-      const res1 = getScore(['HCWM_1', 'HCWM_2', 'RES_1', 'RES_2']);
-      const resTrat = getScore(['HCWM_12', 'HCWM_13', 'HCWM_14', 'RES_14']);
-
-      const hasSegregation = (res1 === 2);
-      const hasTreatment = (resTrat === 2);
-
-      let waste = { status: 'Sin Servicio', class: 'bg-red-50 text-red-800 border-red-300' };
-      if (hasSegregation && hasTreatment) {
-        waste = { status: 'Básico', class: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
-      } else if (hasSegregation || hasTreatment || res1 === 1 || resTrat === 1) {
-        waste = { status: 'Limitado', class: 'bg-amber-50 text-amber-800 border-amber-300' };
-      }
-
-      // 5. MÓDULO LIMPIEZA HOSPITALARIA
-      const l1 = getScore(['EC_1', 'L_1']);
-      const l5 = getScore(['EC_5', 'L_5']);
-
-      let cleaning = { status: 'Sin Servicio', class: 'bg-red-50 text-red-800 border-red-300' };
-      if (l1 === 2 && l5 === 2) {
-        cleaning = { status: 'Básico', class: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
-      } else if (l1 >= 1 || l5 >= 1) {
-        cleaning = { status: 'Limitado', class: 'bg-amber-50 text-amber-800 border-amber-300' };
-      }
-
-      return { water, sanitation, hygiene, waste, cleaning };
-    });
+    const jmpCalculatedStatus = computed(() => WashCore.calculateJmp(generalInfo.value, indicators.value));
 
     // Gráfico de radar dinámico para N módulos
     const radarChartData = computed(() => {
@@ -586,6 +543,7 @@ createApp({
 
     const addTeamMember = () => {
       generalInfo.value.team.push({
+        id: WashCore.newId(),
         name: '',
         role: '',
         institution: '',
@@ -605,8 +563,9 @@ createApp({
         triggerToast('El nombre del integrante es obligatorio.', 'error');
         return;
       }
+      if (member.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email)) { triggerToast('Ingrese un correo válido o deje el campo vacío.', 'error'); return; }
       member.isEditing = false;
-      triggerToast('Integrante confirmado y guardado en el equipo.', 'success');
+      triggerToast('Integrante confirmado. El borrador se guardará automáticamente.', 'success');
       nextTick(() => {
         if (window.lucide) window.lucide.createIcons();
       });
@@ -621,6 +580,8 @@ createApp({
     };
 
     const removeTeamMember = (index) => {
+      const member = generalInfo.value.team[index];
+      indicators.value.filter(ind => ind.responsibleId === member.id).forEach(ind => { ind.responsible = member.name; ind.responsibleId = ''; });
       generalInfo.value.team.splice(index, 1);
       triggerToast('Integrante removido del equipo.', 'error');
       nextTick(() => {
@@ -743,98 +704,61 @@ createApp({
         fileInputElement.click();
       }
     };
+    const triggerImport = () => document.getElementById('import-file')?.click();
 
-    const handleFileChange = async (event) => {
-      const files = event.target.files;
-      if (!files || files.length === 0) return;
-
-      triggerToast('Procesando y optimizando imágenes...', 'info');
-
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith('image/')) {
-          triggerToast(`El archivo "${file.name}" no es una imagen válida.`, 'error');
-          continue;
+    const processPhotos = async files => {
+      if (photoBusy.value || !files?.length) return;
+      photoBusy.value = true;
+      let added = 0;
+      let failed = 0;
+      try {
+        for (const file of Array.from(files)) {
+          if (generalInfo.value.photos.length >= WashCore.MAX_PHOTOS || file.size > WashCore.MAX_PHOTO_BYTES || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { failed++; continue; }
+          try {
+            const url = await compressImage(file, 1200, 1200, 0.7);
+            generalInfo.value.photos.push({ name: file.name.replace(/\.[^.]+$/, '') + '.jpg', url });
+            added++;
+          } catch (_) { failed++; }
         }
-
-        try {
-          const compressedBase64 = await compressImage(file, 1200, 1200, 0.7);
-          const cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-
-          generalInfo.value.photos.push({
-            name: `${cleanName}.jpg`,
-            url: compressedBase64
-          });
-        } catch (error) {
-          triggerToast(`Error al procesar la imagen "${file.name}".`, 'error');
-        }
-      }
-
-      triggerToast('Evidencia fotográfica cargada y optimizada exitosamente.', 'success');
-      event.target.value = '';
-
-      nextTick(() => {
-        if (window.lucide) window.lucide.createIcons();
-      });
+        triggerToast(added ? added + ' fotografía(s) cargada(s).' + (failed ? ' ' + failed + ' rechazada(s): revise formato, tamaño o límite.' : '') : 'No se cargaron fotografías. Use JPG, PNG o WebP de hasta 5 MB; máximo 20 fotos.', added ? 'success' : 'error');
+      } finally { photoBusy.value = false; }
     };
+    const handleFileChange = async event => { await processPhotos(event.target.files); event.target.value = ''; };
+    const handlePhotoDrop = event => processPhotos(event.dataTransfer.files);
 
     const removePhoto = (index) => {
       generalInfo.value.photos.splice(index, 1);
       triggerToast('Evidencia fotográfica removida.', 'error');
     };
 
-    const exportData = () => {
-      const dataset = {
-        generalInfo: generalInfo.value,
-        indicators: indicators.value
-      };
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataset, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `WASH_FIT_Evaluacion_${generalInfo.value.facilityName.replace(/\s+/g, '_')}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      triggerToast('Configuración y evaluación exportada exitosamente.', 'success');
+    const downloadDataset = dataset => {
+      const blob = new Blob([JSON.stringify(dataset, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'WASH_FIT_Evaluacion_' + (dataset.generalInfo.facilityName || 'Sin_nombre').replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     };
-
-    const importData = (event) => {
-      const file = event.target.files[0];
+    const exportData = () => { downloadDataset(snapshot()); triggerToast('Respaldo JSON descargado.'); };
+    const importData = event => {
+      const file = event.target.files?.[0];
       if (!file) return;
-
+      if (file.size > WashCore.MAX_IMPORT_BYTES) { triggerToast('El JSON supera el límite de 40 MB.', 'error'); event.target.value = ''; return; }
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async e => {
         try {
-          const imported = JSON.parse(e.target.result);
-          if (imported.generalInfo && imported.indicators) {
-            if (imported.generalInfo.team) {
-              imported.generalInfo.team.forEach(t => {
-                if (t.isEditing === undefined) t.isEditing = false;
-              });
-            }
-            imported.indicators.forEach(ind => {
-              ind.moduleId = getIndicatorModuleId(ind);
-              if (ind.trackingStatus === undefined) ind.trackingStatus = 'No Iniciado';
-              if (ind.revisionNotes === undefined) ind.revisionNotes = '';
-              if (ind.associatedRisks === undefined) ind.associatedRisks = '';
-              if (ind.indicatorChange === undefined) ind.indicatorChange = 'sin_cambios';
-              if (ind.correctiveMeasures === undefined) ind.correctiveMeasures = '';
-              if (ind.nextReviewDate === undefined) ind.nextReviewDate = '';
-              if (ind.monitoringComments === undefined) ind.monitoringComments = '';
-            });
-            generalInfo.value = imported.generalInfo;
-            indicators.value = imported.indicators;
-            triggerToast('Evaluación e importación completa.', 'success');
-            nextTick(() => {
-              if (window.lucide) window.lucide.createIcons();
-            });
-          } else {
-            triggerToast('El archivo no tiene el formato estándar de WASH-FIT.', 'error');
-          }
-        } catch (err) {
-          triggerToast('Error al procesar el archivo JSON importado.', 'error');
-        }
+          const dataset = WashCore.normalizeDataset(JSON.parse(e.target.result), INDICATORS_DATA);
+          // Validación completa antes de tocar el borrador o la base de datos.
+          if (!await saveDraft(true)) throw new Error('No se pudo conservar el borrador actual. Exporte un respaldo antes de importar.');
+          applyDataset(dataset);
+          const saved = await saveDraft();
+          triggerToast(saved ? 'Evaluación validada, importada y guardada.' : 'Importada en pantalla; falló el guardado. Exporte un respaldo.', saved ? 'success' : 'error');
+        } catch (error) { triggerToast(error.message || 'Archivo JSON inválido.', 'error'); }
+        finally { event.target.value = ''; }
       };
-      reader.readAsText(file);
+      reader.onerror = () => { triggerToast('No se pudo leer el archivo JSON.', 'error'); event.target.value = ''; };
+      return reader.readAsText(file);
     };
 
     const switchView = (viewName) => {
@@ -845,7 +769,7 @@ createApp({
         nextTick(() => {
           if (mapInstance) {
             mapInstance.invalidateSize();
-            if (generalInfo.value.latitude && generalInfo.value.longitude) {
+            if (Number.isFinite(generalInfo.value.latitude) && Number.isFinite(generalInfo.value.longitude)) {
               mapInstance.setView([generalInfo.value.latitude, generalInfo.value.longitude], mapInstance.getZoom());
             }
           } else {
@@ -859,22 +783,37 @@ createApp({
       });
     };
 
-    const printReport = () => {
-      if (activeView.value === 'dashboard') {
-        isPrintingAll.value = true;
-        triggerToast('Generando reporte consolidado completo...', 'info');
-        nextTick(() => {
-          setTimeout(() => {
-            window.print();
-            setTimeout(() => {
-              isPrintingAll.value = false;
-            }, 500);
-          }, 300);
-        });
-      } else {
-        window.print();
-      }
+    const printReport = async () => {
+      reportPreview.value = true;
+      await nextTick();
+      await prepareReportMap();
+      window.print();
     };
+    const getResponsibleName = ind => WashCore.responsibleName(ind, generalInfo.value.team);
+    const assignResponsible = ind => { ind.responsible = getResponsibleName(ind); };
+    const getTrackingStatus = ind => WashCore.trackingStatus(ind);
+    const recordReview = ind => {
+      try { WashCore.recordReview(ind, generalInfo.value.team); triggerToast('Revisión agregada al historial.'); }
+      catch (error) { triggerToast(error.message, 'error'); }
+    };
+    const reportIndicators = computed(() => indicators.value.filter(shouldShowIndicator));
+    const reportPlans = computed(() => reportIndicators.value.filter(ind => ind.score === 0 || ind.score === 1 || ind.action));
+    let reportMap = null;
+    let reportMarker = null;
+    let reportTilesReady = Promise.resolve();
+    const prepareReportMap = async () => {
+      const { latitude, longitude } = generalInfo.value;
+      if (!window.L || !Number.isFinite(latitude) || !Number.isFinite(longitude) || !document.getElementById('report-map')) return;
+      if (!reportMap) {
+        reportMap = L.map('report-map', { zoomControl: false }).setView([latitude, longitude], 14);
+        const layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' });
+        reportTilesReady = new Promise(resolve => { layer.once('load', resolve); setTimeout(resolve, 2000); });
+        layer.addTo(reportMap);
+        reportMarker = L.marker([latitude, longitude]).addTo(reportMap);
+      } else { reportMap.setView([latitude, longitude]); reportMarker.setLatLng([latitude, longitude]); reportMap.invalidateSize(); }
+      await reportTilesReady;
+    };
+    watch(reportPreview, async open => { await nextTick(); window.scrollTo({ top: 0 }); if (open) await prepareReportMap(); });
 
     let mapInstance = null;
     let markerInstance = null;
@@ -891,8 +830,8 @@ createApp({
           return;
         }
 
-        const latInit = generalInfo.value.latitude || -12.1485;
-        const lngInit = generalInfo.value.longitude || -76.9841;
+        const latInit = generalInfo.value.latitude ?? -12.1485;
+        const lngInit = generalInfo.value.longitude ?? -76.9841;
 
         mapInstance = L.map('map-container').setView([latInit, lngInit], 14);
 
@@ -900,67 +839,91 @@ createApp({
           attribution: '© OpenStreetMap contributors'
         }).addTo(mapInstance);
 
-        markerInstance = L.marker([latInit, lngInit], { draggable: true }).addTo(mapInstance);
+        const createMarker = (lat, lng) => {
+          markerInstance = L.marker([lat, lng], { draggable: true }).addTo(mapInstance);
+          markerInstance.on('dragend', () => { const pos = markerInstance.getLatLng(); updateCoordinates(pos.lat, pos.lng); });
+        };
+        if (Number.isFinite(generalInfo.value.latitude) && Number.isFinite(generalInfo.value.longitude)) createMarker(latInit, lngInit);
 
         const updateCoordinates = (lat, lng) => {
           generalInfo.value.latitude = parseFloat(lat.toFixed(6));
           generalInfo.value.longitude = parseFloat(lng.toFixed(6));
         };
 
-        markerInstance.on('dragend', () => {
-          const pos = markerInstance.getLatLng();
-          updateCoordinates(pos.lat, pos.lng);
-        });
-
         mapInstance.on('click', (e) => {
-          markerInstance.setLatLng(e.latlng);
+          if (markerInstance) markerInstance.setLatLng(e.latlng);
+          else createMarker(e.latlng.lat, e.latlng.lng);
           updateCoordinates(e.latlng.lat, e.latlng.lng);
         });
       });
     };
 
     const onCoordinatesInput = () => {
-      const lat = parseFloat(generalInfo.value.latitude);
-      const lng = parseFloat(generalInfo.value.longitude);
-
-      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-        if (mapInstance && markerInstance) {
-          markerInstance.setLatLng([lat, lng]);
-          mapInstance.setView([lat, lng], mapInstance.getZoom());
+      const lat = generalInfo.value.latitude;
+      const lng = generalInfo.value.longitude;
+      if (lat !== null && lat !== '' && (!Number.isFinite(lat) || lat < -90 || lat > 90) || lng !== null && lng !== '' && (!Number.isFinite(lng) || lng < -180 || lng > 180)) {
+        if (!Number.isFinite(lat) || lat < -90 || lat > 90) generalInfo.value.latitude = null;
+        if (!Number.isFinite(lng) || lng < -180 || lng > 180) generalInfo.value.longitude = null;
+        triggerToast('Latitud: −90 a 90. Longitud: −180 a 180.', 'error'); return;
+      }
+      if (Number.isFinite(lat) && Number.isFinite(lng) && mapInstance) {
+        if (markerInstance) markerInstance.setLatLng([lat, lng]);
+        else {
+          markerInstance = L.marker([lat, lng], { draggable: true }).addTo(mapInstance);
+          markerInstance.on('dragend', () => { const pos = markerInstance.getLatLng(); generalInfo.value.latitude = Number(pos.lat.toFixed(6)); generalInfo.value.longitude = Number(pos.lng.toFixed(6)); });
         }
+        mapInstance.setView([lat, lng], mapInstance.getZoom());
+      } else if (markerInstance) { markerInstance.remove(); markerInstance = null; }
+    };
+    const handlePhotoKeys = event => {
+      if (event.key === 'Escape') { event.preventDefault(); closePhotoModal(); }
+      if (event.key === 'Tab') {
+        const buttons = [...document.querySelectorAll('#photo-dialog button')];
+        if (event.shiftKey && document.activeElement === buttons[0]) { event.preventDefault(); buttons.at(-1)?.focus(); }
+        else if (!event.shiftKey && document.activeElement === buttons.at(-1)) { event.preventDefault(); buttons[0]?.focus(); }
       }
     };
-
-    onMounted(() => {
-      if (window.lucide) {
-        window.lucide.createIcons();
-      }
-      if (activeView.value === 'general') {
-        initMap();
+    onMounted(async () => {
+      if (window.lucide) window.lucide.createIcons();
+      window.addEventListener('online', () => { isOnline.value = true; });
+      window.addEventListener('offline', () => { isOnline.value = false; });
+      window.addEventListener('resize', () => { isMobile.value = window.innerWidth < 1024; });
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && !loadingDraft.value && revision !== persistedRevision) saveDraft(); });
+      window.addEventListener('beforeunload', event => { if (!loadingDraft.value && revision !== persistedRevision) { event.preventDefault(); event.returnValue = ''; } });
+      window.addEventListener('afterprint', () => { reportPreview.value = false; });
+      try {
+        const draft = await store.read();
+        if (draft) { applyDataset(WashCore.normalizeDataset(draft, INDICATORS_DATA)); savedAt.value = draft.savedAt || ''; }
+        hasBackup.value = Boolean(await store.read('backup'));
+        saveState.value = 'saved';
+      } catch (error) { saveState.value = 'error'; triggerToast('No se pudo recuperar el borrador. ' + error.message, 'error'); }
+      finally { loadingDraft.value = false; }
+      if (activeView.value === 'general') initMap();
+      if ('serviceWorker' in navigator) {
+        try {
+          serviceRegistration = await navigator.serviceWorker.register('sw.js');
+          updateAvailable.value = Boolean(serviceRegistration.waiting);
+          serviceRegistration.addEventListener('updatefound', () => {
+            const installing = serviceRegistration.installing;
+            installing?.addEventListener('statechange', () => { if (installing.state === 'installed' && navigator.serviceWorker.controller) updateAvailable.value = true; });
+          });
+          const registration = await navigator.serviceWorker.ready;
+          const worker = registration.active;
+          if (worker) {
+            const channel = new MessageChannel();
+            channel.port1.onmessage = event => { offlineReady.value = event.data === 'offline-ready'; };
+            worker.postMessage('offline-status', [channel.port2]);
+          }
+        } catch (_) { offlineReady.value = false; }
       }
     });
-
-    const facilityValuation = computed(() => {
-      const pct = overallCompliance.value;
-      if (pct > 75) {
-        return {
-          label: 'Mejora Avanzada',
-          colorClass: 'text-emerald-700'
-        };
-      } else if (pct >= 60) {
-        return {
-          label: 'En Proceso de Mejora',
-          colorClass: 'text-amber-700'
-        };
-      } else {
-        return {
-          label: 'Requiere Mejoras Prioritarias',
-          colorClass: 'text-rose-700'
-        };
-      }
-    });
+    const facilityValuation = computed(() => WashCore.valuation(answeredCount.value, totalVisibleIndicators.value, overallCompliance.value));
 
     return {
+      loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile, updateAvailable, updateApplication,
+      newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
+      populationWarning, reportPreview, reportIndicators, reportPlans,
+      getResponsibleName, assignResponsible, getTrackingStatus, recordReview,
       activeView,
       activeModuleTab,
       mobileMenuOpen,
@@ -1003,6 +966,7 @@ createApp({
       editTeamMember,
       removeTeamMember,
       triggerMockUpload,
+      triggerImport,
       handleFileChange,
       removePhoto,
       exportData,

@@ -55,7 +55,7 @@ const INDICATORS_DATA = [
     notes: '',
     eval2: 'Sí, todos los grifos están conectados y en perfecto funcionamiento.',
     eval1: 'Más de la mitad de los grifos están conectados y en funcionamiento.',
-    eval0: 'Menos de la mitad de los grifos están conectados y en funcionamiento.'
+    eval0: 'La mitad o menos de los grifos están conectados y en funcionamiento.'
   },
   {
     id: 'A_3',
@@ -67,7 +67,7 @@ const INDICATORS_DATA = [
     jmp: true,
     score: null,
     notes: '',
-    eval2: 'El agua está disponible de forma continua (24 horas al día, 7 días a la semana).',
+    eval2: 'El agua está disponible durante todas las horas y días de funcionamiento del establecimiento.',
     eval1: 'El agua está disponible al menos 4 días a la semana y/o la mayor parte del día.',
     eval0: 'El agua está disponible menos de 4 días a la semana y/o no está disponible durante más de la mitad de la jornada.'
   },
@@ -138,7 +138,7 @@ const INDICATORS_DATA = [
     score: null,
     notes: '',
     eval2: 'El almacenamiento de agua es seguro, está protegido y garantiza la demanda de al menos 2 días completos (48 h).',
-    eval1: 'Satisface la demanda de 2 días pero el almacenamiento no se considera seguro, o bien cubre únicamente el 75% de las necesidades.',
+    eval1: 'El almacenamiento es seguro, pero cubre al menos el 75% y menos del 100% de la demanda de 2 días.',
     eval0: 'Cubre menos del 75% de la demanda de 2 días y/o el almacenamiento es inseguro.'
   },
   {
@@ -510,14 +510,14 @@ const INDICATORS_DATA = [
     score: null,
     notes: '',
     eval2: 'Segregación correcta verificada en el 100% de los contenedores del establecimiento.',
-    eval1: 'Segregación correcta verificada en más del 75% de los contenedores examinados.',
+    eval1: 'Segregación correcta verificada en al menos el 75% y menos del 100% de los contenedores examinados.',
     eval0: 'Segregación incorrecta o ausente en más del 25% de los contenedores del establecimiento.'
   },
   {
     id: 'RES_3',
     code: 'RES_3',
     module: 'Gestión de Residuos',
-    title: 'Instrucciones visuales e afiches de segregación de residuos claramente visibles en los puntos de generación',
+    title: 'Instrucciones visuales y afiches de segregación de residuos claramente visibles en los puntos de generación',
     desc: 'Separación • Esencial • Sala',
     guidance: 'Señaletica gráfica y legible que indique el código de colores normativo y el tipo de desecho correspondiente a cada recipiente.',
     jmp: false,
@@ -1221,7 +1221,7 @@ const INDICATORS_DATA = [
     jmp: false,
     score: null,
     notes: '',
-    eval2: 'Todas las camas e ingresos cuentan con mosquiteros e mallas protectoras en perfecto estado.',
+    eval2: 'Todas las camas e ingresos cuentan con mosquiteros y mallas protectoras en perfecto estado.',
     eval1: 'Existen mosquiteros en algunas camas o ventanas, pero varios están dañados o desgarados.',
     eval0: 'No se dispone de mosquiteros ni mallas de protección contra vectores.'
   },
@@ -1309,7 +1309,7 @@ const INDICATORS_DATA = [
     jmp: false,
     score: null,
     notes: '',
-    eval2: 'Organigrama institucional actualizado, visible y legíble que integra a los servicios generales.',
+    eval2: 'Organigrama institucional actualizado, visible y legible que integra a los servicios generales.',
     eval1: 'Existe organigrama pero está desactualizado o no visibiliza al personal de limpieza/servicios generales.',
     eval0: 'No existe organigrama institucional.'
   },
