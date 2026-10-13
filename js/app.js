@@ -890,6 +890,43 @@ createApp({
 
     let mapInstance = null;
     let markerInstance = null;
+    const locationBusy = ref(false);
+    const locationStatus = ref('');
+    const locationFailed = ref(false);
+    const locateCurrentPosition = () => {
+      if (locationBusy.value) return;
+      locationFailed.value = false;
+      const fail = message => { locationBusy.value = false; locationFailed.value = true; locationStatus.value = message; };
+      if (window.isSecureContext === false || !navigator.geolocation) {
+        fail('La ubicación no está disponible en este navegador. Puedes escribir las coordenadas o usar el mapa.');
+        return;
+      }
+      const target = generalInfo.value;
+      const previous = [target.latitude, target.longitude];
+      locationBusy.value = true;
+      locationStatus.value = 'Obteniendo ubicación actual…';
+      try {
+        navigator.geolocation.getCurrentPosition(position => {
+          if (generalInfo.value !== target || target.latitude !== previous[0] || target.longitude !== previous[1]) {
+            fail('Los datos cambiaron mientras se obtenía la ubicación. Pulsa de nuevo para actualizarla.');
+            return;
+          }
+          const {latitude, longitude, accuracy} = position.coords;
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
+            fail('No se recibieron coordenadas válidas. Inténtalo de nuevo o usa el mapa.');
+            return;
+          }
+          target.latitude = Number(latitude.toFixed(6));
+          target.longitude = Number(longitude.toFixed(6));
+          onCoordinatesInput();
+          locationBusy.value = false;
+          locationStatus.value = 'Ubicación obtenida y coordenadas actualizadas.' + (Number.isFinite(accuracy) && accuracy >= 0 ? ' Precisión aproximada: ' + Math.round(accuracy) + ' m.' : '');
+        }, error => {
+          const messages = {1: 'Permiso de ubicación denegado. Puedes habilitarlo en el navegador o escribir las coordenadas.', 2: 'No se pudo determinar la ubicación. Revisa la ubicación del dispositivo o usa el mapa.', 3: 'La ubicación tardó demasiado. Inténtalo de nuevo o escribe las coordenadas.'};
+          fail(messages[error.code] || 'No se pudo obtener la ubicación. Inténtalo de nuevo o usa el mapa.');
+        }, {enableHighAccuracy: true, timeout: 15000, maximumAge: 0});
+      } catch (_) { fail('No se pudo solicitar la ubicación. Puedes escribir las coordenadas o usar el mapa.'); }
+    };
 
     const initMap = () => {
       if (!window.L) return;
@@ -1049,6 +1086,7 @@ createApp({
       printReport,
       clearCurrentModule,
       onCoordinatesInput,
+      locateCurrentPosition, locationBusy, locationStatus, locationFailed,
       trackingSummary,
       planProgressPercentage,
       getStatusColorClass,
