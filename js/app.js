@@ -885,15 +885,16 @@ createApp({
     const reviewDraft = ref(null);
     const reviewError = ref('');
     const reviewSaving = ref(false);
-    const openReviewHistory = ref({});
+    const historyIndicator = ref(null);
     let reviewOrigin = null;
+    let historyOrigin = null;
     const latestReview = ind => ind.history?.at(-1) || null;
     const openNewReview = ind => {
       reviewOrigin = document.activeElement;
       reviewIndicator.value = ind;
-      reviewDraft.value = {trackingStatus: ind.trackingStatus || 'No Iniciado', indicatorChange: ind.indicatorChange || 'sin_cambios', responsible: getResponsibleName(ind), correctiveMeasures: ind.correctiveMeasures || '', monitoringComments: '', nextReviewDate: ind.nextReviewDate || ''};
+      reviewDraft.value = {indicatorChange: ind.indicatorChange || 'sin_cambios', responsible: getResponsibleName(ind), correctiveMeasures: ind.correctiveMeasures || '', monitoringComments: ind.monitoringComments || '', nextReviewDate: ind.nextReviewDate || ''};
       reviewError.value = '';
-      nextTick(() => { document.getElementById('review-editor').showModal(); document.getElementById('review-state').focus(); });
+      nextTick(() => { document.getElementById('review-editor').showModal(); document.getElementById('review-change').focus(); });
     };
     const closeReviewEditor = () => {
       document.getElementById('review-editor')?.close();
@@ -907,11 +908,20 @@ createApp({
       reviewSaving.value = true;
       try {
         WashCore.saveReviewDraft(reviewIndicator.value, reviewDraft.value, generalInfo.value.team);
-        openReviewHistory.value[reviewIndicator.value.id] = true;
         closeReviewEditor();
         triggerToast('Revisión registrada.');
       } catch (error) { reviewError.value = error.message; }
       finally { reviewSaving.value = false; }
+    };
+    const openHistoryDialog = ind => {
+      historyOrigin = document.activeElement;
+      historyIndicator.value = ind;
+      nextTick(() => { document.getElementById('review-history-dialog').showModal(); document.getElementById('review-history-title').focus(); });
+    };
+    const closeHistoryDialog = () => {
+      document.getElementById('review-history-dialog')?.close();
+      historyIndicator.value = null;
+      nextTick(() => historyOrigin?.focus());
     };
     const reportIndicators = computed(() => indicators.value.filter(shouldShowIndicator));
     const reportRisks = computed(() => reportIndicators.value.filter(ind => ind.score !== null));
@@ -1079,7 +1089,7 @@ createApp({
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
       populationWarning, reportPreview, reportIndicators, reportRisks, reportPlans,
       getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview, bulletValue, focusBulletField, updateBulletField, enterBulletField, blurBulletField, reviewBullets: WashCore.reviewBullets, changeLabel: WashCore.changeLabel,
-      reviewIndicator, reviewDraft, reviewError, reviewSaving, openReviewHistory, latestReview, openNewReview, closeReviewEditor, saveNewReview,
+      reviewIndicator, reviewDraft, reviewError, reviewSaving, latestReview, openNewReview, closeReviewEditor, saveNewReview, historyIndicator, openHistoryDialog, closeHistoryDialog,
       activeView,
       activeModuleTab,
       mobileMenuOpen,

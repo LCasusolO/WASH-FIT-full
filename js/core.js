@@ -266,8 +266,9 @@
   }
   function saveReviewDraft(indicator, draft, team, now = new Date().toISOString()) {
     const candidate = clone(indicator);
-    for (const field of ['trackingStatus', 'indicatorChange', 'responsible', 'correctiveMeasures', 'monitoringComments', 'nextReviewDate']) candidate[field] = draft[field];
+    for (const field of ['indicatorChange', 'responsible', 'correctiveMeasures', 'monitoringComments', 'nextReviewDate']) candidate[field] = draft[field];
     recordReview(candidate, team, now);
+    candidate.history.at(-1).trackingStatus = indicator.trackingStatus || 'No Iniciado';
     Object.assign(indicator, candidate);
     return candidate.history.at(-1);
   }
