@@ -1,3 +1,4 @@
+const Core = require('../js/core.js');
 const crypto = require('node:crypto');
 const FOLDER = '1SjIXFiCnnQwTZTTvCqLY6xJYb9sGxb6z';
 const MAX_BYTES = 40 * 1024 * 1024;
@@ -27,7 +28,7 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
         if (![body.jsonBytes, body.pdfBytes].every(x => Number.isSafeInteger(x) && x > 0 && x <= MAX_BYTES) || typeof body.facility !== 'string' || body.facility.length > 500) return res.status(400).json({error: 'Nombre o tamaño de archivos inválido (máximo 40 MB por archivo).'});
         const authorization = 'Bearer ' + await token();
         const batch = crypto.randomUUID();
-        const name = 'WASH_FIT_' + (body.facility || 'Sin_nombre').normalize('NFKD').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80) + '_' + new Date(now()).toISOString().replace(/[:.]/g, '-') + '_' + batch.slice(0, 8);
+        const name = Core.fileBaseName({facilityName: body.facility, countryCode: body.countryCode, district: body.location});
         const files = [{kind: 'json', name: name + '.json', mime: 'application/json', bytes: body.jsonBytes}, {kind: 'pdf', name: name + '.pdf', mime: 'application/pdf', bytes: body.pdfBytes}];
         for (const file of files) {
           const response = await call('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id', {method: 'POST', headers: {Authorization: authorization, 'Content-Type': 'application/json', 'X-Upload-Content-Type': file.mime, 'X-Upload-Content-Length': String(file.bytes)}, body: JSON.stringify({name: file.name, mimeType: file.mime, parents: [folder], appProperties: {washFitBatch: batch}})});
@@ -75,7 +76,7 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
           const wanted = receipt.files[i];
           if (!response.ok || file.trashed || !file.parents?.includes(folder) || file.appProperties?.washFitBatch !== receipt.batch || file.name !== wanted.name || file.mimeType !== wanted.mime || Number(file.size) !== wanted.bytes) throw new Error('No se pudo confirmar el guardado de ambos archivos en la carpeta.');
         }
-        return res.status(200).json({saved: true});
+        return res.status(200).json({saved: true, savedAt: new Date(now()).toISOString(), files: receipt.files.map((file, i) => ({id: body.ids[i], name: file.name, url: `https://drive.google.com/file/d/${body.ids[i]}/view`}))});
       }
       return res.status(400).json({error: 'Acción no válida.'});
     } catch (_) { return res.status(502).json({error: 'No se pudo completar el guardado en Drive. Revise la conexión y la configuración del repositorio.'}); }

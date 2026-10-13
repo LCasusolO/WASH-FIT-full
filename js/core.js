@@ -44,9 +44,29 @@
     if (!validDate(result)) throw new Error(`Fecha inválida: ${name}.`);
     return result;
   }
+  const countries = [['ARG','Argentina'],['BOL','Bolivia'],['BRA','Brasil'],['CHL','Chile'],['COL','Colombia'],['CRI','Costa Rica'],['CUB','Cuba'],['ECU','Ecuador'],['SLV','El Salvador'],['GTM','Guatemala'],['HTI','Haití'],['HND','Honduras'],['MEX','México'],['NIC','Nicaragua'],['PAN','Panamá'],['PRY','Paraguay'],['PER','Perú'],['DOM','República Dominicana'],['URY','Uruguay'],['VEN','Venezuela'],['CAN','Canadá'],['USA','Estados Unidos'],['BLZ','Belice'],['GUY','Guyana'],['SUR','Surinam'],['JAM','Jamaica'],['TTO','Trinidad y Tobago'],['BHS','Bahamas'],['BRB','Barbados'],['ATG','Antigua y Barbuda'],['DMA','Dominica'],['GRD','Granada'],['KNA','San Cristóbal y Nieves'],['LCA','Santa Lucía'],['VCT','San Vicente y las Granadinas']];
+  const plain = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  function countryCode(info) {
+    if (countries.some(([code]) => code === info.countryCode)) return info.countryCode;
+    const location = plain(info.district).split(/[^a-z]+/).filter(Boolean).join(' ');
+    return countries.find(([,name]) => (' '+location+' ').includes(' '+plain(name)+' '))?.[0] || '';
+  }
+  function fileBaseName(info) {
+    let words = plain(info.facilityName).split(/[^a-z0-9]+/).filter(word => word && !['de','del','la','las','los','el'].includes(word));
+    let name = words.join('_').slice(0,120) || 'Sin_nombre';
+    name = name[0].toUpperCase()+name.slice(1);
+    return (countryCode(info) || 'SIN')+'-'+name;
+  }
+  function filterRisks(list, domain, priority, order) {
+    const risk = ind => ind.severity == null || ind.severity === '' || ind.likelihood == null || ind.likelihood === '' ? null : Number(ind.severity)+Number(ind.likelihood);
+    const level = n => n === null ? 'pending' : n >= 15 ? 'high' : n >= 8 ? 'medium' : 'low';
+    const result = list.filter(ind => (!domain || ind.moduleId === domain) && (!priority || level(risk(ind)) === priority));
+    if(order !== 'none') result.sort((a,b) => {const x=risk(a),y=risk(b);if(x===null)return y===null?0:1;if(y===null)return -1;return order==='desc'?y-x:x-y;});
+    return result;
+  }
   function defaults() {
     return {
-      facilityName: '', district: '', latitude: null, longitude: null,
+      facilityName: '', district: '', countryCode: '', latitude: null, longitude: null,
       // El nivel inicial y sus opciones se conservan: punto 13 excluido.
       level: 'Primer Nivel', type: 'Público', setting: 'Urbano', populationServed: null,
       ageGroups: { under5: null, age5to17: null, over18to59: null, over60: null },
@@ -60,6 +80,7 @@
     if (!isObject(input)) throw new Error('Faltan los datos generales de la evaluación.');
     const info = defaults();
     for (const key of ['facilityName', 'district', 'summary']) info[key] = text(input[key], key);
+    info.countryCode = option(input.countryCode, 'país', countries.map(([code]) => code), countryCode(input));
     info.level = option(input.level, 'nivel', ['Primer Nivel', 'Segundo Nivel', 'Tercer Nivel', 'Primer Nivel (Atención Primaria / Puesto de Salud)', 'Segundo Nivel (Atención Especializada / Hospital)', 'Tercer Nivel (Alta Especialización / Hospital Especializado)'], info.level);
     info.type = option(input.type, 'institución', ['Público', 'Privado'], info.type);
     info.setting = option(input.setting, 'ámbito', ['Urbano', 'Rural'], info.setting);
@@ -225,5 +246,5 @@
     indicator.history = [...(indicator.history || []), snapshot];
     return snapshot;
   }
-  return { SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });

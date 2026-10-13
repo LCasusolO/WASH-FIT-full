@@ -14,3 +14,12 @@ test('draft, photos and plans survive reopening; backup retains the latest snaps
 test('storage fails explicitly instead of claiming success in unsupported browsers',async()=>{
   const store=createStore(undefined);await assert.rejects(store.read());await assert.rejects(store.save({savedAt:'x'}));
 });
+test('last confirmed archive persists separately without overwriting the local draft',async()=>{
+  const idb=new IDBFactory(),store=createStore(idb);
+  await store.save({savedAt:'draft',generalInfo:{facilityName:'Hospital'},indicators:[]});
+  const archive={savedAt:'confirmed',files:[{id:'json-id',name:'PER-Hospital.json'}],fingerprint:'snapshot'};
+  await store.write('lastArchive',archive);
+  const reopened=createStore(idb);
+  assert.deepEqual(await reopened.read('lastArchive'),archive);
+  assert.equal((await reopened.read()).savedAt,'draft');
+});
