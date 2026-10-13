@@ -9,13 +9,14 @@
     if (!response.ok) throw new Error(result.error || 'No se pudo guardar en Drive.');
     return result;
   }
-  async function upload(receipt, kind, blob, request) {
+  async function upload(receipt, kind, blob, request, progress) {
     // El servidor consulta la sesión de Google y envía fragmentos menores de 1 MB.
     // El navegador no depende de las respuestas CORS de la API de subidas de Drive.
     let result = await api({action: 'status', receipt, kind}, request);
     let previousOffset = -1;
     while (!result.id) {
       const start = result.offset;
+      progress(`Guardando ${kind.toUpperCase()} en Drive: ${Math.floor(start / blob.size * 100)}%…`);
       if (!Number.isSafeInteger(start) || start <= previousOffset || start < 0 || start >= blob.size) throw new Error('La subida no avanzó. Reintente el guardado.');
       previousOffset = start;
       const bytes = new Uint8Array(await blob.slice(start, Math.min(start + 1024 * 1024, blob.size)).arrayBuffer());
@@ -26,12 +27,12 @@
     return result.id;
   }
   async function save(job, progress, request = fetch) {
-    if (!job.session) job.session = await api({action: 'start', facility: job.dataset.generalInfo.facilityName, jsonBytes: job.json.size, pdfBytes: job.pdf.size}, request);
+    if (!job.session) job.session = await api({action: 'start', facility: job.dataset.generalInfo.facilityName, countryCode: job.dataset.generalInfo.countryCode, location: job.dataset.generalInfo.district, jsonBytes: job.json.size, pdfBytes: job.pdf.size}, request);
     job.ids ||= [null, null];
     for (let i = 0; i < 2; i++) {
       if (job.ids[i]) continue;
       progress(i === 0 ? 'Guardando JSON en Drive…' : 'JSON guardado. Guardando PDF en Drive…');
-      job.ids[i] = await upload(job.session.receipt, i ? 'pdf' : 'json', i ? job.pdf : job.json, request);
+      job.ids[i] = await upload(job.session.receipt, i ? 'pdf' : 'json', i ? job.pdf : job.json, request, progress);
     }
     progress('Confirmando ambos archivos…');
     const result = await api({action: 'verify', receipt: job.session.receipt, ids: job.ids}, request);

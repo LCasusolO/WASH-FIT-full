@@ -54,6 +54,9 @@ createApp({
     const mobileMenuOpen = ref(false);
     
     const filterOnlyGaps = ref(false); 
+    const riskDomain = ref('');
+    const riskPriority = ref('');
+    const countries = WashCore.countries;
     const sortRiskOrder = ref('none'); // 'none' | 'desc' | 'asc'
     const sidebarCollapsed = ref(false);
     const isPrintingAll = ref(false);
@@ -205,10 +208,10 @@ createApp({
       } catch (error) { triggerToast(error.message, 'error'); }
     };
     const saveLabel = computed(() => {
-      if (saveState.value === 'loading') return 'Recuperando borrador…';
-      if (saveState.value === 'error') return 'Error al guardar. Exporte un respaldo.';
-      if (saveState.value !== 'saved') return 'Guardando…';
-      return savedAt.value ? 'Guardado a las ' + new Date(savedAt.value).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }) : 'Borrador listo';
+      if (saveState.value === 'loading') return 'Recuperando borrador local…';
+      if (saveState.value === 'error') return 'Borrador local: error al guardar.';
+      if (saveState.value !== 'saved') return 'Guardando borrador local…';
+      return savedAt.value ? 'Borrador local guardado a las ' + new Date(savedAt.value).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }) : 'Borrador local listo';
     });
     const updateApplication = async () => {
       if (!serviceRegistration?.waiting) return;
@@ -338,6 +341,7 @@ createApp({
       return result;
     });
 
+    const getFilteredRisks = computed(() => WashCore.filterRisks(getSortedGaps.value.map(ind => ({...ind, moduleId: getIndicatorModuleId(ind)})), riskDomain.value, riskPriority.value, sortRiskOrder.value).map(ind => indicators.value.find(original => original.id === ind.id)));
     const trackingSummary = computed(() => {
       const gaps = indicators.value.filter(ind => shouldShowIndicator(ind) && (ind.score === 0 || ind.score === 1));
       const counts = { noIniciado: 0, enProgreso: 0, completado: 0, retrasado: 0 };
@@ -736,13 +740,19 @@ createApp({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'WASH_FIT_Evaluacion_' + (dataset.generalInfo.facilityName || 'Sin_nombre').replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+      link.download = WashCore.fileBaseName(dataset.generalInfo) + '.json';
       document.body.appendChild(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     };
     const archiveBusy = ref(false);
     const archiveFailed = ref(false);
     const archiveStatus = ref('');
+    const lastArchive = ref(null);
+    const archiveFingerprint = dataset => JSON.stringify([dataset.generalInfo, dataset.indicators]);
+    const driveCurrent = computed(() => lastArchive.value?.fingerprint === archiveFingerprint(snapshot()));
+    const driveLabel = computed(() => archiveBusy.value || archiveFailed.value ? archiveStatus.value : !lastArchive.value ? 'Drive: sin copia confirmada en este navegador.' : driveCurrent.value ? 'Drive: JSON y PDF confirmados.' : 'Drive: hay cambios sin archivar.');
+    const archiveTime = computed(() => lastArchive.value ? new Date(lastArchive.value.savedAt).toLocaleString('es') : '');
+    onMounted(async () => {try { lastArchive.value = await store.read('lastArchive'); } catch (_) {} });
     let archiveJob = null;
     const createArchiveJob = async dataset => {
       const visibleCodes = dataset.indicators.filter(shouldShowIndicator).map(i => i.code);
@@ -775,7 +785,9 @@ createApp({
       try {
         if (dataset) { archiveJob = null; archiveJob = await createArchiveJob(dataset); }
         if (!archiveJob) throw new Error('No hay una evaluación pendiente. Vuelva a Exportar.');
-        await WashArchive.save(archiveJob, text => { archiveStatus.value = text; });
+        const result = await WashArchive.save(archiveJob, text => { archiveStatus.value = text; });
+        lastArchive.value = {savedAt: result.savedAt, files: result.files, fingerprint: archiveFingerprint(archiveJob.dataset)};
+        try { await store.write('lastArchive', lastArchive.value); } catch (_) { triggerToast('Archivos confirmados en Drive; no se pudo conservar el estado en este navegador.', 'error'); }
         archiveStatus.value = 'JSON y PDF guardados en Drive.';
         archiveJob = null;
         triggerToast(archiveStatus.value);
@@ -843,6 +855,9 @@ createApp({
       await nextTick();
       await prepareReportMap();
       await runArchive(dataset);
+      const previousTitle = document.title;
+      document.title = WashCore.fileBaseName(dataset.generalInfo);
+      window.addEventListener('afterprint', () => { document.title = previousTitle; }, {once: true});
       window.print();
     };
     const getResponsibleName = ind => WashCore.responsibleName(ind, generalInfo.value.team);
@@ -987,7 +1002,7 @@ createApp({
       mobileMenuOpen,
       sidebarCollapsed,
       filterOnlyGaps,
-      sortRiskOrder,
+      sortRiskOrder, riskDomain, riskPriority, countries, getFilteredRisks,
       toggleRiskSort,
       severityOptions,
       likelihoodOptions,
@@ -1028,7 +1043,7 @@ createApp({
       handleFileChange,
       removePhoto,
       exportData,
-      archiveBusy, archiveFailed, archiveStatus, retryArchive,
+      archiveBusy, archiveFailed, archiveStatus, retryArchive, lastArchive, driveLabel, archiveTime,
       importData,
       switchView,
       printReport,

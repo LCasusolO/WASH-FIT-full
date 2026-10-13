@@ -43,7 +43,11 @@
         tx.onerror = tx.onabort = () => reject(tx.error || new Error('No se pudo guardar el borrador.'));
       });
     }
-    return { read, save };
+    async function write(key, value) {
+      const db = await open();
+      return new Promise((resolve,reject) => {const tx=db.transaction('drafts','readwrite');tx.objectStore('drafts').put(value,key);tx.oncomplete=()=>resolve();tx.onerror=tx.onabort=()=>reject(tx.error);});
+    }
+    return { read, save, write };
   }
   return { createStore };
 });
