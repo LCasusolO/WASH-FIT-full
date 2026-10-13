@@ -18,7 +18,7 @@
 
 <body class="bg-white text-paho-gray-dark font-sans antialiased min-h-screen">
 
-  <div id="app" v-cloak class="flex flex-col min-h-screen relative overflow-x-auto">
+  <div id="app" v-cloak class="flex flex-col min-h-screen relative overflow-x-clip">
   <div class="application-root flex flex-col min-h-screen" :class="{ 'report-preview': reportPreview }" :inert="loadingDraft">
 
     <!-- NOTIFICACIONES / TOAST MODAL -->
@@ -83,7 +83,7 @@
                       sidebarCollapsed ? 'w-20' : 'w-80',
                       mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0']">
 
-        <div>
+        <div class="sidebar-content">
           <!-- Cabecera del menú lateral -->
           <div class="sidebar-heading px-4 border-b border-paho-grid bg-white flex items-center transition-all duration-300" :class="sidebarCollapsed ? 'justify-center' : 'justify-between'">
             <div class="flex items-center" :class="sidebarCollapsed ? 'justify-center' : 'overflow-hidden'">
@@ -104,7 +104,7 @@
           </div>
 
           <!-- Widget de progreso -->
-          <div :class="['bg-white border border-paho-grid transition-all duration-300 overflow-hidden', sidebarCollapsed ? 'max-h-0 m-0 p-0 opacity-0 border-none' : 'p-6 m-4 max-h-40 opacity-100']">
+          <div class="sidebar-progress" :class="['bg-white border border-paho-grid transition-all duration-300 overflow-hidden', sidebarCollapsed ? 'max-h-0 m-0 p-0 opacity-0 border-none' : 'p-6 m-4 max-h-40 opacity-100']">
             <div class="flex justify-between items-center mb-2">
               <span class="text-xs font-bold text-paho-gray-medium">Progreso de Evaluación</span>
               <span class="text-xs font-bold text-paho-dark-blue">{{ progressPercentage }}%</span>
@@ -179,7 +179,7 @@
         </div>
 
         <!-- Acciones del pie del menú -->
-        <div class="p-4 border-t border-paho-grid bg-white space-y-4 flex-shrink-0">
+        <div class="sidebar-footer p-4 border-t border-paho-grid bg-white space-y-4 flex-shrink-0">
           <div :class="['flex gap-2 transition-all duration-300', sidebarCollapsed ? 'flex-col items-center' : 'flex-row']">
             <button @click="exportData" :disabled="archiveBusy" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-paho-card text-paho-dark-blue text-xs font-bold border border-paho-grid transition-colors">
               <i data-lucide="download" class="w-4 h-4"></i>
