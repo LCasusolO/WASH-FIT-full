@@ -21,7 +21,7 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
     if (req.headers.origin !== allowedOrigin) return res.status(403).json({error: 'Origen no permitido.'});
     try {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      if (!body || JSON.stringify(body).length > 8192) return res.status(400).json({error: 'Solicitud inválida.'});
+      if (!body || JSON.stringify(body).length > 2 * 1024 * 1024) return res.status(400).json({error: 'Solicitud inválida.'});
       const folder = env.GOOGLE_DRIVE_FOLDER_ID || FOLDER;
       if (body.action === 'start') {
         if (![body.jsonBytes, body.pdfBytes].every(x => Number.isSafeInteger(x) && x > 0 && x <= MAX_BYTES) || typeof body.facility !== 'string' || body.facility.length > 500) return res.status(400).json({error: 'Nombre o tamaño de archivos inválido (máximo 40 MB por archivo).'});
@@ -35,17 +35,40 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
           if (!response.ok || !session || new URL(session).origin !== 'https://www.googleapis.com') throw new Error('No se pudo iniciar la subida. Revise el acceso del propietario a la carpeta.');
           file.session = session;
         }
-        const receiptBody = Buffer.from(JSON.stringify({batch, expires: now() + 3600000, files: files.map(({session, ...file}) => file)})).toString('base64url');
-        return res.status(200).json({files, receipt: receiptBody + '.' + sign(receiptBody)});
+        const receiptBody = Buffer.from(JSON.stringify({batch, expires: now() + 3600000, files})).toString('base64url');
+        return res.status(200).json({receipt: receiptBody + '.' + sign(receiptBody)});
       }
-      if (body.action === 'verify') {
+      if (['verify', 'status', 'upload'].includes(body.action)) {
         const [payload, signature] = String(body.receipt || '').split('.');
         const expected = Buffer.from(sign(payload || ''));
         const received = Buffer.from(signature || '');
         if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) return res.status(400).json({error: 'Comprobante inválido.'});
         const receipt = JSON.parse(Buffer.from(payload, 'base64url').toString());
-        if (receipt.expires < now() || !Array.isArray(body.ids) || body.ids.length !== 2 || body.ids.some(id => typeof id !== 'string' || !/^[a-zA-Z0-9_-]{5,200}$/.test(id))) return res.status(400).json({error: 'Comprobante vencido o archivos inválidos.'});
+        if (receipt.expires < now()) return res.status(400).json({error: 'Comprobante vencido. Vuelva a Exportar.'});
         const authorization = 'Bearer ' + await token();
+        if (body.action !== 'verify') {
+          const file = receipt.files.find(file => file.kind === body.kind);
+          if (!file?.session || new URL(file.session).origin !== 'https://www.googleapis.com') return res.status(400).json({error: 'Archivo inválido.'});
+          const headers = {Authorization: authorization, 'Content-Type': file.mime};
+          let chunk;
+          if (body.action === 'upload') {
+            if (typeof body.data !== 'string' || body.data.length % 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(body.data)) return res.status(400).json({error: 'Fragmento inválido.'});
+            chunk = Buffer.from(body.data, 'base64');
+            if (chunk.toString('base64') !== body.data) return res.status(400).json({error: 'Fragmento inválido.'});
+            if (!Number.isSafeInteger(body.offset) || body.offset < 0 || !chunk.length || chunk.length > 1024 * 1024 || body.offset + chunk.length > file.bytes || (body.offset + chunk.length !== file.bytes && chunk.length % (256 * 1024))) return res.status(400).json({error: 'Tamaño o posición de fragmento inválido.'});
+            headers['Content-Range'] = `bytes ${body.offset}-${body.offset + chunk.length - 1}/${file.bytes}`;
+          } else headers['Content-Range'] = `bytes */${file.bytes}`;
+          const response = await call(file.session, {method: 'PUT', headers, ...(chunk ? {body: chunk} : {})});
+          if (response.status === 308) {
+            const range = response.headers.get('range');
+            return res.status(200).json({offset: range ? Number(range.split('-')[1]) + 1 : 0});
+          }
+          if (!response.ok) throw new Error('Subida interrumpida.');
+          const result = await response.json();
+          if (!result.id) throw new Error('Drive no confirmó el archivo.');
+          return res.status(200).json({id: result.id});
+        }
+        if (!Array.isArray(body.ids) || body.ids.length !== 2 || body.ids.some(id => typeof id !== 'string' || !/^[a-zA-Z0-9_-]{5,200}$/.test(id))) return res.status(400).json({error: 'Archivos inválidos.'});
         for (let i = 0; i < 2; i++) {
           const response = await call(`https://www.googleapis.com/drive/v3/files/${body.ids[i]}?supportsAllDrives=true&fields=id,name,mimeType,size,parents,appProperties,trashed`, {headers: {Authorization: authorization}});
           const file = await response.json();

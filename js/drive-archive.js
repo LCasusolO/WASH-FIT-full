@@ -9,25 +9,20 @@
     if (!response.ok) throw new Error(result.error || 'No se pudo guardar en Drive.');
     return result;
   }
-  async function upload(file, blob, request) {
-    if (new URL(file.session).origin !== 'https://www.googleapis.com') throw new Error('Destino de subida inválido.');
-    // Consultar el offset permite reintentar un archivo sin crear otro.
-    let response = await request(file.session, {method: 'PUT', headers: {'Content-Range': `bytes */${blob.size}`}, signal: AbortSignal.timeout(60000)});
-    if (response.ok) return (await response.json()).id;
-    if (response.status !== 308) throw new Error('La sesión de subida no está disponible. Vuelva a Exportar.');
-    let offset = 0;
-    while (response.status === 308) {
-      const range = response.headers.get('range');
-      const start = range ? Number(range.split('-')[1]) + 1 : 0;
-      if (!Number.isSafeInteger(start) || start < offset || start >= blob.size) throw new Error('Respuesta de subida inválida.');
-      offset = start;
-      const end = Math.min(start + 1024 * 1024, blob.size);
-      response = await request(file.session, {method: 'PUT', headers: {'Content-Type': file.mime, 'Content-Range': `bytes ${start}-${end - 1}/${blob.size}`}, body: blob.slice(start, end), signal: AbortSignal.timeout(120000)});
-      if (response.status === 308 && response.headers.get('range') === range) throw new Error('La subida no avanzó. Reintente el guardado.');
+  async function upload(receipt, kind, blob, request) {
+    // El servidor consulta la sesión de Google y envía fragmentos menores de 1 MB.
+    // El navegador no depende de las respuestas CORS de la API de subidas de Drive.
+    let result = await api({action: 'status', receipt, kind}, request);
+    let previousOffset = -1;
+    while (!result.id) {
+      const start = result.offset;
+      if (!Number.isSafeInteger(start) || start <= previousOffset || start < 0 || start >= blob.size) throw new Error('La subida no avanzó. Reintente el guardado.');
+      previousOffset = start;
+      const bytes = new Uint8Array(await blob.slice(start, Math.min(start + 1024 * 1024, blob.size)).arrayBuffer());
+      let binary = '';
+      for (let offset = 0; offset < bytes.length; offset += 8192) binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+      result = await api({action: 'upload', receipt, kind, offset: start, data: btoa(binary)}, request);
     }
-    if (!response.ok) throw new Error('Se interrumpió la subida a Drive. Reintente el guardado.');
-    const result = await response.json();
-    if (!result.id) throw new Error('Drive no confirmó el archivo.');
     return result.id;
   }
   async function save(job, progress, request = fetch) {
@@ -36,7 +31,7 @@
     for (let i = 0; i < 2; i++) {
       if (job.ids[i]) continue;
       progress(i === 0 ? 'Guardando JSON en Drive…' : 'JSON guardado. Guardando PDF en Drive…');
-      job.ids[i] = await upload(job.session.files[i], i ? job.pdf : job.json, request);
+      job.ids[i] = await upload(job.session.receipt, i ? 'pdf' : 'json', i ? job.pdf : job.json, request);
     }
     progress('Confirmando ambos archivos…');
     const result = await api({action: 'verify', receipt: job.session.receipt, ids: job.ids}, request);
