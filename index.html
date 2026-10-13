@@ -1453,8 +1453,8 @@
                 <summary>Historial ({{ ind.history.length }} revisiones)</summary>
                 <div v-for="(entry, index) in ind.history.slice().reverse()" :key="index" class="border-t border-paho-grid py-2 whitespace-pre-wrap">
                   <strong>{{ new Date(entry.recordedAt).toLocaleString('es') }}</strong>
-                  <p>Estado: {{ entry.trackingStatus }} · Responsable: {{ entry.responsible || 'Sin responsable' }}</p>
-                  <p>Acción: {{ entry.action || '—' }}</p><p>Medidas: {{ entry.correctiveMeasures || '—' }}</p><p>Comentarios: {{ entry.monitoringComments || '—' }}</p>
+                  <p>Estado: {{ entry.trackingStatus }} · Cambio: {{ changeLabel(entry.indicatorChange) }} · Responsable: {{ reviewBullets(entry.responsible) || 'Sin responsable' }}</p>
+                  <p>Acción: {{ reviewBullets(entry.action) || '—' }}</p><p>Medidas: {{ reviewBullets(entry.correctiveMeasures) || '—' }}</p><p>Comentarios: {{ reviewBullets(entry.monitoringComments) || '—' }}</p>
                 </div>
               </details>
             </td>
@@ -1986,10 +1986,10 @@
             <p class="report-text"><strong>Medidas correctivas:</strong> {{ ind.correctiveMeasures || '—' }}</p>
             <p class="report-text"><strong>Comentarios:</strong> {{ ind.monitoringComments || '—' }}</p>
             <div v-for="(entry, index) in ind.history || []" :key="index" class="report-history">
-              <h4>Revisión {{ new Date(entry.recordedAt).toLocaleString('es') }}</h4><p>Estado: {{ entry.trackingStatus }} · Responsable: {{ entry.responsible || 'Sin responsable' }}</p>
-              <p class="report-text">Acción: {{ entry.action || '—' }}
-Medidas: {{ entry.correctiveMeasures || '—' }}
-Comentarios: {{ entry.monitoringComments || '—' }}</p>
+              <h4>Revisión {{ new Date(entry.recordedAt).toLocaleString('es') }}</h4><p class="report-text">Estado: {{ entry.trackingStatus }} · Cambio: {{ changeLabel(entry.indicatorChange) }} · Responsable: {{ reviewBullets(entry.responsible) || 'Sin responsable' }}</p>
+              <p class="report-text">Acción: {{ reviewBullets(entry.action) || '—' }}
+Medidas: {{ reviewBullets(entry.correctiveMeasures) || '—' }}
+Comentarios: {{ reviewBullets(entry.monitoringComments) || '—' }}</p>
             </div>
           </article>
           <p v-if="!reportPlans.length">Sin acciones en seguimiento.</p>

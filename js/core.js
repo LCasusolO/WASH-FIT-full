@@ -80,6 +80,8 @@
     return {value: result, caret: Math.min(mapped, result.length)};
   }
   function bulletHasContent(value) { return String(value || '').split('\n').some(line => line.replace(/^[ \t]*•[ \t]*/, '').trim()); }
+  function reviewBullets(value) { return bulletEdit(value).value.split('\n').filter(bulletHasContent).join('\n'); }
+  function changeLabel(value) { return {mejorado: 'Ha mejorado', empeorado: 'Ha empeorado', sin_cambios: 'No ha cambiado'}[value] || 'Sin registrar'; }
   function defaults() {
     return {
       facilityName: '', district: '', countryCode: '', latitude: null, longitude: null,
@@ -262,5 +264,5 @@
     indicator.history = [...(indicator.history || []), snapshot];
     return snapshot;
   }
-  return { bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });
