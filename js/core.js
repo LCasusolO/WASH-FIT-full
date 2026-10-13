@@ -64,6 +64,22 @@
     if(order !== 'none') result.sort((a,b) => {const x=risk(a),y=risk(b);if(x===null)return y===null?0:1;if(y===null)return -1;return order==='desc'?y-x:x-y;});
     return result;
   }
+  function bulletEdit(value, caret = String(value || '').length) {
+    const raw = String(value || '').replace(/\r\n/g, '\n');
+    if (!raw) return {value: '', caret: 0};
+    let offset = 0, outputOffset = 0, mapped = caret;
+    const lines = raw.split('\n').map(line => {
+      const prefix = line.match(/^[ \t]*(?:(?:[•*-][ \t]*)|(?:\d+[.)](?:[ \t]+|$)))?/)?.[0] || '';
+      const result = '• ' + line.slice(prefix.length);
+      if (caret >= offset && caret <= offset + line.length) mapped = outputOffset + Math.max(2, caret - offset + 2 - prefix.length);
+      offset += line.length + 1;
+      outputOffset += result.length + 1;
+      return result;
+    });
+    const result = lines.join('\n');
+    return {value: result, caret: Math.min(mapped, result.length)};
+  }
+  function bulletHasContent(value) { return String(value || '').split('\n').some(line => line.replace(/^[ \t]*•[ \t]*/, '').trim()); }
   function defaults() {
     return {
       facilityName: '', district: '', countryCode: '', latitude: null, longitude: null,
@@ -246,5 +262,5 @@
     indicator.history = [...(indicator.history || []), snapshot];
     return snapshot;
   }
-  return { countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });
