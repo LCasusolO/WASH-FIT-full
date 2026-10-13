@@ -881,6 +881,38 @@ createApp({
       try { WashCore.recordReview(ind, generalInfo.value.team); triggerToast('Revisión agregada al historial.'); }
       catch (error) { triggerToast(error.message, 'error'); }
     };
+    const reviewIndicator = ref(null);
+    const reviewDraft = ref(null);
+    const reviewError = ref('');
+    const reviewSaving = ref(false);
+    const openReviewHistory = ref({});
+    let reviewOrigin = null;
+    const latestReview = ind => ind.history?.at(-1) || null;
+    const openNewReview = ind => {
+      reviewOrigin = document.activeElement;
+      reviewIndicator.value = ind;
+      reviewDraft.value = {trackingStatus: ind.trackingStatus || 'No Iniciado', indicatorChange: ind.indicatorChange || 'sin_cambios', responsible: getResponsibleName(ind), correctiveMeasures: ind.correctiveMeasures || '', monitoringComments: '', nextReviewDate: ind.nextReviewDate || ''};
+      reviewError.value = '';
+      nextTick(() => { document.getElementById('review-editor').showModal(); document.getElementById('review-state').focus(); });
+    };
+    const closeReviewEditor = () => {
+      document.getElementById('review-editor')?.close();
+      reviewIndicator.value = null;
+      reviewDraft.value = null;
+      reviewError.value = '';
+      nextTick(() => reviewOrigin?.focus());
+    };
+    const saveNewReview = () => {
+      if (reviewSaving.value || !reviewIndicator.value || !reviewDraft.value) return;
+      reviewSaving.value = true;
+      try {
+        WashCore.saveReviewDraft(reviewIndicator.value, reviewDraft.value, generalInfo.value.team);
+        openReviewHistory.value[reviewIndicator.value.id] = true;
+        closeReviewEditor();
+        triggerToast('Revisión registrada.');
+      } catch (error) { reviewError.value = error.message; }
+      finally { reviewSaving.value = false; }
+    };
     const reportIndicators = computed(() => indicators.value.filter(shouldShowIndicator));
     const reportRisks = computed(() => reportIndicators.value.filter(ind => ind.score !== null));
     const reportPlans = computed(() => reportIndicators.value.filter(ind => ind.score === 0 || ind.score === 1 || ind.action || ind.history?.length));
@@ -1047,6 +1079,7 @@ createApp({
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
       populationWarning, reportPreview, reportIndicators, reportRisks, reportPlans,
       getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview, bulletValue, focusBulletField, updateBulletField, enterBulletField, blurBulletField, reviewBullets: WashCore.reviewBullets, changeLabel: WashCore.changeLabel,
+      reviewIndicator, reviewDraft, reviewError, reviewSaving, openReviewHistory, latestReview, openNewReview, closeReviewEditor, saveNewReview,
       activeView,
       activeModuleTab,
       mobileMenuOpen,

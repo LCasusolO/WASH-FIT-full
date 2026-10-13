@@ -264,5 +264,12 @@
     indicator.history = [...(indicator.history || []), snapshot];
     return snapshot;
   }
-  return { reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  function saveReviewDraft(indicator, draft, team, now = new Date().toISOString()) {
+    const candidate = clone(indicator);
+    for (const field of ['trackingStatus', 'indicatorChange', 'responsible', 'correctiveMeasures', 'monitoringComments', 'nextReviewDate']) candidate[field] = draft[field];
+    recordReview(candidate, team, now);
+    Object.assign(indicator, candidate);
+    return candidate.history.at(-1);
+  }
+  return { saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });

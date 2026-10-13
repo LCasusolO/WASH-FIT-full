@@ -1341,134 +1341,45 @@
     </div>
   </div>
 
-  <!-- Contenedor de la Tabla -->
-  <div class="bg-white border border-paho-grid overflow-hidden">
-    <div class="overflow-x-auto max-h-[70vh]">
-      <table class="w-full text-left border-collapse min-w-[1300px]">
-        <thead class="sticky top-0 z-20 bg-paho-card border-b border-paho-grid">
-          <tr class="text-[11px] uppercase tracking-wider font-extrabold text-paho-gray-dark">
-            <th class="py-4 px-6 w-80 min-w-[280px] max-w-[320px] text-center bg-paho-card">Dominio / Indicador</th>
-            <th class="py-4 px-4 min-w-[260px] text-center bg-paho-card">Descripción del Problema</th>
-            <th class="py-4 px-4 min-w-[260px] text-center bg-paho-card">Acción de Mitigación</th>
-            <th class="py-4 px-4 w-48 min-w-[190px] text-center bg-paho-card">¿Ha mejorado, empeorado o no ha cambiado?</th>
-            <th class="py-4 px-4 min-w-[260px] text-center bg-paho-card">Medidas Correctivas o Adicionales</th>
-            <th class="py-4 px-4 w-40 min-w-[150px] text-center bg-paho-card">Fecha de Revisión</th>
-            <th class="py-4 px-4 min-w-[220px] text-center bg-paho-card">Comentarios y Notas Adicionales</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-paho-grid text-xs">
-          <tr v-for="ind in getSortedGaps" :key="ind.id" class="hover:bg-paho-card/20 align-top">
-
-            <!-- Columna Unificada: dominio en Box / Indicador -->
-            <td data-label="Dominio / Indicador" class="py-5 px-6 align-top">
-              <div class="flex flex-col items-center text-center gap-2.5">
-
-                <!-- 1. Box del dominio con color oficial -->
-                <span
-                  class="inline-block px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-none shadow-xs"
-                  :class="{
-                    'bg-paho-blue text-white': (ind.module || '').toLowerCase().includes('agua'),
-                    'bg-emerald-600 text-white': (ind.module || '').toLowerCase().includes('saneam'),
-                    'bg-amber-600 text-white': (ind.module || '').toLowerCase().includes('residuo'),
-                    'bg-purple-600 text-white': (ind.module || '').toLowerCase().includes('higien'),
-                    'bg-teal-600 text-white': (ind.module || '').toLowerCase().includes('limpieza'),
-                    'bg-yellow-500 text-slate-900 font-black': (ind.module || '').toLowerCase().includes('energ'),
-                    'bg-indigo-600 text-white': (ind.module || '').toLowerCase().includes('gesti') || (ind.module || '').toLowerCase().includes('admin'),
-                    'bg-paho-dark-blue text-white': !(ind.module || '').toLowerCase().match(/agua|saneam|residuo|higien|limpieza|energ|gesti|admin/)
-                  }"
-                >
-                  {{ ind.module }}
-                </span>
-
-                <!-- 2. Título del Indicador -->
-                <h4 class="font-bold text-paho-dark-blue text-xs sm:text-[13px] leading-snug">
-                  {{ ind.title }}
-                </h4>
-              </div>
-            </td>
-
-            <!-- Descripción del Problema (Solo lectura / Bloqueado) -->
-            <td data-label="Descripción del Problema" class="py-5 px-4 align-top">
-              <textarea aria-label="Descripción del problema"
-                v-model="ind.problemDesc"
-                rows="6"
-                disabled
-                placeholder="Descripción del problema..."
-                class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-gray-50 text-paho-gray-medium cursor-not-allowed outline-none leading-relaxed block"
-              ></textarea>
-            </td>
-
-            <!-- Acción de Mitigación (Solo lectura / Bloqueado) -->
-            <td data-label="Acción de Mitigación" class="py-5 px-4 align-top">
-              <textarea aria-label="Acción de mitigación"
-                :value="bulletValue(ind.action)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'action')" @keydown="enterBulletField($event, ind, 'action')" @blur="blurBulletField"
-                rows="6"
-                disabled
-                placeholder="— Sin medida redactada aún —"
-                class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-gray-50 text-paho-gray-medium cursor-not-allowed outline-none leading-relaxed block"
-              ></textarea>
-            </td>
-
-            <!-- Cambio del Indicador (Mejorado / Empeorado / Sin Cambios) -->
-            <td data-label="¿Ha mejorado, empeorado o no ha cambiado?" class="py-5 px-4 align-top">
-              <select aria-label="Cambio del indicador"
-                v-model="ind.indicatorChange"
-                class="w-full p-2.5 border border-paho-grid rounded-none text-xs bg-white text-paho-gray-dark focus:outline-none focus:border-paho-blue font-medium cursor-pointer"
-              >
-                <option value="mejorado">Ha mejorado</option>
-                <option value="empeorado">Ha empeorado</option>
-                <option value="sin_cambios">No ha cambiado</option>
-              </select>
-            </td>
-
-            <!-- Medidas Correctivas -->
-            <td data-label="Medidas Correctivas o Adicionales" class="py-5 px-4 align-top">
-              <textarea aria-label="Medidas correctivas"
-                :value="bulletValue(ind.correctiveMeasures)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'correctiveMeasures')" @keydown="enterBulletField($event, ind, 'correctiveMeasures')" @blur="blurBulletField"
-                rows="6"
-                placeholder="Describa las acciones correctivas o de sostenibilidad..."
-                class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue focus:ring-1 focus:ring-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
-              ></textarea>
-            </td>
-
-            <!-- Fecha de Revisión -->
-            <td data-label="Fecha de Revisión" class="py-5 px-4 align-top">
-              <input aria-label="Próxima revisión"
-                type="date"
-                v-model="ind.nextReviewDate"
-                class="w-full p-2.5 border border-paho-grid rounded-none text-xs text-paho-gray-dark focus:outline-none focus:border-paho-blue bg-white"
-              >
-            </td>
-
-            <!-- Comentarios / Notas Adicionales -->
-            <td data-label="Comentarios y Notas Adicionales" class="py-5 px-4 align-top">
-              <textarea aria-label="Comentarios de monitoreo"
-                :value="bulletValue(ind.monitoringComments)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'monitoringComments')" @keydown="enterBulletField($event, ind, 'monitoringComments')" @blur="blurBulletField"
-                rows="6"
-                placeholder="Notas adicionales de control o auditoría técnica..."
-                class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
-              ></textarea>
-              <button @click="recordReview(ind)" class="no-print mt-3 px-3 py-2 bg-paho-dark-blue text-white text-xs">Registrar revisión</button>
-              <details v-if="ind.history && ind.history.length" class="mt-3 text-xs">
-                <summary>Historial ({{ ind.history.length }} revisiones)</summary>
-                <div v-for="(entry, index) in ind.history.slice().reverse()" :key="index" class="border-t border-paho-grid py-2 whitespace-pre-wrap">
-                  <strong>{{ new Date(entry.recordedAt).toLocaleString('es') }}</strong>
-                  <p>Estado: {{ entry.trackingStatus }} · Cambio: {{ changeLabel(entry.indicatorChange) }} · Responsable: {{ reviewBullets(entry.responsible) || 'Sin responsable' }}</p>
-                  <p>Acción: {{ reviewBullets(entry.action) || '—' }}</p><p>Medidas: {{ reviewBullets(entry.correctiveMeasures) || '—' }}</p><p>Comentarios: {{ reviewBullets(entry.monitoringComments) || '—' }}</p>
-                </div>
-              </details>
-            </td>
-          </tr>
-
-          <!-- Mensaje cuando no hay brechas registradas -->
-          <tr v-if="getSortedGaps.length === 0">
-            <td data-label="Dominio / Indicador" colspan="7" class="py-12 text-center text-xs text-paho-gray-medium">
-              No hay brechas para monitorear. Complete la evaluación y la matriz de riesgos para poder visualizar el seguimiento.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+  <div class="review-cards space-y-6">
+    <article v-for="ind in getSortedGaps" :key="ind.id" class="review-card p-6 border border-paho-grid bg-white">
+      <p class="text-sm font-semibold text-paho-blue mb-2">{{ ind.module }}</p>
+      <h4 class="text-lg font-bold text-paho-very-dark-blue leading-snug">{{ ind.title }}</h4>
+      <div class="mt-4 p-4 bg-paho-card border border-paho-grid">
+        <h5 class="text-sm font-bold mb-2">Acción de mejora</h5>
+        <p class="whitespace-pre-wrap text-sm">{{ reviewBullets(ind.action) || 'Sin acción de mejora registrada.' }}</p>
+      </div>
+      <div class="mt-5 text-sm" aria-live="polite">
+        <template v-if="latestReview(ind)">
+          <h5 class="font-bold">Última revisión · {{ new Date(latestReview(ind).recordedAt).toLocaleString('es') }}</h5>
+          <p class="mt-2">Estado: <strong>{{ latestReview(ind).trackingStatus }}</strong> · Cambio: <strong>{{ changeLabel(latestReview(ind).indicatorChange) }}</strong></p>
+        </template>
+        <p v-else class="text-paho-gray-medium">Aún no hay revisiones registradas.</p>
+      </div>
+      <div class="flex flex-wrap gap-3 mt-5 no-print">
+        <button type="button" @click="openNewReview(ind)" class="px-4 py-3 bg-paho-dark-blue text-white text-sm font-bold">Nueva revisión</button>
+        <button type="button" :disabled="!ind.history?.length" @click="openReviewHistory[ind.id] = !openReviewHistory[ind.id]" :aria-expanded="!!openReviewHistory[ind.id]" :aria-controls="'review-history-' + ind.id" class="px-4 py-3 border border-paho-grid text-paho-dark-blue text-sm font-bold disabled:opacity-50">{{ openReviewHistory[ind.id] ? 'Ocultar historial' : 'Ver historial' }} ({{ ind.history?.length || 0 }})</button>
+      </div>
+      <section v-if="openReviewHistory[ind.id]" :id="'review-history-' + ind.id" class="mt-6 pt-5 border-t border-paho-grid" aria-label="Historial de revisiones">
+        <h5 class="text-base font-bold mb-4">Historial de revisiones</h5>
+        <div class="space-y-4">
+          <article v-for="(entry, index) in (ind.history || []).slice().reverse()" :key="entry.recordedAt + '-' + index" class="review-history-card p-5 bg-paho-card border-l-4 border-paho-blue text-sm">
+            <h6 class="font-bold">{{ new Date(entry.recordedAt).toLocaleString('es') }}</h6>
+            <p class="mt-2">Estado: <strong>{{ entry.trackingStatus }}</strong> · Cambio: <strong>{{ changeLabel(entry.indicatorChange) }}</strong></p>
+            <details class="mt-3"><summary class="text-paho-dark-blue font-semibold py-2">Ver detalle</summary>
+              <dl class="review-details mt-3">
+                <div><dt>Responsables</dt><dd>{{ reviewBullets(entry.responsible) || 'Sin responsable' }}</dd></div>
+                <div><dt>Acción</dt><dd>{{ reviewBullets(entry.action) || '—' }}</dd></div>
+                <div><dt>Medidas correctivas o adicionales</dt><dd>{{ reviewBullets(entry.correctiveMeasures) || '—' }}</dd></div>
+                <div><dt>Comentarios y notas adicionales</dt><dd>{{ reviewBullets(entry.monitoringComments) || '—' }}</dd></div>
+                <div><dt>Próxima revisión</dt><dd>{{ formatDate(entry.nextReviewDate) || 'Sin programar' }}</dd></div>
+              </dl>
+            </details>
+          </article>
+        </div>
+      </section>
+    </article>
+    <p v-if="!getSortedGaps.length" class="p-8 border border-paho-grid text-sm text-paho-gray-medium">No hay indicadores para monitorear. Complete la evaluación o revise la opción Mostrar solo brechas.</p>
   </div>
 
   <!-- Pie de página de Monitoreo y Revisión (Paso 5) -->
@@ -1869,6 +1780,29 @@
       </main>
 
     </div>
+
+    <dialog id="review-editor" class="review-editor no-print" aria-labelledby="review-editor-title" @cancel.prevent="closeReviewEditor" @close="reviewIndicator && closeReviewEditor()">
+      <form v-if="reviewDraft && reviewIndicator" @submit.prevent="saveNewReview" class="review-form">
+        <header class="review-editor-header">
+          <div><h2 id="review-editor-title">Nueva revisión</h2><p>{{ reviewIndicator.title }}</p></div>
+          <button type="button" @click="closeReviewEditor" aria-label="Cerrar nueva revisión">✕</button>
+        </header>
+        <div class="review-editor-body">
+          <p class="text-sm text-paho-gray-medium mb-5">Completa el seguimiento y pulsa Guardar revisión para agregar un nuevo registro al historial.</p>
+          <p v-if="reviewError" role="alert" class="text-sm text-red-700 mb-4">{{ reviewError }}</p>
+          <section class="p-4 bg-paho-card border border-paho-grid mb-5"><h3 class="text-sm font-bold mb-2">Acción de mejora</h3><p class="text-sm whitespace-pre-wrap">{{ reviewBullets(reviewIndicator.action) || 'Sin acción de mejora registrada.' }}</p></section>
+          <div class="review-form-grid">
+            <div><label for="review-state">Estado</label><select id="review-state" v-model="reviewDraft.trackingStatus"><option value="No Iniciado">No iniciado</option><option value="En Progreso">En progreso</option><option value="Retrasado">Retrasado</option><option value="Completado">Completado</option></select></div>
+            <div><label for="review-change">¿Ha mejorado, empeorado o no ha cambiado?</label><select id="review-change" v-model="reviewDraft.indicatorChange"><option value="mejorado">Ha mejorado</option><option value="empeorado">Ha empeorado</option><option value="sin_cambios">No ha cambiado</option></select></div>
+            <div><label for="review-responsible">Responsables</label><textarea id="review-responsible" :value="bulletValue(reviewDraft.responsible)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'responsible')" @keydown="enterBulletField($event, reviewDraft, 'responsible')" @blur="blurBulletField" rows="3"></textarea></div>
+            <div><label for="review-next-date">Próxima revisión (opcional)</label><input id="review-next-date" type="date" v-model="reviewDraft.nextReviewDate"></div>
+            <div class="review-full"><label for="review-measures">Medidas correctivas o adicionales</label><textarea id="review-measures" :value="bulletValue(reviewDraft.correctiveMeasures)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'correctiveMeasures')" @keydown="enterBulletField($event, reviewDraft, 'correctiveMeasures')" @blur="blurBulletField" rows="4"></textarea></div>
+            <div class="review-full"><label for="review-comments">Comentarios y notas adicionales</label><textarea id="review-comments" :value="bulletValue(reviewDraft.monitoringComments)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'monitoringComments')" @keydown="enterBulletField($event, reviewDraft, 'monitoringComments')" @blur="blurBulletField" rows="4"></textarea></div>
+          </div>
+        </div>
+        <footer class="review-editor-footer"><button type="button" @click="closeReviewEditor" class="review-cancel">Cancelar</button><button type="submit" :disabled="reviewSaving" class="review-save">Guardar revisión</button></footer>
+      </form>
+    </dialog>
 
     <!-- VENTANA MODAL / VISOR DE IMAGEN EN PANTALLA COMPLETA (LIGHTBOX) -->
     <div
