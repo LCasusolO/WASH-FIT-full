@@ -500,7 +500,17 @@
                   <h4 class="text-base font-bold text-paho-very-dark-blue">Geolocalización del Establecimiento</h4>
                   <p class="text-xs text-paho-gray-medium mt-1">Haga clic en el mapa o arrastre el marcador para fijar la ubicación, o bien escriba las coordenadas de Latitud y Longitud en los campos siguientes para desplazar el marcador automáticamente.</p>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="location-controls grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div class="space-y-2 self-center min-w-0">
+                    <button type="button" @click="locateCurrentPosition" :disabled="locationBusy" :aria-busy="locationBusy" class="inline-flex items-center gap-2 px-4 py-3 border border-paho-dark-blue text-paho-dark-blue bg-white hover:bg-paho-card text-sm font-semibold disabled:opacity-50 disabled:cursor-wait">
+                      <i data-lucide="locate-fixed" class="w-4 h-4" aria-hidden="true"></i>
+                      {{ locationBusy ? 'Obteniendo ubicación…' : 'Usar mi ubicación actual' }}
+                    </button>
+                    <p class="text-xs text-paho-gray-medium">Úsala si estás en el establecimiento. Se completarán la latitud y longitud y se ubicará el punto en el mapa.</p>
+                    <p v-if="locationStatus" role="status" aria-live="polite" class="text-sm" :class="locationFailed ? 'text-red-700' : 'text-paho-dark-blue'">{{ locationStatus }}</p>
+                  </div>
+
+                  <div class="location-coordinates space-y-4 min-w-0">
                   <div class="space-y-2">
                     <div class="min-h-[32px] flex items-center justify-center">
                       <label for="latitude" class="text-xs font-bold text-paho-gray-dark uppercase tracking-wider leading-tight text-center">Latitud</label>
@@ -515,15 +525,7 @@
                     <input id="longitude" aria-label="Longitud" type="number" step="any" v-model.number="generalInfo.longitude" @input="onCoordinatesInput" placeholder="Ej: -76.9841" class="w-full px-4 py-3 border border-paho-grid text-sm focus:border-paho-blue outline-none transition-all bg-white text-paho-gray-dark">
                   </div>
 
-                  <div class="space-y-2 sm:col-span-2 lg:col-span-1 lg:pt-10">
-                    <button type="button" @click="locateCurrentPosition" :disabled="locationBusy" :aria-busy="locationBusy" class="inline-flex items-center gap-2 px-4 py-3 border border-paho-dark-blue text-paho-dark-blue bg-white hover:bg-paho-card text-sm font-semibold disabled:opacity-50 disabled:cursor-wait">
-                      <i data-lucide="locate-fixed" class="w-4 h-4" aria-hidden="true"></i>
-                      {{ locationBusy ? 'Obteniendo ubicación…' : 'Usar mi ubicación actual' }}
-                    </button>
-                    <p class="text-xs text-paho-gray-medium">Úsala si estás en el establecimiento. Se completarán la latitud y longitud y se ubicará el punto en el mapa.</p>
-                    <p v-if="locationStatus" role="status" aria-live="polite" class="text-sm" :class="locationFailed ? 'text-red-700' : 'text-paho-dark-blue'">{{ locationStatus }}</p>
                   </div>
-
                 </div>
                 <div id="map-container" class="h-80 w-full border border-paho-grid overflow-hidden relative z-10"></div>
               </div>
