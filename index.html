@@ -104,7 +104,7 @@
           </div>
 
           <!-- Widget de progreso -->
-          <div :class="['bg-white border border-paho-grid transition-all duration-300 overflow-hidden', sidebarCollapsed ? 'max-h-0 m-0 p-0 opacity-0 border-none' : 'p-6 m-4 max-h-40 opacity-100']">
+          <div class="sidebar-progress" :class="['bg-white border border-paho-grid transition-all duration-300 overflow-hidden', sidebarCollapsed ? 'max-h-0 m-0 p-0 opacity-0 border-none' : 'p-6 m-4 max-h-40 opacity-100']">
             <div class="flex justify-between items-center mb-2">
               <span class="text-xs font-bold text-paho-gray-medium">Progreso de Evaluación</span>
               <span class="text-xs font-bold text-paho-dark-blue">{{ progressPercentage }}%</span>
