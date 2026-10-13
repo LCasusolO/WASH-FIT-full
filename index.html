@@ -1451,7 +1451,7 @@
                 class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
               ></textarea>
             </td>
-            <td data-label="Estado del Plan de mejora" class="py-5 px-4 align-top"><span class="text-sm font-semibold">{{ getTrackingStatus(ind) }}</span></td>
+            <td data-label="Estado del Plan de mejora" class="py-5 px-4 align-top"><span class="text-sm font-semibold">{{ ind.trackingStatus || 'No Iniciado' }}</span></td>
             <td data-label="Revisiones" class="py-5 px-4 align-top"><div class="flex flex-col gap-3 min-w-[150px]">
               <button type="button" @click="openNewReview(ind)" class="px-4 py-3 bg-paho-dark-blue text-white text-sm font-bold">Nueva revisión</button>
               <button type="button" @click="openHistoryDialog(ind)" class="px-4 py-3 border border-paho-grid text-paho-dark-blue text-sm font-bold">Ver historial ({{ ind.history?.length || 0 }})</button>
@@ -1879,7 +1879,7 @@
           <p v-if="reviewError" role="alert" class="text-sm text-red-700 mb-4">{{ reviewError }}</p>
           <section class="p-4 bg-paho-card border border-paho-grid mb-5"><h3 class="text-sm font-bold mb-2">Acción de mejora</h3><p class="text-sm whitespace-pre-wrap">{{ reviewBullets(reviewIndicator.action) || 'Sin acción de mejora registrada.' }}</p></section>
           <div class="review-form-grid">
-            <div><label for="review-state">Estado del Plan de mejora</label><input id="review-state" :value="getTrackingStatus(reviewIndicator)" readonly><p class="text-xs text-paho-gray-medium mt-2">Se actualiza desde el Plan de mejora.</p></div>
+            <div><label for="review-state">Estado del Plan de mejora</label><input id="review-state" :value="reviewIndicator.trackingStatus || 'No Iniciado'" readonly><p class="text-xs text-paho-gray-medium mt-2">Se actualiza desde el Plan de mejora.</p></div>
             <div><label for="review-change">¿Ha mejorado, empeorado o no ha cambiado?</label><select id="review-change" v-model="reviewDraft.indicatorChange"><option value="mejorado">Ha mejorado</option><option value="empeorado">Ha empeorado</option><option value="sin_cambios">No ha cambiado</option></select></div>
             <div><label for="review-responsible">Responsables</label><textarea id="review-responsible" :value="bulletValue(reviewDraft.responsible)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'responsible')" @keydown="enterBulletField($event, reviewDraft, 'responsible')" @blur="blurBulletField" rows="3"></textarea></div>
             <div><label for="review-next-date">Próxima revisión (opcional)</label><input id="review-next-date" type="date" v-model="reviewDraft.nextReviewDate"></div>
