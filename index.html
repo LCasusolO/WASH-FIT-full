@@ -1637,8 +1637,9 @@
                   <p class="text-xs text-paho-gray-medium mt-1">Resumen cuantitativo del progreso y puntajes de cumplimiento de los dominios</p>
                 </div>
 
-                <div class="overflow-x-auto bg-white border border-paho-grid">
-                  <table class="w-full text-left border-collapse">
+                <p class="domain-summary-hint text-xs text-paho-gray-medium">Deslice la tabla horizontalmente para ver todas las columnas.</p>
+                <div class="domain-summary-scroll overflow-x-auto bg-white border border-paho-grid" tabindex="0" role="region" aria-label="Consolidado por dominios: tabla desplazable">
+                  <table class="domain-summary-table w-full text-left border-collapse">
                     <thead>
                       <tr class="border-b border-paho-grid text-[10px] font-extrabold uppercase tracking-wider text-paho-gray-medium">
                         <th class="py-2.5 px-4 bg-paho-card">Dominio</th>
@@ -1651,9 +1652,9 @@
 
 <tbody class="divide-y divide-paho-grid text-xs">
                       <tr v-for="mod in modulesList" :key="mod.id" class="hover:bg-paho-card">
-                        <td data-label="Dominio" class="py-3.5 px-4 font-bold text-paho-very-dark-blue flex items-center gap-2">
-                          <span class="w-2.5 h-2.5 rounded-full" :class="mod.color"></span>
-                          <span>{{ mod.name }}</span>
+                        <td data-label="Dominio" class="py-3.5 px-4 font-bold text-paho-very-dark-blue"><div class="flex items-center gap-2">
+                          <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :class="mod.color"></span>
+                          <span>{{ mod.name }}</span></div>
                         </td>
                         <td data-label="Indicadores" class="py-3.5 text-center font-semibold text-paho-gray-dark">{{ getModuleTotalCount(mod.id) }}</td>
                         <td data-label="Evaluados" class="py-3.5 text-center font-semibold text-paho-gray-dark">{{ getModuleAnsweredCount(mod.id) }}</td>
@@ -1990,18 +1991,18 @@
 
         <section class="report-step" data-report-step="2" aria-labelledby="report-step-2">
           <h2 id="report-step-2">Paso 2: Evaluación de la Situación</h2>
-          <table class="report-assessment"><colgroup><col style="width:12%"><col style="width:60%"><col style="width:13%"><col style="width:15%"></colgroup><thead><tr><th>Dominio</th><th>Indicador</th><th>Resultado</th><th>Hallazgos</th></tr></thead><tbody>
+          <div class="report-table-scroll" tabindex="0" role="region" aria-label="Tabla del paso 2: desplazamiento horizontal"><table class="report-wide report-assessment"><colgroup><col style="width:12%"><col style="width:60%"><col style="width:13%"><col style="width:15%"></colgroup><thead><tr><th>Dominio</th><th>Indicador</th><th>Resultado</th><th>Hallazgos</th></tr></thead><tbody>
             <tr v-for="ind in reportIndicators" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}</td><td>{{ getAssessmentResult(ind).label }}</td><td class="report-text">{{ ind.notes || '—' }}</td></tr>
-          </tbody></table>
+          </tbody></table></div>
         </section>
 
         <section class="report-step" data-report-step="3" aria-labelledby="report-step-3">
           <h2 id="report-step-3">Paso 3: Evaluación del Riesgo</h2>
           <p>Riesgo = gravedad + probabilidad (0–20).</p>
-          <table><thead><tr><th>Indicador</th><th>Resultado de situación</th><th>Problema</th><th>Riesgos asociados</th><th>Gravedad</th><th>Probabilidad</th><th>Riesgo</th></tr></thead><tbody>
+          <div class="report-table-scroll" tabindex="0" role="region" aria-label="Tabla del paso 3: desplazamiento horizontal"><table class="report-wide"><colgroup><col style="width:24%"><col style="width:12%"><col style="width:18%"><col style="width:18%"><col style="width:9%"><col style="width:10%"><col style="width:9%"></colgroup><thead><tr><th>Indicador</th><th>Resultado de situación</th><th>Problema</th><th>Riesgos asociados</th><th>Gravedad</th><th>Probabilidad</th><th>Riesgo</th></tr></thead><tbody>
             <tr v-for="ind in reportRisks" :key="ind.id"><td>{{ ind.title }}</td><td>{{ getAssessmentResult(ind).label }}</td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ ind.associatedRisks || '—' }}</td><td>{{ ind.severity ?? '—' }}</td><td>{{ ind.likelihood ?? '—' }}</td><td>{{ calculateRiskScore(ind) ?? '—' }} · {{ getRiskLabel(calculateRiskScore(ind)) }}</td></tr>
             <tr v-if="!reportRisks.length"><td colspan="7">Sin indicadores evaluados.</td></tr>
-          </tbody></table>
+          </tbody></table></div>
         </section>
 
         <section class="report-step" data-report-step="4" aria-labelledby="report-step-4">
