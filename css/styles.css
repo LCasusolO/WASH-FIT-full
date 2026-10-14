@@ -227,3 +227,6 @@ button, [role=button], summary { cursor: pointer; }
 .review-new-information p + p { margin-top: .75rem; }
 .review-new-information strong, .review-new-information span { display: block; }
 .review-new-information span { white-space: pre-wrap; margin-top: .3rem; }
+
+.compliance-value { grid-row: 1 / 3; align-self: center; }
+.draft-status { font-size: .6875rem; }
