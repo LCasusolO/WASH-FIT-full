@@ -940,6 +940,7 @@ createApp({
       nextTick(() => historyOrigin?.focus());
     };
     const reportIndicators = computed(() => indicators.value.filter(shouldShowIndicator));
+    const reportRadarSvg = computed(() => WashRadar.svg(reportIndicators.value, modulesList));
     const reportRisks = computed(() => reportIndicators.value.filter(ind => ind.score !== null));
     const reportPlans = computed(() => reportIndicators.value.filter(ind => ind.score === 0 || ind.score === 1 || ind.action || ind.history?.length));
     let reportMap = null;
@@ -1103,7 +1104,7 @@ createApp({
     return {
       loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile, updateAvailable, updateApplication,
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
-      populationWarning, reportPreview, reportIndicators, reportRisks, reportPlans,
+      populationWarning, reportPreview, reportRadarSvg, reportIndicators, reportRisks, reportPlans,
       getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview, bulletValue, focusBulletField, updateBulletField, enterBulletField, blurBulletField, reviewHistoryText: WashCore.reviewHistoryText, reviewBullets: WashCore.reviewBullets, changeLabel: WashCore.changeLabel,
       reviewIndicator, reviewDraft, reviewError, reviewSaving, latestReview, openNewReview, closeReviewEditor, saveNewReview, historyIndicator, openHistoryDialog, closeHistoryDialog,
       activeView,

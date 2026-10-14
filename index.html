@@ -57,17 +57,6 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <!-- BOTÓN DE IMPRIMIR EN MÓVIL (SÓLO EN dominio RESUMEN) -->
-        <button v-if="activeView === 'dashboard'"
-                @click="printReport"
-                class="flex items-center gap-1.5 px-3 py-1.5 bg-paho-dark-blue hover:bg-paho-blue text-white text-xs font-extrabold border border-white/20 transition-all rounded-none cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 6 2 18 2 18 9"></polyline>
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-            <rect x="6" y="14" width="12" height="8"></rect>
-          </svg>
-          <span>Imprimir</span>
-        </button>
 
         <button aria-label="Abrir o cerrar menú" :aria-expanded="mobileMenuOpen" aria-controls="main-navigation" @click="mobileMenuOpen = !mobileMenuOpen" class="p-2 hover:bg-paho-dark-blue transition-colors focus:outline-none">
           <i :data-lucide="mobileMenuOpen ? 'x' : 'menu'" class="w-6 h-6 text-white"></i>
@@ -226,18 +215,6 @@
               </div>
               <span class="draft-status" role="status" aria-live="polite" :class="saveState === 'error' ? 'text-red-700 font-bold' : ''">{{ saveLabel }}</span>
           </div>
-
-          <!-- BOTÓN DE IMPRIMIR REPORTE (SOLO VISIBLE EN dominio RESUMEN) -->
-          <button v-if="activeView === 'dashboard'"
-                  @click="printReport"
-                  class="no-print hidden lg:flex items-center gap-2 px-4 py-2 bg-paho-dark-blue hover:bg-paho-very-dark-blue text-white text-xs font-extrabold border border-paho-dark-blue transition-all shadow-sm rounded-none cursor-pointer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9"></polyline>
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-              <rect x="6" y="14" width="12" height="8"></rect>
-            </svg>
-            <span>Imprimir Reporte</span>
-          </button>
         </div>
       </header>
 
@@ -1498,8 +1475,9 @@
               <p class="text-xs text-paho-gray-medium mt-1">Revise el desempeño por dominio, el cumplimiento global y los niveles de servicio.</p>
             </div>
 
-            <div class="no-print flex justify-end">
+            <div class="no-print flex justify-end gap-3 report-actions">
               <button @click="reportPreview = true" class="border border-paho-grid px-4 py-2 text-sm">Vista previa del reporte</button>
+              <button @click="printReport" class="flex items-center gap-2 px-4 py-2 bg-paho-dark-blue text-white text-sm font-bold"><i data-lucide="printer" class="w-5 h-5" aria-hidden="true"></i><span>Imprimir Reporte</span></button>
             </div>
             <!-- KPI Summary Cards Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -2013,30 +1991,30 @@
         <section class="report-step" data-report-step="3" aria-labelledby="report-step-3">
           <h2 id="report-step-3">Paso 3: Evaluación del Riesgo</h2>
           <p>Riesgo = gravedad + probabilidad (0–20).</p>
-          <div class="report-table-scroll" tabindex="0" role="region" aria-label="Tabla del paso 3: desplazamiento horizontal"><table class="report-wide"><colgroup><col style="width:24%"><col style="width:12%"><col style="width:18%"><col style="width:18%"><col style="width:9%"><col style="width:10%"><col style="width:9%"></colgroup><thead><tr><th>Indicador</th><th>Resultado de situación</th><th>Problema</th><th>Riesgos asociados</th><th>Gravedad</th><th>Probabilidad</th><th>Riesgo</th></tr></thead><tbody>
-            <tr v-for="ind in reportRisks" :key="ind.id"><td>{{ ind.title }}</td><td>{{ getAssessmentResult(ind).label }}</td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ ind.associatedRisks || '—' }}</td><td>{{ ind.severity ?? '—' }}</td><td>{{ ind.likelihood ?? '—' }}</td><td>{{ calculateRiskScore(ind) ?? '—' }} · {{ getRiskLabel(calculateRiskScore(ind)) }}</td></tr>
-            <tr v-if="!reportRisks.length"><td colspan="7">Sin indicadores evaluados.</td></tr>
+          <div class="report-table-scroll" tabindex="0" role="region" aria-label="Tabla del paso 3: desplazamiento horizontal"><table class="report-wide"><colgroup><col style="width:8%"><col style="width:16%"><col style="width:12%"><col style="width:18%"><col style="width:18%"><col style="width:9%"><col style="width:10%"><col style="width:9%"></colgroup><thead><tr><th>Módulo</th><th>Indicador</th><th>Resultado de situación</th><th>Problema</th><th>Riesgos asociados</th><th>Gravedad</th><th>Probabilidad</th><th>Riesgo</th></tr></thead><tbody>
+            <tr v-for="ind in reportRisks" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}</td><td>{{ getAssessmentResult(ind).label }}</td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ ind.associatedRisks || '—' }}</td><td>{{ ind.severity ?? '—' }}</td><td>{{ ind.likelihood ?? '—' }}</td><td>{{ calculateRiskScore(ind) ?? '—' }} · {{ getRiskLabel(calculateRiskScore(ind)) }}</td></tr>
+            <tr v-if="!reportRisks.length"><td colspan="8">Sin indicadores evaluados.</td></tr>
           </tbody></table></div>
         </section>
 
         <section class="report-step" data-report-step="4" aria-labelledby="report-step-4">
           <h2 id="report-step-4">Paso 4: Plan de Mejora</h2>
-          <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:26%"><col style="width:12%"><col style="width:17%"><col style="width:13%"><col style="width:12%"><col style="width:7%"><col style="width:5%"><col style="width:8%"></colgroup><thead><tr><th>Indicador / resultado / riesgo</th><th>Problema</th><th>Acción</th><th>Recursos</th><th>Responsables</th><th>Plazo</th><th>Costo USD</th><th>Estado</th></tr></thead><tbody>
-            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.title }}<p>{{ getAssessmentResult(ind).label }} · Riesgo: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p></td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.resources) || '—' }}</td><td class="report-text">{{ reviewBullets(getResponsibleName(ind)) || 'Sin responsable' }}</td><td>{{ formatDate(ind.targetDate) || '—' }}</td><td>{{ ind.cost === null ? '—' : formatThousands(ind.cost) }}</td><td>{{ getTrackingStatus(ind) }}</td></tr>
-            <tr v-if="!reportPlans.length"><td colspan="8">Sin acciones o brechas registradas.</td></tr>
+          <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:8%"><col style="width:18%"><col style="width:12%"><col style="width:17%"><col style="width:13%"><col style="width:12%"><col style="width:7%"><col style="width:5%"><col style="width:8%"></colgroup><thead><tr><th>Módulo</th><th>Indicador / resultado / riesgo</th><th>Problema</th><th>Acción</th><th>Recursos</th><th>Responsables</th><th>Plazo</th><th>Costo USD</th><th>Estado</th></tr></thead><tbody>
+            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}<p>{{ getAssessmentResult(ind).label }} · Riesgo: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p></td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.resources) || '—' }}</td><td class="report-text">{{ reviewBullets(getResponsibleName(ind)) || 'Sin responsable' }}</td><td>{{ formatDate(ind.targetDate) || '—' }}</td><td>{{ ind.cost === null ? '—' : formatThousands(ind.cost) }}</td><td>{{ getTrackingStatus(ind) }}</td></tr>
+            <tr v-if="!reportPlans.length"><td colspan="9">Sin acciones o brechas registradas.</td></tr>
           </tbody></table></div>
         </section>
 
         <section class="report-step" data-report-step="5" aria-labelledby="report-step-5">
           <h2 id="report-step-5">Paso 5: Monitoreo y Revisión</h2>
-          <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:24%"><col style="width:18%"><col style="width:12%"><col style="width:18%"><col style="width:8%"><col style="width:20%"></colgroup><thead><tr><th>Indicador</th><th>Acción en seguimiento</th><th>Cambio</th><th>Medidas correctivas</th><th>Próxima revisión</th><th>Comentarios</th></tr></thead><tbody>
-            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.title }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td>{{ changeLabel(ind.indicatorChange) }}</td><td class="report-text">{{ reviewBullets(ind.correctiveMeasures) || '—' }}</td><td>{{ formatDate(ind.nextReviewDate) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.monitoringComments) || '—' }}</td></tr>
-            <tr v-if="!reportPlans.length"><td colspan="6">Sin acciones en seguimiento.</td></tr>
+          <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:8%"><col style="width:16%"><col style="width:18%"><col style="width:12%"><col style="width:18%"><col style="width:8%"><col style="width:20%"></colgroup><thead><tr><th>Módulo</th><th>Indicador</th><th>Acción en seguimiento</th><th>Cambio</th><th>Medidas correctivas</th><th>Próxima revisión</th><th>Comentarios</th></tr></thead><tbody>
+            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td>{{ changeLabel(ind.indicatorChange) }}</td><td class="report-text">{{ reviewBullets(ind.correctiveMeasures) || '—' }}</td><td>{{ formatDate(ind.nextReviewDate) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.monitoringComments) || '—' }}</td></tr>
+            <tr v-if="!reportPlans.length"><td colspan="7">Sin acciones en seguimiento.</td></tr>
           </tbody></table></div>
           <template v-if="reportPlans.some(ind => ind.history?.length)">
             <h3>Historial de revisiones</h3>
-            <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:24%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:14%"><col style="width:14%"><col style="width:12%"></colgroup><thead><tr><th>Indicador</th><th>Revisión / próxima</th><th>Cambio</th><th>Responsables</th><th>Acción</th><th>Medidas</th><th>Comentarios</th></tr></thead><tbody>
-              <template v-for="ind in reportPlans" :key="ind.id"><tr v-for="(entry, index) in ind.history || []" :key="index"><td>{{ ind.title }}</td><td>{{ new Date(entry.recordedAt).toLocaleString('es') }}<p>Próxima: {{ formatDate(entry.nextReviewDate) || '—' }}</p></td><td>{{ changeLabel(entry.indicatorChange) }}</td><td class="report-text">{{ reviewHistoryText(entry, 'responsible') }}</td><td class="report-text">{{ reviewBullets(entry.action) || '—' }}</td><td class="report-text">{{ reviewHistoryText(entry, 'correctiveMeasures') }}</td><td class="report-text">{{ reviewHistoryText(entry, 'monitoringComments') }}</td></tr></template>
+            <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:8%"><col style="width:16%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:14%"><col style="width:14%"><col style="width:12%"></colgroup><thead><tr><th>Módulo</th><th>Indicador</th><th>Revisión / próxima</th><th>Cambio</th><th>Responsables</th><th>Acción</th><th>Medidas</th><th>Comentarios</th></tr></thead><tbody>
+              <template v-for="ind in reportPlans" :key="ind.id"><tr v-for="(entry, index) in ind.history || []" :key="index"><td>{{ ind.module }}</td><td>{{ ind.title }}</td><td>{{ new Date(entry.recordedAt).toLocaleString('es') }}<p>Próxima: {{ formatDate(entry.nextReviewDate) || '—' }}</p></td><td>{{ changeLabel(entry.indicatorChange) }}</td><td class="report-text">{{ reviewHistoryText(entry, 'responsible') }}</td><td class="report-text">{{ reviewBullets(entry.action) || '—' }}</td><td class="report-text">{{ reviewHistoryText(entry, 'correctiveMeasures') }}</td><td class="report-text">{{ reviewHistoryText(entry, 'monitoringComments') }}</td></tr></template>
             </tbody></table></div>
           </template>
         </section>
@@ -2046,6 +2024,7 @@
           <p>Cobertura: {{ answeredCount }}/{{ totalVisibleIndicators }} ({{ progressPercentage }}%). Cumplimiento de los respondidos: {{ answeredCount ? overallCompliance + '%' : 'Sin evaluar' }}. Valoración: {{ facilityValuation.label }}.</p>
           <table><thead><tr><th>Dominio</th><th>Indicadores</th><th>Respondidos</th><th>Puntos</th><th>Cumplimiento de respondidos</th></tr></thead><tbody><tr v-for="mod in modulesList" :key="mod.id"><td>{{ mod.name }}</td><td>{{ getModuleTotalCount(mod.id) }}</td><td>{{ getModuleAnsweredCount(mod.id) }}</td><td>{{ getModuleScoreAchieved(mod.id) }}</td><td>{{ getModuleAnsweredCount(mod.id) ? getModulePercentage(mod.id) + '%' : 'Sin evaluar' }}</td></tr></tbody></table>
           <h3>Servicios JMP</h3><table><thead><tr><th>Agua</th><th>Saneamiento</th><th>Residuos</th><th>Higiene</th><th>Limpieza</th></tr></thead><tbody><tr><td>{{ jmpCalculatedStatus.water.status }}</td><td>{{ jmpCalculatedStatus.sanitation.status }}</td><td>{{ jmpCalculatedStatus.waste.status }}</td><td>{{ jmpCalculatedStatus.hygiene.status }}</td><td>{{ jmpCalculatedStatus.cleaning.status }}</td></tr></tbody></table>
+        <figure class="report-radar"><h3>Porcentaje de desempeño por dominio (Radar)</h3><div v-html="reportRadarSvg"></div><figcaption>Cumplimiento de los indicadores respondidos. Los dominios pendientes se muestran como Sin evaluar.</figcaption></figure>
         </section>
       </div>
     </section>
@@ -2058,6 +2037,7 @@
   <script src="js/storage.js"></script>
   <script src="vendor/pdfmake.min.js"></script>
   <script src="vendor/vfs_fonts.js"></script>
+  <script src="js/report-radar.js"></script>
   <script src="js/pdf-report.js"></script>
   <script src="js/drive-archive.js"></script>
   <script src="js/app.js"></script>
