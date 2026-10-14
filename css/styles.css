@@ -193,3 +193,27 @@ button, [role=button], summary { cursor: pointer; }
   .view-title { padding: 14px 16px; background: #F0F5FA; border: 1px solid #D5E1ED; border-left: 4px solid #004C97; border-radius: 6px; }
   .view-title h2 { color: #153D6A; font-size: 1rem; font-weight: 800; line-height: 1.5; }
 }
+
+/* Barre de cumplimiento y acciones con etiquetas visibles. */
+.header-controls { width: 100%; min-width: 0; }
+.compliance-status { width: 100%; flex: 1; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; gap: .4rem 1rem; }
+.compliance-value { flex-wrap: wrap; white-space: normal; }
+.compliance-value > span:nth-child(2) { font-size: .875rem; }
+.compliance-value > span:last-child { font-size: 1.25rem; margin-left: .25rem; }
+.evaluation-actions { gap: .75rem; }
+.evaluation-actions button { width: auto; min-height: 44px; padding: .6rem .75rem; gap: .5rem; border: 1px solid #D5E1ED; background: #F7F9FB; font-size: .75rem; font-weight: 700; text-align: left; }
+.evaluation-actions svg { width: 24px; height: 24px; flex-shrink: 0; }
+.draft-status { grid-column: 2; }
+.domain-banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.5rem; }
+.domain-banner h3 { font-size: 1.25rem; line-height: 1.4; }
+.domain-progress { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; flex-shrink: 0; }
+.domain-progress > div { min-width: 0; }
+@media (max-width: 767px) {
+  .evaluation-actions { flex-direction: column; gap: .4rem; max-width: 190px; }
+  .evaluation-actions button { font-size: .6875rem; padding: .5rem; justify-content: flex-start; }
+  .compliance-status { column-gap: .75rem; }
+  .compliance-value > span:nth-child(2) { font-size: .75rem; }
+  .domain-banner { flex-direction: column; align-items: stretch; padding: 1rem; }
+  .domain-banner h3 { font-size: 1.125rem; }
+  .domain-progress { justify-content: space-around; }
+}
