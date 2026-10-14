@@ -1990,48 +1990,40 @@
 
         <section class="report-step" data-report-step="2" aria-labelledby="report-step-2">
           <h2 id="report-step-2">Paso 2: Evaluación de la Situación</h2>
-          <table><thead><tr><th>Código / dominio</th><th>Indicador</th><th>Resultado</th><th>Hallazgos</th></tr></thead><tbody>
-            <tr v-for="ind in reportIndicators" :key="ind.id"><td>{{ ind.code }} / {{ ind.module }}</td><td>{{ ind.title }}</td><td>{{ getAssessmentResult(ind).label }}</td><td class="report-text">{{ ind.notes || '—' }}</td></tr>
+          <table class="report-assessment"><colgroup><col style="width:12%"><col style="width:60%"><col style="width:13%"><col style="width:15%"></colgroup><thead><tr><th>Dominio</th><th>Indicador</th><th>Resultado</th><th>Hallazgos</th></tr></thead><tbody>
+            <tr v-for="ind in reportIndicators" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}</td><td>{{ getAssessmentResult(ind).label }}</td><td class="report-text">{{ ind.notes || '—' }}</td></tr>
           </tbody></table>
         </section>
 
         <section class="report-step" data-report-step="3" aria-labelledby="report-step-3">
           <h2 id="report-step-3">Paso 3: Evaluación del Riesgo</h2>
           <p>Riesgo = gravedad + probabilidad (0–20).</p>
-          <table><thead><tr><th>Código / indicador</th><th>Resultado de situación</th><th>Problema</th><th>Riesgos asociados</th><th>Gravedad</th><th>Probabilidad</th><th>Riesgo</th></tr></thead><tbody>
-            <tr v-for="ind in reportRisks" :key="ind.id"><td>{{ ind.code }} · {{ ind.title }}</td><td>{{ getAssessmentResult(ind).label }}</td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ ind.associatedRisks || '—' }}</td><td>{{ ind.severity ?? '—' }}</td><td>{{ ind.likelihood ?? '—' }}</td><td>{{ calculateRiskScore(ind) ?? '—' }} · {{ getRiskLabel(calculateRiskScore(ind)) }}</td></tr>
+          <table><thead><tr><th>Indicador</th><th>Resultado de situación</th><th>Problema</th><th>Riesgos asociados</th><th>Gravedad</th><th>Probabilidad</th><th>Riesgo</th></tr></thead><tbody>
+            <tr v-for="ind in reportRisks" :key="ind.id"><td>{{ ind.title }}</td><td>{{ getAssessmentResult(ind).label }}</td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ ind.associatedRisks || '—' }}</td><td>{{ ind.severity ?? '—' }}</td><td>{{ ind.likelihood ?? '—' }}</td><td>{{ calculateRiskScore(ind) ?? '—' }} · {{ getRiskLabel(calculateRiskScore(ind)) }}</td></tr>
             <tr v-if="!reportRisks.length"><td colspan="7">Sin indicadores evaluados.</td></tr>
           </tbody></table>
         </section>
 
         <section class="report-step" data-report-step="4" aria-labelledby="report-step-4">
           <h2 id="report-step-4">Paso 4: Plan de Mejora</h2>
-          <article v-for="ind in reportPlans" :key="ind.id" class="report-plan">
-            <h3>{{ ind.code }} · {{ ind.title }}</h3><p>Resultado: {{ getAssessmentResult(ind).label }} · Riesgo: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p>
-            <p class="report-text"><strong>Problema:</strong> {{ ind.problemDesc || '—' }}</p>
-            <p class="report-text"><strong>Acción:</strong> {{ ind.action || '—' }}</p>
-            <p class="report-text"><strong>Recursos:</strong> {{ ind.resources || '—' }}</p>
-            <p class="report-text">Responsable: {{ getResponsibleName(ind) || 'Sin responsable' }} · Costo USD: {{ ind.cost === null ? '—' : formatThousands(ind.cost) }} · Plazo: {{ formatDate(ind.targetDate) || '—' }} · Estado: {{ getTrackingStatus(ind) }}</p>
-          </article>
-          <p v-if="!reportPlans.length">Sin acciones o brechas registradas.</p>
+          <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:26%"><col style="width:12%"><col style="width:17%"><col style="width:13%"><col style="width:12%"><col style="width:7%"><col style="width:5%"><col style="width:8%"></colgroup><thead><tr><th>Indicador / resultado / riesgo</th><th>Problema</th><th>Acción</th><th>Recursos</th><th>Responsables</th><th>Plazo</th><th>Costo USD</th><th>Estado</th></tr></thead><tbody>
+            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.title }}<p>{{ getAssessmentResult(ind).label }} · Riesgo: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p></td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.resources) || '—' }}</td><td class="report-text">{{ reviewBullets(getResponsibleName(ind)) || 'Sin responsable' }}</td><td>{{ formatDate(ind.targetDate) || '—' }}</td><td>{{ ind.cost === null ? '—' : formatThousands(ind.cost) }}</td><td>{{ getTrackingStatus(ind) }}</td></tr>
+            <tr v-if="!reportPlans.length"><td colspan="8">Sin acciones o brechas registradas.</td></tr>
+          </tbody></table></div>
         </section>
 
         <section class="report-step" data-report-step="5" aria-labelledby="report-step-5">
           <h2 id="report-step-5">Paso 5: Monitoreo y Revisión</h2>
-          <article v-for="ind in reportPlans" :key="ind.id" class="report-plan">
-            <h3>{{ ind.code }} · {{ ind.title }}</h3><p>Resultado: {{ getAssessmentResult(ind).label }}</p>
-            <p class="report-text"><strong>Acción en seguimiento:</strong> {{ ind.action || '—' }}</p>
-            <p>Cambio: {{ ind.indicatorChange === 'mejorado' ? 'Ha mejorado' : ind.indicatorChange === 'empeorado' ? 'Ha empeorado' : 'No ha cambiado' }} · Próxima revisión: {{ formatDate(ind.nextReviewDate) || '—' }}</p>
-            <p class="report-text"><strong>Medidas correctivas:</strong> {{ ind.correctiveMeasures || '—' }}</p>
-            <p class="report-text"><strong>Comentarios:</strong> {{ ind.monitoringComments || '—' }}</p>
-            <div v-for="(entry, index) in ind.history || []" :key="index" class="report-history">
-              <h4>Revisión {{ new Date(entry.recordedAt).toLocaleString('es') }}</h4><p class="report-text">Cambio: {{ changeLabel(entry.indicatorChange) }} · Responsable: {{ reviewBullets(entry.responsible) || 'Sin responsable' }}</p>
-              <p class="report-text">Acción: {{ reviewBullets(entry.action) || '—' }}
-Medidas: {{ reviewBullets(entry.correctiveMeasures) || '—' }}
-Comentarios: {{ reviewBullets(entry.monitoringComments) || '—' }}</p>
-            </div>
-          </article>
-          <p v-if="!reportPlans.length">Sin acciones en seguimiento.</p>
+          <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:24%"><col style="width:18%"><col style="width:12%"><col style="width:18%"><col style="width:8%"><col style="width:20%"></colgroup><thead><tr><th>Indicador</th><th>Acción en seguimiento</th><th>Cambio</th><th>Medidas correctivas</th><th>Próxima revisión</th><th>Comentarios</th></tr></thead><tbody>
+            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.title }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td>{{ changeLabel(ind.indicatorChange) }}</td><td class="report-text">{{ reviewBullets(ind.correctiveMeasures) || '—' }}</td><td>{{ formatDate(ind.nextReviewDate) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.monitoringComments) || '—' }}</td></tr>
+            <tr v-if="!reportPlans.length"><td colspan="6">Sin acciones en seguimiento.</td></tr>
+          </tbody></table></div>
+          <template v-if="reportPlans.some(ind => ind.history?.length)">
+            <h3>Historial de revisiones</h3>
+            <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:24%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:14%"><col style="width:14%"><col style="width:12%"></colgroup><thead><tr><th>Indicador</th><th>Revisión / próxima</th><th>Cambio</th><th>Responsables</th><th>Acción</th><th>Medidas</th><th>Comentarios</th></tr></thead><tbody>
+              <template v-for="ind in reportPlans" :key="ind.id"><tr v-for="(entry, index) in ind.history || []" :key="index"><td>{{ ind.title }}</td><td>{{ new Date(entry.recordedAt).toLocaleString('es') }}<p>Próxima: {{ formatDate(entry.nextReviewDate) || '—' }}</p></td><td>{{ changeLabel(entry.indicatorChange) }}</td><td class="report-text">{{ reviewBullets(entry.responsible) || 'Sin responsable' }}</td><td class="report-text">{{ reviewBullets(entry.action) || '—' }}</td><td class="report-text">{{ reviewBullets(entry.correctiveMeasures) || '—' }}</td><td class="report-text">{{ reviewBullets(entry.monitoringComments) || '—' }}</td></tr></template>
+            </tbody></table></div>
+          </template>
         </section>
 
         <section class="report-step" data-report-step="6" aria-labelledby="report-step-6">
