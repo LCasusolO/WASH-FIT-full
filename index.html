@@ -94,9 +94,9 @@
 
             <!-- Botón Contraer / Expandir -->
             <button @click="sidebarCollapsed = !sidebarCollapsed"
-                    class="hidden lg:flex items-center justify-center w-8 h-8 rounded transition-colors"
+                    class="flex items-center justify-center w-8 h-8 rounded transition-colors"
                     :class="sidebarCollapsed ? 'bg-paho-dark-blue text-white hover:bg-paho-very-dark-blue' : 'text-paho-gray-dark hover:bg-paho-gray-light'"
-                    title="Contraer / Expandir">
+                    title="Contraer / Expandir" :aria-label="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'" :aria-expanded="!sidebarCollapsed">
               <div class="transition-transform duration-300 transform" :class="sidebarCollapsed ? 'rotate-180' : ''">
                 <i data-lucide="chevron-left" class="w-4 h-4 block"></i>
               </div>
@@ -196,8 +196,7 @@
               <p>{{ driveLabel }}</p>
               <p v-if="lastArchive" class="mt-2">Última copia confirmada: {{ archiveTime }}</p>
             </div>
-            <div v-if="lastArchive" class="flex flex-wrap gap-3 text-sm"><a v-for="file in lastArchive.files" :key="file.id" :href="file.url" target="_blank" rel="noopener" class="underline" :title="file.name">{{ file.name.endsWith('.json') ? 'Ver JSON' : 'Ver PDF' }}</a></div>
-            <button v-if="archiveFailed" :disabled="archiveBusy" @click="retryArchive" title="Reintentar guardado en Drive" aria-label="Reintentar guardado en Drive"><i data-lucide="cloud-upload" class="w-4 h-4"></i><span>Reintentar Drive</span></button>
+            <button v-if="archiveFailed" :disabled="archiveBusy" @click="retryArchive" title="Reintentar guardado" aria-label="Reintentar guardado"><i data-lucide="cloud-upload" class="w-4 h-4"></i><span>Reintentar guardado</span></button>
             <button v-if="saveState === 'error'" @click="saveDraft()" title="Reintentar guardado" aria-label="Reintentar guardado"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span v-show="!sidebarCollapsed">Reintentar guardado</span></button>
             <button v-if="updateAvailable" @click="updateApplication" title="Guardar y actualizar aplicación" aria-label="Guardar y actualizar aplicación"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span v-show="!sidebarCollapsed">Guardar y actualizar aplicación</span></button>
           </div>
@@ -213,7 +212,7 @@
 
       <!-- TOP NAVIGATION BAR -->
       <header class="evaluation-header flex items-center justify-between gap-4 px-4 lg:px-10 py-3 border-b border-paho-grid bg-white z-20 no-print flex-shrink-0">
-        <div class="hidden lg:block">
+        <div class="view-title">
           <h2 class="text-xl font-extrabold text-paho-very-dark-blue tracking-tight">{{ getViewTitle }}</h2>
         </div>
 
@@ -1073,7 +1072,7 @@
 </td>
 
             <!-- Score de Riesgo Total (G + P: 0 a 20) -->
-            <td data-label="Riesgo ↓ ↑ ↕" class="py-5 px-4 text-center align-top bg-paho-card/40 border-l border-paho-grid" :title="getRiskMeaning(calculateRiskScore(ind))">
+            <td data-label="Riesgo" class="py-5 px-4 text-center align-top bg-paho-card/40 border-l border-paho-grid" :title="getRiskMeaning(calculateRiskScore(ind))">
               <div class="flex flex-col items-center">
                 <span :class="['text-sm font-extrabold px-3 py-1 border inline-block min-w-[42px]', getRiskColorClass(calculateRiskScore(ind))]">
                   {{ calculateRiskScore(ind) !== null ? calculateRiskScore(ind) : '—' }}
@@ -1186,6 +1185,8 @@
                 <h4 class="font-bold text-paho-dark-blue text-xs sm:text-[13px] leading-snug">
                   {{ ind.title }}
                 </h4>
+
+                <div class="assessment-result"><span data-assessment-badge :data-indicator-code="ind.code" :class="['inline-block px-3 py-1.5 text-[11px] font-bold border rounded-none', getAssessmentResult(ind).class]">{{ getAssessmentResult(ind).label }}</span></div>
 
                 <!-- 3. Nivel de Riesgo (Bajo / Medio / Alto) y Puntaje con "ptos" -->
                 <div class="pt-0.5">
@@ -1961,7 +1962,7 @@
         <button @click="reportPreview = false" :disabled="archiveBusy" class="border border-paho-grid px-4 py-2">Volver a la evaluación</button>
         <button @click="printReport" :disabled="archiveBusy" class="bg-paho-dark-blue text-white px-4 py-2">Imprimir / guardar PDF</button>
       </div>
-      <div v-if="archiveStatus" class="no-print p-4" role="status" aria-live="polite"><p>{{ archiveStatus }}</p><button v-if="archiveFailed" :disabled="archiveBusy" @click="retryArchive" class="text-paho-dark-blue underline">Reintentar guardado en Drive</button></div>
+      <div v-if="archiveStatus" class="no-print p-4" role="status" aria-live="polite"><p>{{ archiveStatus }}</p><button v-if="archiveFailed" :disabled="archiveBusy" @click="retryArchive" class="text-paho-dark-blue underline">Reintentar guardado</button></div>
       <div class="report-content">
         <h1>WASH FIT · Reporte consolidado</h1>
         <p>Generado: {{ new Date().toLocaleString('es') }} · Evaluación: {{ formatDate(generalInfo.evaluationDate) }}</p>
