@@ -188,3 +188,8 @@ button, [role=button], summary { cursor: pointer; }
   .evaluation-header { flex-direction: column; align-items: stretch; gap: .75rem; }
   .view-title h2 { font-size: 1rem; line-height: 1.4; }
 }
+
+@media (max-width: 1023px) {
+  .view-title { padding: 14px 16px; background: #F0F5FA; border: 1px solid #D5E1ED; border-left: 4px solid #004C97; border-radius: 6px; }
+  .view-title h2 { color: #153D6A; font-size: 1rem; font-weight: 800; line-height: 1.5; }
+}
