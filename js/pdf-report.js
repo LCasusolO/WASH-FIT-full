@@ -1,7 +1,7 @@
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'));
-  else root.WashPdf = factory(root.WashCore);
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (Core) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'), require('./report-radar.js'));
+  else root.WashPdf = factory(root.WashCore, root.WashRadar);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (Core, Radar) {
   const value = x => x === null || x === undefined || x === '' ? 'Sin registrar' : String(x);
   const line = (label, x) => ({text: [{text: label + ': ', bold: true}, value(x)], margin: [0, 3, 0, 3]});
   const risk = ind => ind.severity == null || ind.likelihood == null || ind.severity === '' || ind.likelihood === '' ? null : Number(ind.severity) + Number(ind.likelihood);
@@ -24,19 +24,20 @@
     step(2, 'Evaluación de la Situación');
     content.push(table(['Dominio', 'Indicador', 'Resultado', 'Hallazgos'], indicators.map(i => [i.module, i.title, Core.assessmentResult(i.score).label, value(i.notes)]), [80, '*', 85, 100]));
     step(3, 'Evaluación del Riesgo');
-    content.push({text: 'Riesgo = gravedad + probabilidad (0-20).'}, table(['Indicador', 'Resultado', 'Problema', 'Riesgos asociados', 'Gravedad', 'Probabilidad', 'Riesgo'], evaluated.map(i => [i.title, Core.assessmentResult(i.score).label, value(i.problemDesc), value(i.associatedRisks), value(i.severity), value(i.likelihood), riskText(i)]), ['*', 85, 130, 130, 45, 55, 65]));
+    content.push({text: 'Riesgo = gravedad + probabilidad (0-20).'}, table(['Módulo', 'Indicador', 'Resultado', 'Problema', 'Riesgos asociados', 'Gravedad', 'Probabilidad', 'Riesgo'], evaluated.map(i => [i.module, i.title, Core.assessmentResult(i.score).label, value(i.problemDesc), value(i.associatedRisks), value(i.severity), value(i.likelihood), riskText(i)]), [55, '*', 65, 115, 115, 40, 50, 55]));
     step(4, 'Plan de Mejora');
-    content.push(table(['Indicador / resultado / riesgo', 'Problema', 'Acción', 'Recursos', 'Responsables', 'Plazo', 'Costo USD', 'Estado'], plans.map(i => [i.title+'\n'+Core.assessmentResult(i.score).label+'\nRiesgo: '+riskText(i), value(i.problemDesc), value(Core.reviewBullets(i.action)), value(Core.reviewBullets(i.resources)), value(Core.reviewBullets(Core.responsibleName(i,g.team))), value(i.targetDate), value(i.cost), Core.trackingStatus(i)]), ['*',75,100,75,70,50,35,55]));
+    content.push(table(['Módulo', 'Indicador / resultado / riesgo', 'Problema', 'Acción', 'Recursos', 'Responsables', 'Plazo', 'Costo USD', 'Estado'], plans.map(i => [i.module,i.title+'\n'+Core.assessmentResult(i.score).label+'\nRiesgo: '+riskText(i), value(i.problemDesc), value(Core.reviewBullets(i.action)), value(Core.reviewBullets(i.resources)), value(Core.reviewBullets(Core.responsibleName(i,g.team))), value(i.targetDate), value(i.cost), Core.trackingStatus(i)]), [55,'*',65,85,65,65,50,35,50]));
     step(5, 'Monitoreo y Revisión');
-    content.push(table(['Indicador', 'Acción en seguimiento', 'Cambio', 'Medidas correctivas', 'Próxima revisión', 'Comentarios'], plans.map(i => [i.title,value(Core.reviewBullets(i.action)),Core.changeLabel(i.indicatorChange),value(Core.reviewBullets(i.correctiveMeasures)),value(i.nextReviewDate),value(Core.reviewBullets(i.monitoringComments))]), ['*',105,75,110,60,120]));
-    const history=plans.flatMap(i => (i.history || []).map(h => [i.title,new Date(h.recordedAt).toLocaleString('es-PE',{timeZone:'America/Lima'})+'\nPróxima: '+value(h.nextReviewDate),Core.changeLabel(h.indicatorChange),Core.reviewHistoryText(h,'responsible'),value(Core.reviewBullets(h.action)),Core.reviewHistoryText(h,'correctiveMeasures'),Core.reviewHistoryText(h,'monitoringComments')]));
-    if(history.length) content.push({text:'Historial de revisiones',style:'subheading'},table(['Indicador','Revisión / próxima','Cambio','Responsables','Acción','Medidas','Comentarios'],history,['*',85,70,70,90,90,90]));
+    content.push(table(['Módulo', 'Indicador', 'Acción en seguimiento', 'Cambio', 'Medidas correctivas', 'Próxima revisión', 'Comentarios'], plans.map(i => [i.module,i.title,value(Core.reviewBullets(i.action)),Core.changeLabel(i.indicatorChange),value(Core.reviewBullets(i.correctiveMeasures)),value(i.nextReviewDate),value(Core.reviewBullets(i.monitoringComments))]), [55,'*',90,65,100,60,100]));
+    const history=plans.flatMap(i => (i.history || []).map(h => [i.module,i.title,new Date(h.recordedAt).toLocaleString('es-PE',{timeZone:'America/Lima'})+'\nPróxima: '+value(h.nextReviewDate),Core.changeLabel(h.indicatorChange),Core.reviewHistoryText(h,'responsible'),value(Core.reviewBullets(h.action)),Core.reviewHistoryText(h,'correctiveMeasures'),Core.reviewHistoryText(h,'monitoringComments')]));
+    if(history.length) content.push({text:'Historial de revisiones',style:'subheading'},table(['Módulo','Indicador','Revisión / próxima','Cambio','Responsables','Acción','Medidas','Comentarios'],history,[55,'*',80,60,60,75,90,90]));
     step(6, 'Resumen');
     const compliance = evaluated.length ? Math.round(evaluated.reduce((n, i) => n + i.score, 0) / (evaluated.length * 2) * 100) : 0;
     content.push(line('Cobertura', `${evaluated.length}/${indicators.length}`), line('Cumplimiento Global', percent(evaluated)), line('Valoración', Core.valuation(evaluated.length, indicators.length, compliance).label));
     content.push(table(['Dominio', 'Indicadores', 'Respondidos', 'Puntos', 'Cumplimiento'], modules.map(m => { const all = indicators.filter(i => i.moduleId === m.id); const done = all.filter(i => i.score !== null); return [m.name, String(all.length), String(done.length), String(done.reduce((n, i) => n + i.score, 0)), percent(done)]; })));
     const jmp = Core.calculateJmp(g, dataset.indicators);
     content.push({text: 'Servicios JMP', style: 'subheading'}, table(['Agua', 'Saneamiento', 'Residuos', 'Higiene', 'Limpieza'], [[jmp.water.status, jmp.sanitation.status, jmp.waste.status, jmp.hygiene.status, jmp.cleaning.status]]));
+    content.push({stack:[{text:'Porcentaje de desempeño por dominio (Radar)',style:'subheading'},{svg:Radar.svg(indicators,modules),width:650,alignment:'center'},{text:'Cumplimiento de los indicadores respondidos. Los dominios pendientes se muestran como Sin evaluar.',fontSize:8}],unbreakable:true});
     return {info: {title: `WASH FIT - ${g.facilityName || 'Sin nombre'}`, subject: 'Reporte de evaluación WASH FIT'}, pageSize: 'A4', pageOrientation: 'landscape', pageMargins: [30, 30, 30, 35], defaultStyle: {font: 'Roboto', fontSize: 9}, styles: {title: {fontSize: 20, bold: true, color: '#004C97', margin: [0, 0, 0, 10]}, heading: {fontSize: 15, bold: true, color: '#004C97', margin: [0, 8, 0, 10]}, subheading: {fontSize: 11, bold: true, margin: [0, 10, 0, 5]}}, footer: (page, total) => ({text: `WASH FIT | ${page} / ${total}`, alignment: 'right', margin: [30, 0, 30, 0], fontSize: 8}), content};
   }
   return {definition};
