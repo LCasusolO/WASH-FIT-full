@@ -264,6 +264,11 @@
     if (score === 0) return { label: 'No Cumple', class: 'bg-rose-50 text-rose-700 border-rose-300' };
     return { label: 'Sin evaluar', class: 'bg-gray-50 text-gray-600 border-gray-300' };
   }
+  function assessmentComplete(indicator) {
+    if ([0, 1, 2].includes(indicator.score)) return true;
+    const match = String(indicator.notes || '').trim().match(/^INDICADOR\s+NO\s+APLICA\s+XQ\s*:?[ \t]+([\s\S]+)$/i);
+    return Boolean(match && /\p{L}/u.test(match[1]));
+  }
   function responsibleName(indicator, team) {
     return team.find(member => member.id === indicator.responsibleId)?.name || indicator.responsible || '';
   }
@@ -309,5 +314,5 @@
     const added = field === 'correctiveMeasures' ? changes.newCorrectiveMeasures : changes.newMonitoringComments;
     return (added ? 'Nuevo en esta revisión:\n' + reviewBullets(added) : 'Sin información nueva en esta revisión.') + '\n\nAcumulado:\n' + full;
   }
-  return { bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });
