@@ -492,15 +492,32 @@ createApp({
       return Math.round((score / (answered * 2)) * 100);
     };
 
+    const assessmentAttempted = ref(false);
+    const assessmentPending = computed(() => getFilteredIndicatorsByModule.value.filter(ind => !WashCore.assessmentComplete(ind)));
+    const assessmentInvalid = ind => assessmentAttempted.value && !WashCore.assessmentComplete(ind);
+    const validateAssessmentDomain = () => {
+      assessmentAttempted.value = true;
+      if (!assessmentPending.value.length) return true;
+      triggerToast('Complete los indicadores pendientes o escriba INDICADOR NO APLICA XQ seguido del motivo en sus hallazgos.', 'error');
+      nextTick(() => {
+        const field = document.getElementById('assessment-notes-' + assessmentPending.value[0]?.id);
+        field?.scrollIntoView({block: 'center', behavior: 'smooth'});
+        field?.focus({preventScroll: true});
+      });
+      return false;
+    };
+    const selectAssessmentModule = moduleId => {
+      if (moduleId === activeModuleTab.value || !modulesList.some(mod => mod.id === moduleId)) return;
+      if (!validateAssessmentDomain()) return;
+      activeModuleTab.value = moduleId;
+      assessmentAttempted.value = false;
+      window.scrollTo({top: 0, behavior: 'smooth'});
+      nextTick(() => window.lucide?.createIcons());
+    };
     const navigateNextModule = () => {
       const currentIndex = modulesList.findIndex(d => d.id === activeModuleTab.value);
       const nextIndex = (currentIndex + 1) % modulesList.length;
-      activeModuleTab.value = modulesList[nextIndex].id;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      triggerToast(`Navegando al módulo: ${modulesList[nextIndex].name}`, 'success');
-      nextTick(() => {
-        if (window.lucide) window.lucide.createIcons();
-      });
+      selectAssessmentModule(modulesList[nextIndex].id);
     };
 
     const clearCurrentModule = () => {
@@ -819,6 +836,7 @@ createApp({
     };
 
     const switchView = (viewName) => {
+      if (activeView.value === 'assessment' && ['step3', 'step4', 'step5', 'dashboard'].includes(viewName) && !validateAssessmentDomain()) return;
       activeView.value = viewName;
       mobileMenuOpen.value = false;
 
@@ -1132,7 +1150,7 @@ createApp({
       getModuleAnsweredCount,
       getModuleScoreAchieved,
       getModulePercentage,
-      navigateNextModule,
+      navigateNextModule, selectAssessmentModule, assessmentPending, assessmentInvalid, assessmentAttempted,
       addTeamMember,
       confirmTeamMember,
       editTeamMember,

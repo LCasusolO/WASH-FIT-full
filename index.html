@@ -712,7 +712,7 @@
 
             <!-- Tabbed Sub-navigation -->
             <div class="bg-paho-card p-2 border border-paho-grid flex flex-wrap gap-1.5 no-print">
-              <button v-for="mod in modulesList" :key="mod.id" @click="activeModuleTab = mod.id"
+              <button v-for="mod in modulesList" :key="mod.id" @click="selectAssessmentModule(mod.id)"
                       :class="['flex items-center gap-2 px-4 py-3 font-bold text-xs transition-all duration-150 border rounded-none', activeModuleTab === mod.id ? 'bg-paho-dark-blue text-white border-paho-dark-blue' : 'text-paho-gray-dark bg-white border-paho-grid hover:bg-paho-card']">
                 <span class="w-2.5 h-2.5 rounded-full" :class="mod.color"></span>
                 <span>{{ mod.name }}</span>
@@ -740,6 +740,9 @@
                 </div>
               </div>
             </div>
+
+            <p class="text-sm text-paho-gray-dark">Antes de cambiar de dominio, seleccione Cumple, Cumple Parcialmente o No Cumple en cada indicador. Si no aplica, escriba en sus hallazgos: <strong>INDICADOR NO APLICA XQ</strong> seguido del motivo.</p>
+            <p v-if="assessmentAttempted && assessmentPending.length" role="alert" class="border border-red-300 bg-red-50 p-4 text-sm text-red-700">Hay {{ assessmentPending.length }} indicador(es) pendiente(s). Complete una respuesta o justifique por qué no aplica para continuar.</p>
 
             <!-- Indicators List -->
             <div class="space-y-6">
@@ -826,8 +829,9 @@
                     </div>
 
                     <div class="space-y-1.5 w-full">
-                      <label class="text-[10px] font-bold text-paho-gray-dark uppercase tracking-wider block">Comentarios de Campo / Hallazgos</label>
-                      <input aria-label="Comentarios de campo" type="text" v-model="ind.notes" placeholder="Describa el estado, fecha o condiciones..." class="w-full px-4 py-2.5 text-xs border border-paho-grid bg-white focus:outline-none focus:border-paho-blue text-paho-gray-dark rounded-none">
+                      <label :for="'assessment-notes-' + ind.id" class="text-[10px] font-bold text-paho-gray-dark uppercase tracking-wider block">Comentarios de Campo / Hallazgos</label>
+                      <input :id="'assessment-notes-' + ind.id" aria-label="Comentarios de campo" :aria-invalid="assessmentInvalid(ind) ? 'true' : undefined" :aria-describedby="assessmentInvalid(ind) ? 'assessment-error-' + ind.id : undefined" type="text" v-model="ind.notes" :placeholder="ind.score === null ? 'INDICADOR NO APLICA XQ (escriba el motivo), si corresponde' : 'Describa el estado, fecha o condiciones...'" class="w-full px-4 py-2.5 text-xs border border-paho-grid bg-white focus:outline-none focus:border-paho-blue text-paho-gray-dark rounded-none">
+                      <p v-if="assessmentInvalid(ind)" :id="'assessment-error-' + ind.id" class="text-xs text-red-700">Seleccione una respuesta o escriba «INDICADOR NO APLICA XQ» seguido de un motivo. No basta con dejar puntos suspensivos.</p>
                     </div>
                   </div>
 
