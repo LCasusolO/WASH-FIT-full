@@ -757,36 +757,25 @@ createApp({
     const archiveTime = computed(() => lastArchive.value ? new Date(lastArchive.value.savedAt).toLocaleString('es') : '');
     onMounted(async () => {try { lastArchive.value = await store.read('lastArchive'); } catch (_) {} });
     let archiveJob = null;
-    const createArchiveJob = async dataset => {
-      const visibleCodes = dataset.indicators.filter(shouldShowIndicator).map(i => i.code);
-      const pdfData = WashCore.clone(dataset);
-      // Validar y limitar las imágenes evita bloquear el PDF con evidencias dañadas.
-      for (const photo of pdfData.generalInfo.photos) {
-        photo.url = await new Promise((resolve, reject) => {
-          const image = new Image();
-          image.onload = () => {
-            const scale = Math.min(1, 1200 / Math.max(image.width, image.height));
-            const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(image.width * scale)); canvas.height = Math.max(1, Math.round(image.height * scale));
-            const context = canvas.getContext('2d'); context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', .9));
-          };
-          image.onerror = () => reject(new Error('No se pudo incluir una fotografía en el PDF.'));
-          image.src = photo.url;
-        });
-      }
-      const definition = WashPdf.definition(pdfData, visibleCodes, modulesList);
-      const pdf = await new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error('No se pudo preparar el PDF a tiempo. Reintente el guardado.')), 60000);
-        try { pdfMake.createPdf(definition).getBlob(blob => { clearTimeout(timer); resolve(blob); }); } catch (error) { clearTimeout(timer); reject(error); }
-      });
+    const createArchiveJob = async (dataset, html) => {
+      const wasPreview = reportPreview.value;
+      reportPreview.value = true;
+      let pdf;
+      try {
+        await nextTick();
+        await prepareReportMap();
+        archiveStatus.value = 'Generando PDF con Chrome…';
+        pdf = await WashChrome.generate(html || await WashChrome.serialize(document.querySelector('.report-content'), WashCore.fileBaseName(dataset.generalInfo)));
+      } finally { reportPreview.value = wasPreview; }
       return {dataset, json: new Blob([JSON.stringify(dataset, null, 2)], {type: 'application/json'}), pdf};
     };
-    const runArchive = async dataset => {
+    const runArchive = async (dataset, html) => {
       if (archiveBusy.value) return false;
       archiveBusy.value = true;
       archiveFailed.value = false;
       archiveStatus.value = 'Preparando evaluación…';
       try {
-        if (dataset) { archiveJob = null; archiveJob = await createArchiveJob(dataset); }
+        if (dataset) { archiveJob = null; archiveJob = await createArchiveJob(dataset, html); }
         if (!archiveJob) throw new Error('No hay una evaluación pendiente. Vuelva a Exportar.');
         const result = await WashArchive.save(archiveJob, text => { archiveStatus.value = text; });
         lastArchive.value = {savedAt: result.savedAt, files: result.files, fingerprint: archiveFingerprint(archiveJob.dataset)};
@@ -857,11 +846,11 @@ createApp({
       reportPreview.value = true;
       await nextTick();
       await prepareReportMap();
-      await runArchive(dataset);
-      const previousTitle = document.title;
-      document.title = WashCore.fileBaseName(dataset.generalInfo);
-      window.addEventListener('afterprint', () => { document.title = previousTitle; }, {once: true});
-      window.print();
+      try {
+        const html = await WashChrome.serialize(document.querySelector('.report-content'), WashCore.fileBaseName(dataset.generalInfo));
+        await runArchive(dataset, html);
+        await WashChrome.print(html);
+      } catch (error) { triggerToast(error.message || 'No se pudo preparar la impresión.', 'error'); }
     };
     const bulletValue = value => value || '';
     const focusBulletField = event => { if (!event.target.value) { event.target.value = '• '; event.target.setSelectionRange(2, 2); } };
@@ -951,7 +940,7 @@ createApp({
       if (!window.L || !Number.isFinite(latitude) || !Number.isFinite(longitude) || !document.getElementById('report-map')) return;
       if (!reportMap) {
         reportMap = L.map('report-map', { zoomControl: false }).setView([latitude, longitude], 14);
-        const layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' });
+        const layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', crossOrigin: true });
         reportTilesReady = new Promise(resolve => { layer.once('load', resolve); setTimeout(resolve, 2000); });
         layer.addTo(reportMap);
         reportMarker = L.marker([latitude, longitude]).addTo(reportMap);

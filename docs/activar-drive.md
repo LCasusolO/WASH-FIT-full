@@ -41,4 +41,8 @@ El PDF se genera directamente con datos de la misma captura que el JSON. Separa 
 
 Se prueban la generación del PDF, la falta de configuración, los orígenes, el aislamiento de credenciales, la comprobación del par y un reintento que omite el JSON ya guardado. Las llamadas de Drive se simulan en las pruebas: no sustituyen la comprobación final con credenciales reales. Hasta que se configure la autorización del propietario y se verifiquen ambos archivos reales, el guardado automático no se considera activado.
 
-Fuentes: [subidas reanudables de Drive](https://developers.google.com/workspace/drive/api/guides/manage-uploads), [OAuth para servidores](https://developers.google.com/identity/protocols/oauth2/web-server), [pdfmake en navegador](https://pdfmake.github.io/docs/0.1/getting-started/client-side/).
+Fuentes: [subidas reanudables de Drive](https://developers.google.com/workspace/drive/api/guides/manage-uploads), [OAuth para servidores](https://developers.google.com/identity/protocols/oauth2/web-server), [Chromium para funciones de servidor](https://github.com/Sparticuz/chromium).
+
+## PDF con Chrome
+
+La impresión y el archivo central usan el mismo reporte HTML y sus estilos de impresión. `/api/chrome-report` lo convierte en PDF con Chromium, incluyendo mapa y radar. El reporte viaja comprimido y sus imágenes están incorporadas; el renderizador no ejecuta JavaScript ni accede a la red. Se admite hasta 4 MB por solicitud comprimida y por PDF (límite de las funciones de Vercel); si se supera, reduzca las fotografías. Una falla no produce un PDF alternativo. Los PDF ya almacenados se actualizan al volver a exportar la evaluación. Para probar localmente, configure `WASH_APP_ORIGIN` y `WASH_CHROME_EXECUTABLE` con la ruta de Chrome.
