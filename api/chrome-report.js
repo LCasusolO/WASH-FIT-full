@@ -41,7 +41,7 @@ function createHandler({env = process.env, renderPdf = html => render(html, env)
       if (pdf.length > 4 * 1024 * 1024) return res.status(413).json({error: 'El PDF supera el tamaño permitido. Reduzca el tamaño de las fotografías y reintente.'});
       res.setHeader('Content-Type', 'application/pdf');
       return res.status(200).end(pdf);
-    } catch (_) { return res.status(502).json({error: 'No se pudo generar el PDF con Chrome. Reintente el guardado.'}); }
+    } catch (error) { console.error('Chrome PDF generation failed:', error.message); return res.status(502).json({error: 'No se pudo generar el PDF con Chrome. Reintente el guardado.'}); }
   };
 }
 module.exports = createHandler();
