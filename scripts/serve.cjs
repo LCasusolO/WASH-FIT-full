@@ -5,15 +5,16 @@ const root = process.cwd();
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.json': 'application/json' };
 http.createServer((req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
-  if (pathname === '/api/drive-archive') {
+  if (['/api/drive-archive', '/api/chrome-report'].includes(pathname)) {
+    const limit = pathname === '/api/chrome-report' ? 4 * 1024 * 1024 : 2 * 1024 * 1024;
     const chunks = []; let size = 0;
-    req.on('data', chunk => { size += chunk.length; if (size <= 2 * 1024 * 1024) chunks.push(chunk); });
+    req.on('data', chunk => { size += chunk.length; if (size <= limit) chunks.push(chunk); });
     req.on('end', async () => {
       res.status = code => {res.statusCode = code; return res;};
       res.json = data => {res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(data));};
-      if (size > 2 * 1024 * 1024) return res.status(413).json({error:'Solicitud demasiado grande.'});
+      if (size > limit) return res.status(413).json({error:'Solicitud demasiado grande.'});
       req.body = Buffer.concat(chunks).toString();
-      await require('../api/drive-archive.js')(req, res);
+      await require('..' + pathname + '.js')(req, res);
     });
     return;
   }
