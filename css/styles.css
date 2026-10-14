@@ -217,3 +217,8 @@ button, [role=button], summary { cursor: pointer; }
   .domain-banner h3 { font-size: 1.125rem; }
   .domain-progress { justify-content: space-around; }
 }
+
+.review-additions h3 { font-size: .875rem; font-weight: 800; margin-bottom: .75rem; color: #153D6A; }
+.review-previous { padding: 12px 16px; margin-bottom: 12px; border: 1px solid #D5E1ED; background: #F7F9FB; }
+.review-previous h4 { font-size: .75rem; font-weight: 700; color: #4D4D4D; margin-bottom: .4rem; }
+.review-previous p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .875rem; line-height: 1.5; }

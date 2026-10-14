@@ -264,13 +264,24 @@
     indicator.history = [...(indicator.history || []), snapshot];
     return snapshot;
   }
+  function createReviewDraft(indicator, team) {
+    const previous = indicator.history?.at(-1);
+    return {indicatorChange: indicator.indicatorChange || 'sin_cambios', responsible: reviewBullets(previous ? previous.responsible || '' : responsibleName(indicator, team)), previousCorrectiveMeasures: indicator.correctiveMeasures || previous?.correctiveMeasures || '', previousMonitoringComments: indicator.monitoringComments || previous?.monitoringComments || '', newCorrectiveMeasures: '', newMonitoringComments: '', nextReviewDate: indicator.nextReviewDate || ''};
+  }
+  function appendReviewText(previous, addition) {
+    const added = reviewBullets(addition).replace(/^•(?:[ \t]*•)+[ \t]*/gm, '• ');
+    if (!added) return previous || '';
+    return previous ? previous + (previous.endsWith('\n') ? '' : '\n') + added : added;
+  }
   function saveReviewDraft(indicator, draft, team, now = new Date().toISOString()) {
     const candidate = clone(indicator);
     for (const field of ['indicatorChange', 'responsible', 'correctiveMeasures', 'monitoringComments', 'nextReviewDate']) candidate[field] = draft[field];
+    if (Object.hasOwn(draft, 'newCorrectiveMeasures')) candidate.correctiveMeasures = appendReviewText(indicator.correctiveMeasures || indicator.history?.at(-1)?.correctiveMeasures || '', draft.newCorrectiveMeasures);
+    if (Object.hasOwn(draft, 'newMonitoringComments')) candidate.monitoringComments = appendReviewText(indicator.monitoringComments || indicator.history?.at(-1)?.monitoringComments || '', draft.newMonitoringComments);
     recordReview(candidate, team, now);
     candidate.history.at(-1).trackingStatus = indicator.trackingStatus || 'No Iniciado';
     Object.assign(indicator, candidate);
     return candidate.history.at(-1);
   }
-  return { saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });
