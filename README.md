@@ -69,7 +69,7 @@ Se aclararon límites de respuesta de `A_2`, `A_3`, `A_8` y `RES_2`, y se corrig
 
 ## Repositorio central de Google Drive
 
-Exportar e Imprimir reporte preparan el JSON y un PDF de seis pasos desde una misma captura y los envían a la carpeta configurada. La aplicación confirma ambos archivos en Drive antes de anunciar el guardado. Si falla, conserva el par pendiente en memoria y permite reintentar sin duplicar los archivos confirmados. La descarga local de JSON y la impresión siguen disponibles.
+Exportar e Imprimir reporte preparan el JSON y un PDF de seis pasos desde una misma captura y los envían a la carpeta configurada. Cada guardado busca en la carpeta el nombre de país/establecimiento y tipo de archivo. Si existe, actualiza el mismo ID; si no, lo crea. Ante duplicados anteriores, actualiza la copia más antigua sin borrar las demás. La aplicación confirma ambos archivos en Drive antes de anunciar el guardado. Si falla, conserva el par pendiente en memoria y permite reintentar sin duplicar los archivos confirmados. La descarga local de JSON y la impresión siguen disponibles.
 
 La subida requiere autorización del propietario en el servidor de Vercel. No usa la conexión Drive de un chat, y los visitantes no necesitan iniciar sesión con Google. Consulte [activar el repositorio](docs/activar-drive.md). Hasta completar esa configuración y una prueba real, el repositorio no está activado. El PDF archivado conserva coordenadas y enlace al mapa; los mosaicos interactivos permanecen en la vista previa.
 
