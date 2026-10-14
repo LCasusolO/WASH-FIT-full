@@ -159,7 +159,13 @@
       if (item.history !== undefined && (!Array.isArray(item.history) || item.history.length > 200)) throw new Error('Historial inválido o demasiado grande.');
       normalized.history = (item.history || []).map(entry => {
         if (!isObject(entry) || typeof entry.recordedAt !== 'string' || !Number.isFinite(Date.parse(entry.recordedAt))) throw new Error('Fecha del historial inválida.');
-        return { recordedAt: entry.recordedAt, ...answer(entry) };
+        const result = { recordedAt: entry.recordedAt, ...answer(entry) };
+        if (entry.reviewChanges !== undefined) {
+          const changes = entry.reviewChanges;
+          if (!isObject(changes) || typeof changes.responsibleChanged !== 'boolean') throw new Error('Cambios de revisión inválidos.');
+          result.reviewChanges = {responsibleChanged: changes.responsibleChanged, previousResponsible: text(changes.previousResponsible, 'responsable anterior'), newCorrectiveMeasures: text(changes.newCorrectiveMeasures, 'nueva medida correctiva'), newMonitoringComments: text(changes.newMonitoringComments, 'nuevo comentario')};
+        }
+        return result;
       });
       if (!normalized.responsibleId && normalized.responsible) {
         const matches = generalInfo.team.filter(member => member.name === normalized.responsible);
@@ -266,7 +272,7 @@
   }
   function createReviewDraft(indicator, team) {
     const previous = indicator.history?.at(-1);
-    return {indicatorChange: indicator.indicatorChange || 'sin_cambios', responsible: reviewBullets(previous ? previous.responsible || '' : responsibleName(indicator, team)), previousCorrectiveMeasures: indicator.correctiveMeasures || previous?.correctiveMeasures || '', previousMonitoringComments: indicator.monitoringComments || previous?.monitoringComments || '', newCorrectiveMeasures: '', newMonitoringComments: '', nextReviewDate: indicator.nextReviewDate || ''};
+    return {indicatorChange: indicator.indicatorChange || 'sin_cambios', responsible: reviewBullets(responsibleName(indicator, team)), previousCorrectiveMeasures: indicator.correctiveMeasures || previous?.correctiveMeasures || '', previousMonitoringComments: indicator.monitoringComments || previous?.monitoringComments || '', newCorrectiveMeasures: '', newMonitoringComments: '', nextReviewDate: indicator.nextReviewDate || ''};
   }
   function appendReviewText(previous, addition) {
     const added = reviewBullets(addition).replace(/^•(?:[ \t]*•)+[ \t]*/gm, '• ');
@@ -275,13 +281,25 @@
   }
   function saveReviewDraft(indicator, draft, team, now = new Date().toISOString()) {
     const candidate = clone(indicator);
-    for (const field of ['indicatorChange', 'responsible', 'correctiveMeasures', 'monitoringComments', 'nextReviewDate']) candidate[field] = draft[field];
+    for (const field of ['indicatorChange', 'correctiveMeasures', 'monitoringComments', 'nextReviewDate']) candidate[field] = draft[field];
     if (Object.hasOwn(draft, 'newCorrectiveMeasures')) candidate.correctiveMeasures = appendReviewText(indicator.correctiveMeasures || indicator.history?.at(-1)?.correctiveMeasures || '', draft.newCorrectiveMeasures);
     if (Object.hasOwn(draft, 'newMonitoringComments')) candidate.monitoringComments = appendReviewText(indicator.monitoringComments || indicator.history?.at(-1)?.monitoringComments || '', draft.newMonitoringComments);
     recordReview(candidate, team, now);
-    candidate.history.at(-1).trackingStatus = indicator.trackingStatus || 'No Iniciado';
+    const entry = candidate.history.at(-1);
+    entry.trackingStatus = indicator.trackingStatus || 'No Iniciado';
+    entry.responsible = text(draft.responsible, 'responsable de revisión');
+    entry.responsibleId = '';
+    entry.reviewChanges = {responsibleChanged: reviewBullets(entry.responsible) !== reviewBullets(responsibleName(indicator, team)), previousResponsible: responsibleName(indicator, team), newCorrectiveMeasures: reviewBullets(draft.newCorrectiveMeasures || '').replace(/^•(?:[ \t]*•)+[ \t]*/gm, '• '), newMonitoringComments: reviewBullets(draft.newMonitoringComments || '').replace(/^•(?:[ \t]*•)+[ \t]*/gm, '• ')};
     Object.assign(indicator, candidate);
     return candidate.history.at(-1);
   }
-  return { createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  function reviewHistoryText(entry, field) {
+    const full = reviewBullets(entry[field]) || '—';
+    const changes = entry.reviewChanges;
+    if (!changes) return full;
+    if (field === 'responsible') return (changes.responsibleChanged ? 'Modificados en esta revisión:\n' : 'Del Plan de mejora:\n') + full;
+    const added = field === 'correctiveMeasures' ? changes.newCorrectiveMeasures : changes.newMonitoringComments;
+    return (added ? 'Nuevo en esta revisión:\n' + reviewBullets(added) : 'Sin información nueva en esta revisión.') + '\n\nAcumulado:\n' + full;
+  }
+  return { reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });

@@ -1088,7 +1088,7 @@ createApp({
       loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile, updateAvailable, updateApplication,
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
       populationWarning, reportPreview, reportIndicators, reportRisks, reportPlans,
-      getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview, bulletValue, focusBulletField, updateBulletField, enterBulletField, blurBulletField, reviewBullets: WashCore.reviewBullets, changeLabel: WashCore.changeLabel,
+      getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview, bulletValue, focusBulletField, updateBulletField, enterBulletField, blurBulletField, reviewHistoryText: WashCore.reviewHistoryText, reviewBullets: WashCore.reviewBullets, changeLabel: WashCore.changeLabel,
       reviewIndicator, reviewDraft, reviewError, reviewSaving, latestReview, openNewReview, closeReviewEditor, saveNewReview, historyIndicator, openHistoryDialog, closeHistoryDialog,
       activeView,
       activeModuleTab,
