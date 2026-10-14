@@ -498,7 +498,7 @@ createApp({
     const validateAssessmentDomain = () => {
       assessmentAttempted.value = true;
       if (!assessmentPending.value.length) return true;
-      triggerToast('Complete los indicadores pendientes o escriba INDICADOR NO APLICA XQ seguido del motivo en sus hallazgos.', 'error');
+      triggerToast('Complete los indicadores pendientes o escriba INDICADOR NO APLICA seguido del motivo en sus hallazgos.', 'error');
       nextTick(() => {
         const field = document.getElementById('assessment-notes-' + assessmentPending.value[0]?.id);
         field?.scrollIntoView({block: 'center', behavior: 'smooth'});
@@ -508,7 +508,10 @@ createApp({
     };
     const selectAssessmentModule = moduleId => {
       if (moduleId === activeModuleTab.value || !modulesList.some(mod => mod.id === moduleId)) return;
-      if (!validateAssessmentDomain()) return;
+      const destinationComplete = indicators.value
+        .filter(ind => getIndicatorModuleId(ind) === moduleId && shouldShowIndicator(ind))
+        .every(WashCore.assessmentComplete);
+      if (!destinationComplete && !validateAssessmentDomain()) return;
       activeModuleTab.value = moduleId;
       assessmentAttempted.value = false;
       window.scrollTo({top: 0, behavior: 'smooth'});

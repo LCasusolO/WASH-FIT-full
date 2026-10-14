@@ -266,8 +266,10 @@
   }
   function assessmentComplete(indicator) {
     if ([0, 1, 2].includes(indicator.score)) return true;
-    const match = String(indicator.notes || '').trim().match(/^INDICADOR\s+NO\s+APLICA\s+XQ\s*:?[ \t]+([\s\S]+)$/i);
-    return Boolean(match && /\p{L}/u.test(match[1]));
+    const match = String(indicator.notes || '').trim().match(/^INDICADOR\s+NO\s+APLICA(?:\s+|:\s*)([\s\S]*)$/i);
+    // Keep previously saved XQ notes valid while accepting the shorter wording.
+    const reason = match?.[1].replace(/^XQ\b\s*:?\s*/i, '') || '';
+    return /\p{L}/u.test(reason);
   }
   function responsibleName(indicator, team) {
     return team.find(member => member.id === indicator.responsibleId)?.name || indicator.responsible || '';
