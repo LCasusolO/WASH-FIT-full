@@ -64,12 +64,12 @@ button, [role=button], summary { cursor: pointer; }
   .brand-header > div:first-child { width: 105px; height: 45px; }
   .brand-title { padding-right: 0; text-align: right; }
   .brand-title h1 { font-size: 2rem; }
-  .print-page table { display: block; min-width: 0 !important; }
-  .print-page table thead { display: none; }
-  .print-page table tbody { display: block; }
-  .print-page table tr { display: block; border: 1px solid #E6E6E6; margin: .75rem 0; }
-  .print-page table td { display: block; width: 100% !important; min-width: 0 !important; max-width: none !important; text-align: left; padding: .8rem; }
-  .print-page table td::before { content: attr(data-label); display: block; color: #004C97; font-weight: 800; margin-bottom: .4rem; }
+  .print-page table:not(.domain-summary-table) { display: block; min-width: 0 !important; }
+  .print-page table:not(.domain-summary-table) thead { display: none; }
+  .print-page table:not(.domain-summary-table) tbody { display: block; }
+  .print-page table:not(.domain-summary-table) tr { display: block; border: 1px solid #E6E6E6; margin: .75rem 0; }
+  .print-page table:not(.domain-summary-table) td { display: block; width: 100% !important; min-width: 0 !important; max-width: none !important; text-align: left; padding: .8rem; }
+  .print-page table:not(.domain-summary-table) td::before { content: attr(data-label); display: block; color: #004C97; font-weight: 800; margin-bottom: .4rem; }
   .print-page .max-h-\[70vh\] { max-height: none; }
   .report-content { padding: 1rem; }
   .report-info, .report-photos { grid-template-columns: 1fr; }
@@ -173,3 +173,13 @@ button, [role=button], summary { cursor: pointer; }
 }
 
 @media (min-width: 1024px) { .sidebar-menu { border-right: 0; } }
+
+.domain-summary-hint { display: none; }
+@media (max-width: 767px) {
+  .domain-summary-hint { display: block; }
+  .domain-summary-table { min-width: 640px; }
+  .domain-summary-table th, .domain-summary-table td { padding-left: .75rem; padding-right: .75rem; }
+  .domain-summary-table th { white-space: nowrap; }
+  .domain-summary-table td:first-child { width: 190px; }
+  .domain-summary-scroll { scrollbar-width: thin; scrollbar-color: #004C97 #E6E6E6; }
+}
