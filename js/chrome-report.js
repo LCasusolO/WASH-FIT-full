@@ -15,6 +15,8 @@
         canvas.getContext('2d').drawImage(source, 0, 0);
         image.src = canvas.toDataURL('image/png');
         image.removeAttribute('srcset');
+        // Leaflet fades new tiles with JS. The static report must keep every decoded tile visible.
+        if (image.classList.contains('leaflet-tile')) { image.style.opacity = '1'; image.classList.add('leaflet-tile-loaded'); }
       } catch (_) { throw new Error('No se pudo cargar una imagen del reporte. Revise la conexión y reintente.'); }
     }));
     const css = Array.from(document.styleSheets).map(sheet => Array.from(sheet.cssRules).map(rule => rule.cssText).join('\n')).join('\n');
