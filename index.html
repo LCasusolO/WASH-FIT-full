@@ -1354,7 +1354,6 @@
             <th class="py-4 px-4 min-w-[260px] text-center bg-paho-card">Medidas Correctivas o Adicionales</th>
             <th class="py-4 px-4 w-40 min-w-[150px] text-center bg-paho-card">Fecha de Revisión</th>
             <th class="py-4 px-4 min-w-[220px] text-center bg-paho-card">Comentarios y Notas Adicionales</th>
-            <th class="py-4 px-4 text-center bg-paho-card">Estado del Plan de mejora</th>
             <th class="py-4 px-4 text-center bg-paho-card">Revisiones</th>
           </tr>
         </thead>
@@ -1451,7 +1450,6 @@
                 class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
               ></textarea>
             </td>
-            <td data-label="Estado del Plan de mejora" class="py-5 px-4 align-top"><span class="text-sm font-semibold">{{ ind.trackingStatus || 'No Iniciado' }}</span></td>
             <td data-label="Revisiones" class="py-5 px-4 align-top"><div class="flex flex-col gap-3 min-w-[150px]">
               <button type="button" @click="openNewReview(ind)" class="px-4 py-3 bg-paho-dark-blue text-white text-sm font-bold">Nueva revisión</button>
               <button type="button" @click="openHistoryDialog(ind)" class="px-4 py-3 border border-paho-grid text-paho-dark-blue text-sm font-bold">Ver historial ({{ ind.history?.length || 0 }})</button>
@@ -1460,7 +1458,7 @@
 
           <!-- Mensaje cuando no hay brechas registradas -->
           <tr v-if="getSortedGaps.length === 0">
-            <td data-label="Dominio / Indicador" colspan="9" class="py-12 text-center text-xs text-paho-gray-medium">
+            <td data-label="Dominio / Indicador" colspan="8" class="py-12 text-center text-xs text-paho-gray-medium">
               No hay brechas para monitorear. Complete la evaluación y la matriz de riesgos para poder visualizar el seguimiento.
             </td>
           </tr>
@@ -1871,7 +1869,7 @@
     <dialog id="review-editor" class="review-editor no-print" aria-labelledby="review-editor-title" @cancel.prevent="closeReviewEditor" @close="reviewIndicator && closeReviewEditor()">
       <form v-if="reviewDraft && reviewIndicator" @submit.prevent="saveNewReview" class="review-form">
         <header class="review-editor-header">
-          <div><h2 id="review-editor-title">Nueva revisión</h2><p>{{ reviewIndicator.title }}</p></div>
+          <div><h2 id="review-editor-title">Nueva revisión</h2><div class="review-indicator-context"><span>Indicador</span><p class="review-indicator">{{ reviewIndicator.title }}</p></div></div>
           <button type="button" @click="closeReviewEditor" aria-label="Cerrar nueva revisión">✕</button>
         </header>
         <div class="review-editor-body">
@@ -1879,8 +1877,7 @@
           <p v-if="reviewError" role="alert" class="text-sm text-red-700 mb-4">{{ reviewError }}</p>
           <section class="p-4 bg-paho-card border border-paho-grid mb-5"><h3 class="text-sm font-bold mb-2">Acción de mejora</h3><p class="text-sm whitespace-pre-wrap">{{ reviewBullets(reviewIndicator.action) || 'Sin acción de mejora registrada.' }}</p></section>
           <div class="review-form-grid">
-            <div><label for="review-state">Estado del Plan de mejora</label><input id="review-state" :value="reviewIndicator.trackingStatus || 'No Iniciado'" readonly><p class="text-xs text-paho-gray-medium mt-2">Se actualiza desde el Plan de mejora.</p></div>
-            <div><label for="review-change">¿Ha mejorado, empeorado o no ha cambiado?</label><select id="review-change" v-model="reviewDraft.indicatorChange"><option value="mejorado">Ha mejorado</option><option value="empeorado">Ha empeorado</option><option value="sin_cambios">No ha cambiado</option></select></div>
+            <div class="review-full"><label for="review-change">¿Ha mejorado, empeorado o no ha cambiado?</label><select id="review-change" v-model="reviewDraft.indicatorChange"><option value="mejorado">Ha mejorado</option><option value="empeorado">Ha empeorado</option><option value="sin_cambios">No ha cambiado</option></select></div>
             <div><label for="review-responsible">Responsables</label><textarea id="review-responsible" :value="bulletValue(reviewDraft.responsible)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'responsible')" @keydown="enterBulletField($event, reviewDraft, 'responsible')" @blur="blurBulletField" rows="3"></textarea></div>
             <div><label for="review-next-date">Próxima revisión (opcional)</label><input id="review-next-date" type="date" v-model="reviewDraft.nextReviewDate"></div>
             <div class="review-full"><label for="review-measures">Medidas correctivas o adicionales</label><textarea id="review-measures" :value="bulletValue(reviewDraft.correctiveMeasures)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'correctiveMeasures')" @keydown="enterBulletField($event, reviewDraft, 'correctiveMeasures')" @blur="blurBulletField" rows="4"></textarea></div>
@@ -1893,12 +1890,12 @@
 
     <dialog id="review-history-dialog" class="review-editor no-print" aria-labelledby="review-history-title" @cancel.prevent="closeHistoryDialog" @close="historyIndicator && closeHistoryDialog()">
       <div v-if="historyIndicator" class="review-form">
-        <header class="review-editor-header"><div><h2 id="review-history-title" tabindex="-1">Historial de revisiones</h2><p>{{ historyIndicator.title }}</p></div><button type="button" @click="closeHistoryDialog" aria-label="Cerrar historial">✕</button></header>
+        <header class="review-editor-header"><div><h2 id="review-history-title" tabindex="-1">Historial de revisiones</h2><div class="review-indicator-context"><span>Indicador</span><p class="review-indicator">{{ historyIndicator.title }}</p></div></div><button type="button" @click="closeHistoryDialog" aria-label="Cerrar historial">✕</button></header>
         <div class="review-editor-body space-y-4">
           <p v-if="!historyIndicator.history?.length" class="text-sm text-paho-gray-medium">Aún no hay revisiones registradas para este indicador.</p>
           <article v-for="(entry, index) in (historyIndicator.history || []).slice().reverse()" :key="entry.recordedAt + '-' + index" class="review-history-card p-5 bg-paho-card border-l-4 border-paho-blue text-sm">
             <h3 class="font-bold">{{ new Date(entry.recordedAt).toLocaleString('es') }}</h3>
-            <p class="mt-2">Estado: <strong>{{ entry.trackingStatus }}</strong> · Cambio: <strong>{{ changeLabel(entry.indicatorChange) }}</strong></p>
+            <p class="mt-2">Cambio: <strong>{{ changeLabel(entry.indicatorChange) }}</strong></p>
             <details class="mt-3"><summary class="text-paho-dark-blue font-semibold py-2">Ver detalle</summary><dl class="review-details mt-3">
               <div><dt>Responsables</dt><dd>{{ reviewBullets(entry.responsible) || 'Sin responsable' }}</dd></div>
               <div><dt>Acción</dt><dd>{{ reviewBullets(entry.action) || '—' }}</dd></div>
@@ -2022,13 +2019,13 @@
         <section class="report-step" data-report-step="5" aria-labelledby="report-step-5">
           <h2 id="report-step-5">Paso 5: Monitoreo y Revisión</h2>
           <article v-for="ind in reportPlans" :key="ind.id" class="report-plan">
-            <h3>{{ ind.code }} · {{ ind.title }}</h3><p>Resultado: {{ getAssessmentResult(ind).label }} · Estado: {{ getTrackingStatus(ind) }}</p>
+            <h3>{{ ind.code }} · {{ ind.title }}</h3><p>Resultado: {{ getAssessmentResult(ind).label }}</p>
             <p class="report-text"><strong>Acción en seguimiento:</strong> {{ ind.action || '—' }}</p>
             <p>Cambio: {{ ind.indicatorChange === 'mejorado' ? 'Ha mejorado' : ind.indicatorChange === 'empeorado' ? 'Ha empeorado' : 'No ha cambiado' }} · Próxima revisión: {{ formatDate(ind.nextReviewDate) || '—' }}</p>
             <p class="report-text"><strong>Medidas correctivas:</strong> {{ ind.correctiveMeasures || '—' }}</p>
             <p class="report-text"><strong>Comentarios:</strong> {{ ind.monitoringComments || '—' }}</p>
             <div v-for="(entry, index) in ind.history || []" :key="index" class="report-history">
-              <h4>Revisión {{ new Date(entry.recordedAt).toLocaleString('es') }}</h4><p class="report-text">Estado: {{ entry.trackingStatus }} · Cambio: {{ changeLabel(entry.indicatorChange) }} · Responsable: {{ reviewBullets(entry.responsible) || 'Sin responsable' }}</p>
+              <h4>Revisión {{ new Date(entry.recordedAt).toLocaleString('es') }}</h4><p class="report-text">Cambio: {{ changeLabel(entry.indicatorChange) }} · Responsable: {{ reviewBullets(entry.responsible) || 'Sin responsable' }}</p>
               <p class="report-text">Acción: {{ reviewBullets(entry.action) || '—' }}
 Medidas: {{ reviewBullets(entry.correctiveMeasures) || '—' }}
 Comentarios: {{ reviewBullets(entry.monitoringComments) || '—' }}</p>
