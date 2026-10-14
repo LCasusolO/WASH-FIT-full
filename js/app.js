@@ -747,7 +747,7 @@ createApp({
     const lastArchive = ref(null);
     const archiveFingerprint = dataset => JSON.stringify([dataset.generalInfo, dataset.indicators]);
     const driveCurrent = computed(() => lastArchive.value?.fingerprint === archiveFingerprint(snapshot()));
-    const driveLabel = computed(() => archiveBusy.value || archiveFailed.value ? archiveStatus.value : !lastArchive.value ? 'Drive: sin copia confirmada en este navegador.' : driveCurrent.value ? 'Drive: JSON y PDF confirmados.' : 'Drive: hay cambios sin archivar.');
+    const driveLabel = computed(() => archiveBusy.value || archiveFailed.value ? archiveStatus.value : !lastArchive.value ? 'sin copia confirmada en este navegador.' : driveCurrent.value ? 'JSON y PDF confirmados.' : 'hay cambios sin archivar.');
     const archiveTime = computed(() => lastArchive.value ? new Date(lastArchive.value.savedAt).toLocaleString('es') : '');
     onMounted(async () => {try { lastArchive.value = await store.read('lastArchive'); } catch (_) {} });
     let archiveJob = null;
@@ -784,14 +784,14 @@ createApp({
         if (!archiveJob) throw new Error('No hay una evaluación pendiente. Vuelva a Exportar.');
         const result = await WashArchive.save(archiveJob, text => { archiveStatus.value = text; });
         lastArchive.value = {savedAt: result.savedAt, files: result.files, fingerprint: archiveFingerprint(archiveJob.dataset)};
-        try { await store.write('lastArchive', lastArchive.value); } catch (_) { triggerToast('Archivos confirmados en Drive; no se pudo conservar el estado en este navegador.', 'error'); }
-        archiveStatus.value = 'JSON y PDF guardados en Drive.';
+        try { await store.write('lastArchive', lastArchive.value); } catch (_) { triggerToast('Archivos confirmados en el repositorio; no se pudo conservar el estado en este navegador.', 'error'); }
+        archiveStatus.value = 'JSON y PDF guardados en el repositorio.';
         archiveJob = null;
         triggerToast(archiveStatus.value);
         return true;
       } catch (error) {
         archiveFailed.value = true;
-        archiveStatus.value = (archiveJob?.ids?.[0] ? 'JSON guardado; PDF o confirmación pendientes. ' : 'Guardado en Drive pendiente. ') + error.message;
+        archiveStatus.value = (archiveJob?.ids?.[0] ? 'JSON guardado; PDF o confirmación pendientes. ' : 'Guardado en el repositorio pendiente. ') + error.message;
         triggerToast(archiveStatus.value, 'error');
         return false;
       } finally { archiveBusy.value = false; nextTick(() => window.lucide?.createIcons()); }
