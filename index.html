@@ -93,11 +93,11 @@
             </div>
 
             <!-- Botón Contraer / Expandir -->
-            <button @click="sidebarCollapsed = !sidebarCollapsed"
+            <button @click="isMobile ? mobileMenuOpen = false : sidebarCollapsed = !sidebarCollapsed"
                     class="flex items-center justify-center w-8 h-8 rounded transition-colors"
                     :class="sidebarCollapsed ? 'bg-paho-dark-blue text-white hover:bg-paho-very-dark-blue' : 'text-paho-gray-dark hover:bg-paho-gray-light'"
-                    title="Contraer / Expandir" :aria-label="sidebarCollapsed ? 'Expandir menú' : 'Contraer menú'" :aria-expanded="!sidebarCollapsed">
-              <div class="transition-transform duration-300 transform" :class="sidebarCollapsed ? 'rotate-180' : ''">
+                    :title="isMobile ? 'Contraer menú' : 'Contraer / Expandir'" :aria-label="isMobile || !sidebarCollapsed ? 'Contraer menú' : 'Expandir menú'" :aria-expanded="isMobile ? mobileMenuOpen : !sidebarCollapsed">
+              <div class="transition-transform duration-300 transform" :class="!isMobile && sidebarCollapsed ? 'rotate-180' : ''">
                 <i data-lucide="chevron-left" class="w-4 h-4 block"></i>
               </div>
             </button>
