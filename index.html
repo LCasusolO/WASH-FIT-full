@@ -1878,7 +1878,7 @@
     <dialog id="review-editor" class="review-editor no-print" aria-labelledby="review-editor-title" @cancel.prevent="closeReviewEditor" @close="reviewIndicator && closeReviewEditor()">
       <form v-if="reviewDraft && reviewIndicator" @submit.prevent="saveNewReview" class="review-form">
         <header class="review-editor-header">
-          <div><h2 id="review-editor-title">Nueva revisión</h2><div class="review-indicator-context"><span>Indicador</span><p class="review-indicator">{{ reviewIndicator.title }}</p></div></div>
+          <div><h2 id="review-editor-title">Nueva revisión</h2><div class="review-indicator-context"><span>{{ reviewIndicator.module }}</span><p class="review-indicator">{{ reviewIndicator.title }}</p></div></div>
           <button type="button" @click="closeReviewEditor" aria-label="Cerrar nueva revisión">✕</button>
         </header>
         <div class="review-editor-body">
@@ -1888,9 +1888,10 @@
           <div class="review-form-grid">
             <div class="review-full"><label for="review-change">¿Ha mejorado, empeorado o no ha cambiado?</label><select id="review-change" v-model="reviewDraft.indicatorChange"><option value="mejorado">Ha mejorado</option><option value="empeorado">Ha empeorado</option><option value="sin_cambios">No ha cambiado</option></select></div>
             <div><label for="review-responsible">Responsables</label><textarea id="review-responsible" :value="bulletValue(reviewDraft.responsible)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'responsible')" @keydown="enterBulletField($event, reviewDraft, 'responsible')" @blur="blurBulletField" rows="3"></textarea></div>
-            <div><label for="review-next-date">Próxima revisión (opcional)</label><input id="review-next-date" type="date" v-model="reviewDraft.nextReviewDate"></div>
-            <div class="review-full"><label for="review-measures">Medidas correctivas o adicionales</label><textarea id="review-measures" :value="bulletValue(reviewDraft.correctiveMeasures)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'correctiveMeasures')" @keydown="enterBulletField($event, reviewDraft, 'correctiveMeasures')" @blur="blurBulletField" rows="4"></textarea></div>
-            <div class="review-full"><label for="review-comments">Comentarios y notas adicionales</label><textarea id="review-comments" :value="bulletValue(reviewDraft.monitoringComments)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'monitoringComments')" @keydown="enterBulletField($event, reviewDraft, 'monitoringComments')" @blur="blurBulletField" rows="4"></textarea></div>
+            
+            <section class="review-full review-additions" aria-labelledby="review-measures-title"><h3 id="review-measures-title">Medidas correctivas o adicionales</h3><div class="review-previous"><h4>Registrado anteriormente</h4><p>{{ reviewBullets(reviewDraft.previousCorrectiveMeasures) || 'Sin registros anteriores.' }}</p></div><label for="review-measures">Agregar nueva información</label><textarea id="review-measures" :value="bulletValue(reviewDraft.newCorrectiveMeasures)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'newCorrectiveMeasures')" @keydown="enterBulletField($event, reviewDraft, 'newCorrectiveMeasures')" @blur="blurBulletField" rows="3"></textarea></section>
+            <section class="review-full review-additions" aria-labelledby="review-comments-title"><h3 id="review-comments-title">Comentarios y notas adicionales</h3><div class="review-previous"><h4>Registrado anteriormente</h4><p>{{ reviewBullets(reviewDraft.previousMonitoringComments) || 'Sin registros anteriores.' }}</p></div><label for="review-comments">Agregar nueva información</label><textarea id="review-comments" :value="bulletValue(reviewDraft.newMonitoringComments)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'newMonitoringComments')" @keydown="enterBulletField($event, reviewDraft, 'newMonitoringComments')" @blur="blurBulletField" rows="3"></textarea></section>
+            <div class="review-full"><label for="review-next-date">Próxima revisión (opcional)</label><input id="review-next-date" type="date" v-model="reviewDraft.nextReviewDate"></div>
           </div>
         </div>
         <footer class="review-editor-footer"><button type="button" @click="closeReviewEditor" class="review-cancel">Cancelar</button><button type="submit" :disabled="reviewSaving" class="review-save">Guardar revisión</button></footer>
@@ -1899,7 +1900,7 @@
 
     <dialog id="review-history-dialog" class="review-editor no-print" aria-labelledby="review-history-title" @cancel.prevent="closeHistoryDialog" @close="historyIndicator && closeHistoryDialog()">
       <div v-if="historyIndicator" class="review-form">
-        <header class="review-editor-header"><div><h2 id="review-history-title" tabindex="-1">Historial de revisiones</h2><div class="review-indicator-context"><span>Indicador</span><p class="review-indicator">{{ historyIndicator.title }}</p></div></div><button type="button" @click="closeHistoryDialog" aria-label="Cerrar historial">✕</button></header>
+        <header class="review-editor-header"><div><h2 id="review-history-title" tabindex="-1">Historial de revisiones</h2><div class="review-indicator-context"><span>{{ historyIndicator.module }}</span><p class="review-indicator">{{ historyIndicator.title }}</p></div></div><button type="button" @click="closeHistoryDialog" aria-label="Cerrar historial">✕</button></header>
         <div class="review-editor-body space-y-4">
           <p v-if="!historyIndicator.history?.length" class="text-sm text-paho-gray-medium">Aún no hay revisiones registradas para este indicador.</p>
           <article v-for="(entry, index) in (historyIndicator.history || []).slice().reverse()" :key="entry.recordedAt + '-' + index" class="review-history-card p-5 bg-paho-card border-l-4 border-paho-blue text-sm">

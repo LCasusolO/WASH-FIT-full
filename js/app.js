@@ -892,7 +892,7 @@ createApp({
     const openNewReview = ind => {
       reviewOrigin = document.activeElement;
       reviewIndicator.value = ind;
-      reviewDraft.value = {indicatorChange: ind.indicatorChange || 'sin_cambios', responsible: getResponsibleName(ind), correctiveMeasures: ind.correctiveMeasures || '', monitoringComments: ind.monitoringComments || '', nextReviewDate: ind.nextReviewDate || ''};
+      reviewDraft.value = WashCore.createReviewDraft(ind, generalInfo.value.team);
       reviewError.value = '';
       nextTick(() => { document.getElementById('review-editor').showModal(); document.getElementById('review-change').focus(); });
     };

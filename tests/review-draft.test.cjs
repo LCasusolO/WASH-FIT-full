@@ -21,3 +21,19 @@ test('review state is captured from the plan and cannot be changed by the review
  ind.trackingStatus='Completado';Core.saveReviewDraft(ind,{...draft,trackingStatus:'No Iniciado'},[],'2026-10-16T10:00:00Z');
  assert.equal(ind.history[1].trackingStatus,'Completado');assert.equal(ind.history[0].trackingStatus,'En Progreso');
 });
+
+test('new review loads previous responsible and keeps additions separate from previous notes',()=>{
+ const ind={responsible:'Plan owner',correctiveMeasures:'- Medida anterior',monitoringComments:'Nota anterior',history:[{responsible:'• Ana'}]};
+ const before=JSON.stringify(ind),d=Core.createReviewDraft(ind,[]);
+ assert.equal(d.responsible,'• Ana');assert.equal(d.previousCorrectiveMeasures,'- Medida anterior');assert.equal(d.previousMonitoringComments,'Nota anterior');assert.equal(d.newCorrectiveMeasures,'');assert.equal(d.newMonitoringComments,'');assert.equal(JSON.stringify(ind),before);
+ const fresh=Core.createReviewDraft({responsible:'• Plan owner',history:[]},[]);assert.equal(fresh.responsible,'• Plan owner');
+});
+test('review additions append to prior text without rewriting it or earlier snapshots',()=>{
+ const ind={score:0,responsible:'• Ana',correctiveMeasures:'- Medida anterior',monitoringComments:'Nota anterior',history:[]};Core.recordReview(ind,[],'2026-10-13T12:00:00Z');const first=JSON.stringify(ind.history[0]);
+ const d=Core.createReviewDraft(ind,[]);d.responsible='• Luis';d.newCorrectiveMeasures='Medida nueva';d.newMonitoringComments='• Comentario nuevo';d.nextReviewDate='2026-11-01';
+ Core.saveReviewDraft(ind,d,[],'2026-10-14T12:00:00Z');assert.equal(JSON.stringify(ind.history[0]),first);assert.equal(ind.correctiveMeasures,'- Medida anterior\n• Medida nueva');assert.equal(ind.monitoringComments,'Nota anterior\n• Comentario nuevo');assert.equal(ind.responsible,'• Luis');
+ const unchanged=Core.createReviewDraft(ind,[]);Core.saveReviewDraft(ind,unchanged,[],'2026-10-15T12:00:00Z');assert.equal(ind.correctiveMeasures,'- Medida anterior\n• Medida nueva');assert.equal(ind.monitoringComments,'Nota anterior\n• Comentario nuevo');assert.equal(ind.history.length,3);
+});
+test('invalid additive review preserves all prior notes and history',()=>{
+ const ind={score:0,correctiveMeasures:'• Previous',monitoringComments:'• Previous comment',history:[]};const before=JSON.stringify(ind);const d=Core.createReviewDraft(ind,[]);d.newCorrectiveMeasures='New';d.nextReviewDate='2026-02-30';assert.throws(()=>Core.saveReviewDraft(ind,d,[]));assert.equal(JSON.stringify(ind),before);
+});
