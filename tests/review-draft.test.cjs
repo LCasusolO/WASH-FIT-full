@@ -6,7 +6,7 @@ test('saving a review draft appends a snapshot and leaves earlier reviews unchan
  const first=JSON.stringify(ind.history[0]);
  Core.saveReviewDraft(ind,{...draft,indicatorChange:'empeorado'},[],'2026-10-15T10:00:00Z');
  assert.equal(ind.history.length,2);assert.equal(JSON.stringify(ind.history[0]),first);
- assert.equal(ind.history[1].indicatorChange,'empeorado');assert.equal(ind.monitoringComments,draft.monitoringComments);
+ assert.equal(ind.history[1].indicatorChange,'empeorado');assert.equal(ind.monitoringComments,undefined);assert.equal(ind.history[1].monitoringComments,draft.monitoringComments);
 });
 test('invalid or full-history review drafts leave the indicator unchanged',()=>{
  const ind={score:0,action:'Instalar',history:[]},before=JSON.stringify(ind);
@@ -31,8 +31,8 @@ test('new review loads plan responsible even when history has another responsibl
 test('review additions append to prior text without rewriting it or earlier snapshots',()=>{
  const ind={score:0,responsible:'• Ana',correctiveMeasures:'- Medida anterior',monitoringComments:'Nota anterior',history:[]};Core.recordReview(ind,[],'2026-10-13T12:00:00Z');const first=JSON.stringify(ind.history[0]);
  const d=Core.createReviewDraft(ind,[]);d.responsible='• Luis';d.newCorrectiveMeasures='Medida nueva';d.newMonitoringComments='• Comentario nuevo';d.nextReviewDate='2026-11-01';
- Core.saveReviewDraft(ind,d,[],'2026-10-14T12:00:00Z');assert.equal(JSON.stringify(ind.history[0]),first);assert.equal(ind.correctiveMeasures,'- Medida anterior\n• Medida nueva');assert.equal(ind.monitoringComments,'Nota anterior\n• Comentario nuevo');assert.equal(ind.responsible,'• Ana');assert.equal(ind.history[1].responsible,'• Luis');assert.equal(ind.history[1].reviewChanges.responsibleChanged,true);assert.equal(ind.history[1].reviewChanges.newCorrectiveMeasures,'• Medida nueva');
- const unchanged=Core.createReviewDraft(ind,[]);Core.saveReviewDraft(ind,unchanged,[],'2026-10-15T12:00:00Z');assert.equal(ind.correctiveMeasures,'- Medida anterior\n• Medida nueva');assert.equal(ind.monitoringComments,'Nota anterior\n• Comentario nuevo');assert.equal(ind.history.length,3);
+ Core.saveReviewDraft(ind,d,[],'2026-10-14T12:00:00Z');assert.equal(JSON.stringify(ind.history[0]),first);assert.equal(ind.correctiveMeasures,'- Medida anterior');assert.equal(ind.history.at(-1).correctiveMeasures,'- Medida anterior\n• Medida nueva');assert.equal(ind.monitoringComments,'Nota anterior');assert.equal(ind.history.at(-1).monitoringComments,'Nota anterior\n• Comentario nuevo');assert.equal(ind.responsible,'• Ana');assert.equal(ind.history[1].responsible,'• Luis');assert.equal(ind.history[1].reviewChanges.responsibleChanged,true);assert.equal(ind.history[1].reviewChanges.newCorrectiveMeasures,'• Medida nueva');
+ const unchanged=Core.createReviewDraft(ind,[]);Core.saveReviewDraft(ind,unchanged,[],'2026-10-15T12:00:00Z');assert.equal(ind.correctiveMeasures,'- Medida anterior');assert.equal(ind.history.at(-1).correctiveMeasures,'- Medida anterior\n• Medida nueva');assert.equal(ind.monitoringComments,'Nota anterior');assert.equal(ind.history.at(-1).monitoringComments,'Nota anterior\n• Comentario nuevo');assert.equal(ind.history.length,3);
 });
 test('invalid additive review preserves all prior notes and history',()=>{
  const ind={score:0,correctiveMeasures:'• Previous',monitoringComments:'• Previous comment',history:[]};const before=JSON.stringify(ind);const d=Core.createReviewDraft(ind,[]);d.newCorrectiveMeasures='New';d.nextReviewDate='2026-02-30';assert.throws(()=>Core.saveReviewDraft(ind,d,[]));assert.equal(JSON.stringify(ind),before);
@@ -46,4 +46,8 @@ test('review changes survive JSON import and identify only the new information',
 });
 test('unchanged plan responsible and no additions are not flagged as new',()=>{
  const ind={score:0,responsible:'• Ana',correctiveMeasures:'• Anterior',history:[]};Core.saveReviewDraft(ind,Core.createReviewDraft(ind,[]),[],'2026-10-14T12:00:00Z');const h=ind.history[0];assert.equal(h.reviewChanges.responsibleChanged,false);assert.equal(h.reviewChanges.newCorrectiveMeasures,'');assert.ok(Core.reviewHistoryText(h,'correctiveMeasures').startsWith('Sin información nueva'));
+});
+
+test('saving a new review changes only history, leaving all monitoring fields intact',()=>{
+ const ind={score:0,responsible:'• Plan',indicatorChange:'sin_cambios',correctiveMeasures:'• Tabla original',monitoringComments:'• Nota original',nextReviewDate:'2026-10-30',history:[]};const original=Core.clone(ind);const d=Core.createReviewDraft(ind,[]);d.indicatorChange='mejorado';d.nextReviewDate='2026-12-01';d.newCorrectiveMeasures='Nueva';d.newMonitoringComments='Nuevo comentario';Core.saveReviewDraft(ind,d,[],'2026-10-14T12:00:00Z');assert.deepEqual({...ind,history:[]},original);assert.equal(ind.history[0].nextReviewDate,'2026-12-01');const reopened=Core.createReviewDraft(ind,[]);assert.equal(reopened.previousCorrectiveMeasures,'• Tabla original\n• Nueva');assert.equal(reopened.indicatorChange,'mejorado');
 });

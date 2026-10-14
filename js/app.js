@@ -184,7 +184,13 @@ createApp({
     }, { deep: true, flush: 'sync' });
     const applyDataset = (dataset) => {
       generalInfo.value = dataset.generalInfo;
-      indicators.value = dataset.indicators.map(ind => ({...ind, responsible: WashCore.responsibleName(ind, dataset.generalInfo.team), responsibleId: ''}));
+      indicators.value = dataset.indicators.map(ind => {
+        const result = {...ind, responsible: WashCore.responsibleName(ind, dataset.generalInfo.team), responsibleId: ''};
+        for (const field of ['associatedRisks', 'action', 'resources', 'responsible', 'correctiveMeasures', 'monitoringComments']) {
+          if (result[field]) result[field] = WashCore.bulletEdit(result[field]).value;
+        }
+        return result;
+      });
       nextTick(() => { onCoordinatesInput(); if (window.lucide) window.lucide.createIcons(); });
     };
     const newEvaluation = async () => {
@@ -857,21 +863,31 @@ createApp({
       window.addEventListener('afterprint', () => { document.title = previousTitle; }, {once: true});
       window.print();
     };
-    const bulletValue = value => value ? WashCore.bulletEdit(value).value : '';
+    const bulletValue = value => value || '';
     const focusBulletField = event => { if (!event.target.value) { event.target.value = '• '; event.target.setSelectionRange(2, 2); } };
     const updateBulletField = (event, ind, field) => {
       if (event.isComposing) return;
       const el = event.target;
+      if (event.inputType?.startsWith('delete')) { ind[field] = el.value; return; }
       const edit = WashCore.bulletEdit(el.value, el.selectionStart);
       ind[field] = WashCore.bulletHasContent(edit.value) ? edit.value : '';
       el.value = edit.value;
       nextTick(() => { el.value = edit.value; el.setSelectionRange(edit.caret, edit.caret); });
     };
     const enterBulletField = (event, ind, field) => {
-      if (event.key !== 'Enter' || event.isComposing) return;
+      if (event.isComposing) return;
+      const el = event.target;
+      if (event.key === 'Backspace') {
+        const edit = WashCore.bulletBackspace(el.value, el.selectionStart, el.selectionEnd);
+        if (!edit) return;
+        event.preventDefault(); ind[field] = edit.value; el.value = edit.value;
+        nextTick(() => { el.value = edit.value; el.setSelectionRange(edit.caret, edit.caret); });
+        return;
+      }
+      if (event.key !== 'Enter') return;
       event.preventDefault();
-      event.target.setRangeText('\n• ', event.target.selectionStart, event.target.selectionEnd, 'end');
-      updateBulletField(event, ind, field);
+      el.setRangeText('\n• ', el.selectionStart, el.selectionEnd, 'end');
+      ind[field] = el.value;
     };
     const blurBulletField = event => { if (!WashCore.bulletHasContent(event.target.value)) event.target.value = ''; };
     const getResponsibleName = ind => WashCore.responsibleName(ind, generalInfo.value.team);

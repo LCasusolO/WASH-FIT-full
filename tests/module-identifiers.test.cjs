@@ -103,8 +103,8 @@ test('legacy linked responsible becomes independent text without losing the name
   data.indicators[0].responsibleId='member-1';
   await app.importData({target:{files:[{text:JSON.stringify(data)}]}});
   const ind=app.indicators.value[0];
-  assert.equal(ind.responsible,'Responsable anterior');assert.equal(ind.responsibleId,'');
+  assert.equal(ind.responsible,'• Responsable anterior');assert.equal(ind.responsibleId,'');
   app.generalInfo.value.team[0].name='Nombre nuevo';
-  assert.equal(app.getResponsibleName(ind),'Responsable anterior');
+  assert.equal(app.getResponsibleName(ind),'• Responsable anterior');
   ind.responsible='Ana; Luis';assert.equal(app.getResponsibleName(ind),'Ana; Luis');
 });
