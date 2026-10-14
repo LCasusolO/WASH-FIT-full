@@ -778,7 +778,7 @@ createApp({
       if (archiveBusy.value) return false;
       archiveBusy.value = true;
       archiveFailed.value = false;
-      archiveStatus.value = 'Preparando JSON y PDF…';
+      archiveStatus.value = 'Preparando evaluación…';
       try {
         if (dataset) { archiveJob = null; archiveJob = await createArchiveJob(dataset); }
         if (!archiveJob) throw new Error('No hay una evaluación pendiente. Vuelva a Exportar.');

@@ -22,6 +22,7 @@ test('central repository hides owner credentials and verifies both file sizes, b
   const handler = createHandler({env, request: async (url, options) => {
     if (url.includes('oauth2')) return Response.json({access_token:'private-owner-token', expires_in:3600});
     assert.equal(options.headers.Authorization, 'Bearer private-owner-token');
+    if (url.startsWith('https://www.googleapis.com/drive/v3/files?')) return Response.json({files:[]});
     if (url.includes('/upload/')) { metadata.push(JSON.parse(options.body)); return new Response('', {headers:{location:'https://www.googleapis.com/upload/session'+metadata.length}}); }
     const index = url.includes('/file-json?') ? 0 : 1;
     return Response.json({...metadata[index], id: index ? 'file-pdf' : 'file-json', size: index ? '20' : '10', parents:[wrongFolder ? 'other-folder' : folder]});
@@ -60,6 +61,7 @@ test('server proxies signed upload chunks and recovers a confirmed file after a 
   let uploaded;
   const handler=createHandler({env,request:async(url,options)=>{
     if(url.includes('oauth2'))return Response.json({access_token:'owner-token',expires_in:3600});
+    if(url.startsWith('https://www.googleapis.com/drive/v3/files?'))return Response.json({files:[]});
     if(options.method==='POST')return new Response('',{headers:{location:'https://www.googleapis.com/upload/session'}});
     assert.equal(options.headers.Authorization,'Bearer owner-token');
     if(options.headers['Content-Range'].includes('*/'))return uploaded ? Response.json({id:'file-json'}) : new Response('',{status:308});
@@ -81,4 +83,44 @@ test('PDF retains six separated steps, excludes hidden indicators and preserves 
   assert.equal(doc.content.filter(x=>x.pageBreak==='before').length,5);
   assert.ok(!JSON.stringify(doc).includes('HIDDEN'));
   assert.ok(JSON.stringify(doc).includes('7 - Bajo'));
+});
+
+test('repeated exports replace the existing JSON and PDF IDs in the target folder', async () => {
+  const stored=new Map(), sessions=new Map();let creates=0,updates=0;
+  const handler=createHandler({env,request:async(url,options)=>{
+    if(url.includes('oauth2'))return Response.json({access_token:'owner',expires_in:3600});
+    if(url.startsWith('https://www.googleapis.com/drive/v3/files?')){
+      const q=new URL(url).searchParams.get('q');assert.ok(q.includes("'"+folder+"' in parents"));assert.ok(q.includes('trashed = false'));
+      return Response.json({files:[...stored.values()].filter(f=>q.includes("name = '"+f.name+"'")&&q.includes("mimeType = '"+f.mimeType+"'")).map(f=>({id:f.id}))});
+    }
+    if(url.includes('/upload/drive/')){
+      const metadata=JSON.parse(options.body);let id;
+      if(options.method==='POST'){id=metadata.name.endsWith('.json')?'file-json':'file-pdf';creates++;stored.set(id,{id,...metadata});}
+      else{assert.equal(options.method,'PATCH');id=new URL(url).pathname.split('/').pop();assert.ok(stored.has(id));assert.equal(metadata.parents,undefined);updates++;stored.set(id,{...stored.get(id),...metadata});}
+      const session='https://www.googleapis.com/upload/session-'+id;sessions.set(session,{id,bytes:options.headers['X-Upload-Content-Length']});return new Response('',{headers:{location:session}});
+    }
+    if(sessions.has(url)){const session=sessions.get(url);stored.get(session.id).size=session.bytes;stored.get(session.id).content=options.body.toString();return Response.json({id:session.id});}
+    const id=new URL(url).pathname.split('/').pop();return Response.json(stored.get(id));
+  }});
+  for(const value of ['first','replacement']){
+    const start=await run(handler,{action:'start',facility:'Hospital dos de mayo',countryCode:'PER',jsonBytes:value.length,pdfBytes:value.length});assert.equal(start.code,200);
+    const ids=[];for(const kind of ['json','pdf']){const uploaded=await run(handler,{action:'upload',receipt:start.data.receipt,kind,offset:0,data:Buffer.from(value).toString('base64')});assert.equal(uploaded.code,200);ids.push(uploaded.data.id);}
+    const verified=await run(handler,{action:'verify',receipt:start.data.receipt,ids});assert.equal(verified.data.saved,true);assert.deepEqual(verified.data.files.map(f=>f.id),['file-json','file-pdf']);
+  }
+  assert.equal(creates,2);assert.equal(updates,2);assert.equal(stored.size,2);assert.ok([...stored.values()].every(file=>file.content==='replacement'));
+});
+
+test('failed lookup does not create duplicate files',async()=>{
+  let uploads=0;const handler=createHandler({env,request:async(url)=>{
+    if(url.includes('oauth2'))return Response.json({access_token:'owner',expires_in:3600});
+    if(url.includes('/upload/'))uploads++;
+    return Response.json({error:'lookup failed'},{status:503});
+  }});
+  assert.equal((await run(handler,{action:'start',facility:'Hospital',jsonBytes:4,pdfBytes:4})).code,502);assert.equal(uploads,0);
+});
+
+test('archive progress contains no Drive or per-file saving messages',async()=>{
+  const progress=[];const job={dataset:{generalInfo:{facilityName:'Hospital'}},json:new Blob(['json']),pdf:new Blob(['pdf'])};
+  await Archive.save(job,text=>progress.push(text),async(url,options)=>{const body=JSON.parse(options.body);if(body.action==='start')return Response.json({receipt:'test'});if(body.action==='status')return Response.json({offset:0});if(body.action==='verify')return Response.json({saved:true});return Response.json({id:'file-'+body.kind});});
+  assert.ok(progress.length>0);assert.ok(progress.every(text=>!/Drive|Guardando JSON|Guardando PDF/i.test(text)));
 });

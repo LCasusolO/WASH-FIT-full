@@ -10,7 +10,7 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
     if (cachedToken?.expires > now()) return cachedToken.value;
     const result = await call('https://oauth2.googleapis.com/token', {method: 'POST', body: new URLSearchParams({client_id: env.GOOGLE_CLIENT_ID, client_secret: env.GOOGLE_CLIENT_SECRET, refresh_token: env.GOOGLE_REFRESH_TOKEN, grant_type: 'refresh_token'})});
     const data = await result.json();
-    if (!result.ok || !data.access_token) throw new Error('No se pudo autorizar el repositorio de Drive.');
+    if (!result.ok || !data.access_token) throw new Error('No se pudo autorizar el repositorio central.');
     cachedToken = {value: data.access_token, expires: now() + Math.max(0, Number(data.expires_in) - 60) * 1000};
     return cachedToken.value;
   }
@@ -31,7 +31,17 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
         const name = Core.fileBaseName({facilityName: body.facility, countryCode: body.countryCode, district: body.location});
         const files = [{kind: 'json', name: name + '.json', mime: 'application/json', bytes: body.jsonBytes}, {kind: 'pdf', name: name + '.pdf', mime: 'application/pdf', bytes: body.pdfBytes}];
         for (const file of files) {
-          const response = await call('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id', {method: 'POST', headers: {Authorization: authorization, 'Content-Type': 'application/json', 'X-Upload-Content-Type': file.mime, 'X-Upload-Content-Length': String(file.bytes)}, body: JSON.stringify({name: file.name, mimeType: file.mime, parents: [folder], appProperties: {washFitBatch: batch}})});
+          // Reuse an existing file ID for the same country/facility name.
+          const quote = value => String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          const query = new URLSearchParams({q: "'" + quote(folder) + "' in parents and trashed = false and name = '" + quote(file.name) + "' and mimeType = '" + file.mime + "'", fields: 'files(id),incompleteSearch', pageSize: '1', orderBy: 'createdTime', supportsAllDrives: 'true', includeItemsFromAllDrives: 'true'});
+          const listed = await call('https://www.googleapis.com/drive/v3/files?' + query, {headers: {Authorization: authorization}});
+          const matches = await listed.json();
+          if (!listed.ok || !Array.isArray(matches.files) || matches.incompleteSearch) throw new Error('No se pudo comprobar la copia anterior.');
+          file.targetId = matches.files[0]?.id;
+          const metadata = {name: file.name, mimeType: file.mime, appProperties: {washFitBatch: batch}};
+          if (!file.targetId) metadata.parents = [folder];
+          const endpoint = 'https://www.googleapis.com/upload/drive/v3/files' + (file.targetId ? '/' + encodeURIComponent(file.targetId) : '') + '?uploadType=resumable&supportsAllDrives=true&fields=id';
+          const response = await call(endpoint, {method: file.targetId ? 'PATCH' : 'POST', headers: {Authorization: authorization, 'Content-Type': 'application/json', 'X-Upload-Content-Type': file.mime, 'X-Upload-Content-Length': String(file.bytes)}, body: JSON.stringify(metadata)});
           const session = response.headers.get('location');
           if (!response.ok || !session || new URL(session).origin !== 'https://www.googleapis.com') throw new Error('No se pudo iniciar la subida. Revise el acceso del propietario a la carpeta.');
           file.session = session;
@@ -66,7 +76,7 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
           }
           if (!response.ok) throw new Error('Subida interrumpida.');
           const result = await response.json();
-          if (!result.id) throw new Error('Drive no confirmó el archivo.');
+          if (!result.id) throw new Error('El repositorio no confirmó el archivo.');
           return res.status(200).json({id: result.id});
         }
         if (!Array.isArray(body.ids) || body.ids.length !== 2 || body.ids.some(id => typeof id !== 'string' || !/^[a-zA-Z0-9_-]{5,200}$/.test(id))) return res.status(400).json({error: 'Archivos inválidos.'});
@@ -74,12 +84,12 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
           const response = await call(`https://www.googleapis.com/drive/v3/files/${body.ids[i]}?supportsAllDrives=true&fields=id,name,mimeType,size,parents,appProperties,trashed`, {headers: {Authorization: authorization}});
           const file = await response.json();
           const wanted = receipt.files[i];
-          if (!response.ok || file.trashed || !file.parents?.includes(folder) || file.appProperties?.washFitBatch !== receipt.batch || file.name !== wanted.name || file.mimeType !== wanted.mime || Number(file.size) !== wanted.bytes) throw new Error('No se pudo confirmar el guardado de ambos archivos en la carpeta.');
+          if ((wanted.targetId && body.ids[i] !== wanted.targetId) || !response.ok || file.trashed || !file.parents?.includes(folder) || file.appProperties?.washFitBatch !== receipt.batch || file.name !== wanted.name || file.mimeType !== wanted.mime || Number(file.size) !== wanted.bytes) throw new Error('No se pudo confirmar el guardado de ambos archivos en la carpeta.');
         }
         return res.status(200).json({saved: true, savedAt: new Date(now()).toISOString(), files: receipt.files.map((file, i) => ({id: body.ids[i], name: file.name, url: `https://drive.google.com/file/d/${body.ids[i]}/view`}))});
       }
       return res.status(400).json({error: 'Acción no válida.'});
-    } catch (_) { return res.status(502).json({error: 'No se pudo completar el guardado en Drive. Revise la conexión y la configuración del repositorio.'}); }
+    } catch (_) { return res.status(502).json({error: 'No se pudo completar el guardado en el repositorio. Revise la conexión y la configuración del repositorio.'}); }
   };
 }
 module.exports = createHandler();

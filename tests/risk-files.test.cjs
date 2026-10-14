@@ -20,6 +20,7 @@ test('risk ordering keeps unfinished scores last in both directions and filters 
 test('Drive stores the exact pair name and returns confirmed links and server timestamp', async () => {
   const files=[];const handler=createHandler({env:{GOOGLE_CLIENT_ID:'id',GOOGLE_CLIENT_SECRET:'secret',GOOGLE_REFRESH_TOKEN:'token'},now:()=>1700000000000,request:async(url,options)=>{
     if(url.includes('oauth2'))return Response.json({access_token:'token',expires_in:3600});
+    if(url.startsWith('https://www.googleapis.com/drive/v3/files?'))return Response.json({files:[]});
     if(url.includes('/upload/')){files.push(JSON.parse(options.body));return new Response('',{headers:{location:'https://www.googleapis.com/upload/session'+files.length}})}
     const i=url.includes('json-id')?0:1;return Response.json({...files[i],id:i?'pdf-id':'json-id',size:i?'20':'10'});
   }});
