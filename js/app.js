@@ -148,8 +148,6 @@ createApp({
     const hasBackup = ref(false);
     const isOnline = ref(navigator.onLine);
     const offlineReady = ref(false);
-    const updateAvailable = ref(false);
-    let serviceRegistration = null;
     const photoBusy = ref(false);
     const reportPreview = ref(false);
     const isMobile = ref(window.innerWidth < 1024);
@@ -217,12 +215,6 @@ createApp({
       if (saveState.value !== 'saved') return 'Guardando…';
       return savedAt.value ? 'Guardado a las ' + new Date(savedAt.value).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }) : 'Listo';
     });
-    const updateApplication = async () => {
-      if (!serviceRegistration?.waiting) return;
-      if (!await saveDraft()) { triggerToast('Guarde un respaldo antes de actualizar: el borrador no pudo guardarse.', 'error'); return; }
-      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
-      serviceRegistration.waiting.postMessage('activate-update');
-    };
 
     // Los nombres son etiquetas; las relaciones y los cálculos usan IDs estables.
     // El fallback permite abrir JSON anteriores que solo incluían `module`.
@@ -1083,12 +1075,10 @@ createApp({
       if (activeView.value === 'general') initMap();
       if ('serviceWorker' in navigator) {
         try {
-          serviceRegistration = await navigator.serviceWorker.register('sw.js');
-          updateAvailable.value = Boolean(serviceRegistration.waiting);
-          serviceRegistration.addEventListener('updatefound', () => {
-            const installing = serviceRegistration.installing;
-            installing?.addEventListener('statechange', () => { if (installing.state === 'installed' && navigator.serviceWorker.controller) updateAvailable.value = true; });
-          });
+          const serviceRegistration = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
+          // Activa también una actualización pendiente creada por versiones anteriores.
+          serviceRegistration.waiting?.postMessage('activate-update');
+          serviceRegistration.update().catch(() => {});
           const registration = await navigator.serviceWorker.ready;
           const worker = registration.active;
           if (worker) {
@@ -1102,7 +1092,7 @@ createApp({
     const facilityValuation = computed(() => WashCore.valuation(answeredCount.value, totalVisibleIndicators.value, overallCompliance.value));
 
     return {
-      loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile, updateAvailable, updateApplication,
+      loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile,
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
       populationWarning, reportPreview, reportRadarSvg, reportIndicators, reportRisks, reportPlans,
       getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview, bulletValue, focusBulletField, updateBulletField, enterBulletField, blurBulletField, reviewHistoryText: WashCore.reviewHistoryText, reviewBullets: WashCore.reviewBullets, changeLabel: WashCore.changeLabel,

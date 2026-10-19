@@ -1,13 +1,23 @@
-const CACHE = 'wash-fit-4d2cb8054f3c';
-const ASSETS = ["./","./index.html","./css/styles.css?v=4d2cb8054f3c","./js/core.js?v=4d2cb8054f3c","./js/storage.js?v=4d2cb8054f3c","./js/chrome-report.js?v=4d2cb8054f3c","./js/report-radar.js?v=4d2cb8054f3c","./js/drive-archive.js?v=4d2cb8054f3c","./js/app.js?v=4d2cb8054f3c","./js/config/tailwind-config.js","./js/data/indicators.js?v=4d2cb8054f3c","./img/barra.png","./img/paho-logo-blanco.png?v=4d2cb8054f3c","./vendor/leaflet-LICENSE","./vendor/leaflet.css?v=4d2cb8054f3c","./vendor/leaflet.js?v=4d2cb8054f3c","./vendor/lucide-LICENSE","./vendor/lucide.js?v=4d2cb8054f3c","./vendor/tailwind.css?v=4d2cb8054f3c","./vendor/vue-LICENSE","./vendor/vue.global.js?v=4d2cb8054f3c","./vendor/images/layers-2x.png","./vendor/images/layers.png","./vendor/images/marker-icon-2x.png","./vendor/images/marker-icon.png","./vendor/images/marker-shadow.png"];
+const CACHE = 'wash-fit-1157abf7ab14';
+const ASSETS = ["./","./index.html","./css/styles.css?v=1157abf7ab14","./js/core.js?v=1157abf7ab14","./js/storage.js?v=1157abf7ab14","./js/chrome-report.js?v=1157abf7ab14","./js/report-radar.js?v=1157abf7ab14","./js/drive-archive.js?v=1157abf7ab14","./js/app.js?v=1157abf7ab14","./js/config/tailwind-config.js","./js/data/indicators.js?v=1157abf7ab14","./img/barra.png","./img/paho-logo-blanco.png?v=1157abf7ab14","./vendor/leaflet-LICENSE","./vendor/leaflet.css?v=1157abf7ab14","./vendor/leaflet.js?v=1157abf7ab14","./vendor/lucide-LICENSE","./vendor/lucide.js?v=1157abf7ab14","./vendor/tailwind.css?v=1157abf7ab14","./vendor/vue-LICENSE","./vendor/vue.global.js?v=1157abf7ab14","./vendor/images/layers-2x.png","./vendor/images/layers.png","./vendor/images/marker-icon-2x.png","./vendor/images/marker-icon.png","./vendor/images/marker-shadow.png"];
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('wash-fit-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+  const scope = new URL(self.registration.scope);
+  // Al abrir la web se usa el HTML actual; sin conexión se recupera la copia instalada.
+  // No se recarga ninguna evaluación que el usuario ya tenga abierta.
+  if (event.request.mode === 'navigate' && url.origin === scope.origin && [scope.pathname, scope.pathname + 'index.html'].includes(url.pathname)) {
+    event.respondWith(fetch(event.request).then(response => {
+      if (!response.ok) throw new Error('Navigation unavailable');
+      return response;
+    }).catch(() => caches.open(CACHE).then(cache => cache.match('./'))));
+    return;
+  }
   // Solo recursos estáticos de esta aplicación; los datos permanecen en IndexedDB.
   if (event.request.method !== 'GET' || url.origin !== self.location.origin || !ASSETS.some(asset => new URL(asset, self.registration.scope).href === url.href)) return;
   event.respondWith(caches.open(CACHE).then(cache => cache.match(event.request).then(cached => cached || fetch(event.request))));

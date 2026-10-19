@@ -35,7 +35,7 @@ Solo un borrador activo por navegador/origen. Evite editar la misma evaluación 
 
 Tras la primera visita por HTTPS (o localhost), el service worker conserva la interfaz, scripts, estilos e imágenes institucionales. La evaluación y sus borradores pueden seguir utilizándose sin internet. El mapa OpenStreetMap requiere red; las coordenadas siguen en el borrador y el reporte. No se descargan mapas para uso offline. Los mensajes de conexión se retiraron de la interfaz por solicitud del propietario.
 
-Las actualizaciones se activan al cerrar las pestañas de esta aplicación y volver a abrirla. Si hay una versión esperando, «Guardar y actualizar aplicación» conserva el borrador antes de recargar. Los borradores están en una base independiente del caché estático. No se utiliza Google Fonts ni un compilador CSS remoto.
+Las actualizaciones se instalan y activan en segundo plano, sin avisos ni botones. Al abrir o recargar la web con conexión, se solicita el HTML actual y sus recursos versionados; sin conexión se conserva la copia instalada. Una evaluación abierta no se recarga automáticamente, para no interrumpir la edición ni las cargas de archivos. Los borradores están en una base independiente del caché estático. No se utiliza Google Fonts ni un compilador CSS remoto.
 
 ## Resultados JMP y valoración
 
