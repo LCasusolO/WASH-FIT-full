@@ -757,7 +757,7 @@
                           <span class="px-2 py-0.5 bg-paho-gray-light text-paho-gray-dark text-[10px] font-bold rounded-none">{{ ind.module }}</span>
                         </div>
                         <h4 class="text-base font-extrabold text-paho-very-dark-blue pt-1">{{ ind.title }}</h4>
-                        <p class="indicator-description text-xs text-paho-gray-dark leading-relaxed"><span v-for="(tag, index) in ind.desc.split(/\r?\n/).filter(Boolean)" :key="index" class="indicator-tag"><span class="indicator-tag-dot" aria-hidden="true">●</span> {{ tag }} </span></p>
+                        <p class="indicator-description text-xs text-paho-gray-dark leading-relaxed"><span v-for="(tag, index) in ind.desc.split(/\r?\n/).filter(Boolean)" :key="index" class="indicator-tag"><span class="indicator-tag-dot" aria-hidden="true"></span> {{ tag }} </span></p>
                       </div>
 
                       <div class="flex items-center gap-2 flex-shrink-0">
@@ -815,7 +815,7 @@
                       </button>
                     </div>
 
-                    <div class="flex items-start gap-2.5">
+                    <div class="indicator-guidance flex items-start gap-2.5">
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-paho-gray-medium mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="M12 16v-4"></path>

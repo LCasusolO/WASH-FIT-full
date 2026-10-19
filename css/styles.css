@@ -3,7 +3,9 @@
 /* Texto continuo para la lectura de campo y el reporte. */
 #app :is(p, h1, h2, h3, h4, h5, td) { text-align: justify; }
 .indicator-tag { display: inline; margin-right: .65em; }
-.indicator-tag-dot { font-size: .55em; vertical-align: middle; }
+.indicator-tag-dot { display: inline-block; width: .35em; height: .35em; border-radius: 50%; background: currentColor; vertical-align: .1em; }
+.indicator-guidance { min-width: 0; }
+.indicator-guidance p { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .indicator-card button > div:last-child { flex: 1; min-width: 0; }
 
 [v-cloak] {
