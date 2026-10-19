@@ -16,32 +16,32 @@ test('no responses never imply no service or a facility diagnosis',()=>{
   assert.equal(Core.valuation(1,89,100).label,'Evaluación incompleta');
   assert.equal(Core.valuation(89,89,100).label,'Mejora Avanzada');
 });
-test('water uses real codes, admits improved source in the grounds and distinguishes visit availability',()=>{
+test('water uses the selected facility level and the approved score matrix',()=>{
   assert.equal(jmp(fixture({A_1a:1,A_3:2})).water.status,'Básico');
   const data=fixture({A_1b:2,A_3:2});data.generalInfo.level='Tercer Nivel (Alta Especialización / Hospital Especializado)';
   assert.equal(jmp(data).water.status,'Básico');
   const partial=fixture({A_1a:2,A_3:1});
-  assert.equal(jmp(partial).water.status,'Evaluación incompleta');
-  partial.generalInfo.jmpWater.available='no';assert.equal(jmp(partial).water.status,'Limitado');
-  partial.generalInfo.jmpWater.source='unimproved';assert.equal(jmp(partial).water.status,'Sin Servicio');
+  assert.equal(jmp(partial).water.status,'Básico');
+  partial.generalInfo.jmpWater.available='no';assert.equal(jmp(partial).water.status,'Básico');
+  partial.generalInfo.jmpWater.source='unimproved';assert.equal(jmp(partial).water.status,'Básico');
 });
-test('off-premises water follows distance and never turns lack of continuity into lack of source',()=>{
+test('legacy water observations do not replace the indicator scores',()=>{
   const data=fixture();data.generalInfo.jmpWater={source:'improved',location:'near',available:'yes'};
-  assert.equal(jmp(data).water.status,'Limitado');
-  data.generalInfo.jmpWater.location='far';assert.equal(jmp(data).water.status,'Sin Servicio');
+  assert.equal(jmp(data).water.status,'Sin evaluar');
+  data.generalInfo.jmpWater.location='far';assert.equal(jmp(data).water.status,'Sin evaluar');
 });
 test('hygiene requires care points and toilet stations; public areas cannot replace toilets',()=>{
   assert.equal(jmp(fixture({H_1:2,H_2:2,S_3:0})).hygiene.status,'Limitado');
   assert.equal(jmp(fixture({H_1:2,S_3:2})).hygiene.status,'Básico');
   assert.equal(jmp(fixture({H_1:2})).hygiene.status,'Evaluación incompleta');
 });
-test('waste requires effective segregation and treatment, excluding flood protection as substitute',()=>{
+test('waste uses segregation and the selected treatment score without additional confirmations',()=>{
   assert.equal(jmp(fixture({RES_2:2,RES_12:2})).waste.status,'Básico');
   assert.notEqual(jmp(fixture({RES_1:2,RES_14:2})).waste.status,'Básico');
   const data=fixture({RES_2:2,RES_10:2,RES_11:2,RES_13:2});data.generalInfo.wasteTreatmentRoute='onsite';
-  assert.equal(jmp(data).waste.status,'Evaluación incompleta');
+  assert.equal(jmp(data).waste.status,'Básico');
   data.generalInfo.wasteSafeTreatment='yes';assert.equal(jmp(data).waste.status,'Básico');
-  data.generalInfo.wasteSafeTreatment='no';assert.equal(jmp(data).waste.status,'Limitado');
+  data.generalInfo.wasteSafeTreatment='no';assert.equal(jmp(data).waste.status,'Básico');
 });
 test('cleaning and sanitation need their required responses before issuing a category',()=>{
   assert.equal(jmp(fixture({L_1:2})).cleaning.status,'Evaluación incompleta');

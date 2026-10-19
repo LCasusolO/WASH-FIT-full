@@ -218,42 +218,35 @@
   function calculateJmp(info, indicators) {
     const score = code => indicators.find(item => item.code === code)?.score ?? null;
     const incomplete = values => service(values.every(value => value === null) ? 'Sin evaluar' : 'Evaluación incompleta');
-    const hospital = /Segundo|Tercer/.test(info.level || '');
+    const hospital = /segundo|tercer|secundari|terciari/.test((info.level || '').toLocaleLowerCase('es'));
     const sourceScore = score(hospital ? 'A_1b' : 'A_1a');
-    const observation = info.jmpWater || {};
-    const source = observation.source || (sourceScore >= 1 ? 'improved' : null);
-    const location = observation.location || (sourceScore >= 1 ? 'premises' : null);
-    // Una respuesta de continuidad parcial no determina disponibilidad el día de visita.
-    const available = observation.available || (score('A_3') === 2 ? 'yes' : null);
-    let water = incomplete([sourceScore, score('A_3'), observation.source ?? null, observation.location ?? null, observation.available ?? null]);
-    if (source === 'none' || source === 'unimproved' || (source === 'improved' && location === 'far')) water = service('Sin Servicio');
-    else if (source === 'improved' && location === 'near') water = service('Limitado');
-    else if (source === 'improved' && location === 'premises' && available) water = service(available === 'yes' ? 'Básico' : 'Limitado');
+    const availability = score('A_3');
+    // Equivalencias numéricas de la matriz aprobadas por el propietario.
+    let water = incomplete([sourceScore, availability]);
+    if (sourceScore === 0) water = service('Sin Servicio');
+    else if (sourceScore !== null && availability !== null) water = service(availability >= 1 ? 'Básico' : 'Limitado');
     const san = ['S_1', 'S_2', 'S_4', 'S_5', 'S_6', 'S_7'].map(score);
     let sanitation = incomplete(san);
-    if (san.every(value => value !== null)) {
-      const improved = san[0] >= 1 || san[1] >= 1;
-      const basic = (san[0] === 2 || san[1] === 2) && san.slice(2).every(value => value === 2);
-      sanitation = service(basic ? 'Básico' : improved ? 'Limitado' : 'Sin Servicio');
-    }
+    if (san[0] === 0 || san[1] === 0) sanitation = service('Sin Servicio');
+    else if (san.every(value => value !== null)) sanitation = service(san.every(value => value >= 1) ? 'Básico' : 'Limitado');
     const hygieneScores = [score('H_1'), score('S_3')];
     let hygiene = incomplete(hygieneScores);
-    if (hygieneScores.every(value => value !== null)) hygiene = service(hygieneScores.every(value => value === 2) ? 'Básico' : hygieneScores.some(value => value >= 1) ? 'Limitado' : 'Sin Servicio');
-    const route = info.wasteTreatmentRoute || (score('RES_12') !== null ? 'external' : null);
+    if (hygieneScores.every(value => value !== null)) hygiene = service(hygieneScores.every(value => value >= 1) ? 'Básico' : hygieneScores.some(value => value >= 1) ? 'Limitado' : 'Sin Servicio');
+    const route = info.wasteTreatmentRoute;
     const segregation = score('RES_2');
     let treatment = null;
     if (route === 'external') treatment = score('RES_12');
-    if (route === 'none') treatment = 0;
-    if (route === 'onsite') {
-      const onsite = [score('RES_10'), score('RES_11'), score('RES_13')];
-      if (info.wasteSafeTreatment === 'no') treatment = 0;
-      else if (info.wasteSafeTreatment === 'yes' && onsite.every(value => value !== null)) treatment = Math.min(...onsite);
+    else if (route === 'onsite') treatment = score('RES_10');
+    else {
+      // Sin ruta explícita, se usan los tratamientos evaluados; si hay dos, ambos deben cumplir.
+      const evaluated = [score('RES_10'), score('RES_12')].filter(value => value !== null);
+      if (evaluated.length) treatment = Math.min(...evaluated);
     }
-    let waste = incomplete([segregation, treatment, route, info.wasteSafeTreatment ?? null]);
-    if (segregation !== null && treatment !== null) waste = service(segregation === 2 && treatment === 2 ? 'Básico' : segregation >= 1 || treatment >= 1 ? 'Limitado' : 'Sin Servicio');
+    let waste = incomplete([segregation, treatment]);
+    if (segregation !== null && treatment !== null) waste = service(segregation >= 1 && treatment >= 1 ? 'Básico' : segregation >= 1 || treatment >= 1 ? 'Limitado' : 'Sin Servicio');
     const cleaningScores = [score('L_1'), score('L_5')];
     let cleaning = incomplete(cleaningScores);
-    if (cleaningScores.every(value => value !== null)) cleaning = service(cleaningScores.every(value => value === 2) ? 'Básico' : cleaningScores.some(value => value >= 1) ? 'Limitado' : 'Sin Servicio');
+    if (cleaningScores.every(value => value !== null)) cleaning = service(cleaningScores[0] >= 1 && cleaningScores[1] === 2 ? 'Básico' : cleaningScores.some(value => value >= 1) ? 'Limitado' : 'Sin Servicio');
     return { water, sanitation, hygiene, waste, cleaning };
   }
   function valuation(answered, total, compliance) {

@@ -41,11 +41,14 @@ Las actualizaciones se activan al cerrar las pestañas de esta aplicación y vol
 
 Referencia: [definiciones JMP para establecimientos de salud](https://washdata.org/topics/health-care-facilities).
 
-- **Agua:** usa `A_1a` o `A_1b` según el nivel y `A_3`. Una fuente mejorada en el predio y agua disponible en la visita representan servicio básico. `A_3 = 2` permite inferir disponibilidad durante las horas de operación. Una respuesta de continuidad parcial no demuestra disponibilidad el día de visita; sin información suficiente, la categoría permanece incompleta. El panel de observaciones adicionales se retiró por solicitud del propietario; los valores guardados en archivos anteriores se conservan para compatibilidad.
-- **Residuos:** usa segregación efectiva `RES_2` y la ruta de tratamiento. Fuera del centro usa `RES_12`. Dentro del centro usa `RES_10`, `RES_11`, `RES_13` y una confirmación explícita de tratamiento/disposición seguros de infecciosos y punzocortantes. `RES_14` no reemplaza el tratamiento.
-- **Higiene:** usa `H_1` y `S_3`. Las estaciones de zonas públicas (`H_2`) no sustituyen las de los baños.
-- **Limpieza:** usa `L_1` y `L_5`. Saneamiento conserva los criterios anteriores; se exige información suficiente antes de mostrar categoría.
-- Los datos ausentes producen «Sin evaluar» o «Evaluación incompleta». La clasificación es una interpretación de los indicadores y observaciones registrados; requiere verificación en campo. Los puntajes WASH FIT no sustituyen todas las preguntas del instrumento JMP.
+La app utiliza las equivalencias numéricas de la matriz aprobadas por el propietario: 2 = verde, 1 = amarillo, 0 = rojo. Esta adaptación se calcula con las reglas siguientes:
+
+- **Agua:** usa `A_1a` en primer nivel o `A_1b` en segundo/tercer nivel, junto con `A_3`. Básico si ambos son 1 o 2; Limitado si la fuente es 1 o 2 y `A_3 = 0`; Sin Servicio si la fuente es 0, independientemente de `A_3`.
+- **Saneamiento:** usa `S_1`, `S_2`, `S_4`, `S_5`, `S_6`, `S_7`. Básico si todos son 1 o 2; Limitado si los dos primeros son 1 o 2 y alguno de los demás es 0; Sin Servicio si `S_1 = 0` o `S_2 = 0`. `S_3` se evalúa en higiene.
+- **Residuos:** usa `RES_2` y `RES_10` (tratamiento local) o `RES_12` (externo). Básico si ambos son 1 o 2; Limitado si solo uno es 0; Sin Servicio si ambos son 0. Se respeta la ruta explícita guardada; si no hay ruta seleccionada, se utilizan los tratamientos respondidos y, si ambos están evaluados, el menor puntaje. `RES_11`, `RES_13`, `RES_14` y las confirmaciones antiguas no sustituyen ni condicionan estos puntajes.
+- **Higiene:** usa `H_1` y `S_3`. Básico si ambos son 1 o 2; Limitado si solo uno es 0; Sin Servicio si ambos son 0. `H_2` no sustituye a `S_3`.
+- **Limpieza:** usa `L_1` y `L_5`. Básico si `L_1` es 1 o 2 y `L_5 = 2`; Sin Servicio si ambos son 0; las demás combinaciones respondidas son Limitado.
+- Las respuestas ausentes producen «Sin evaluar» o «Evaluación incompleta», salvo los rojos de agua o saneamiento que determinan Sin Servicio por sí solos. Las observaciones antiguas de agua y la confirmación de tratamiento seguro se conservan para compatibilidad, pero no modifican la clasificación numérica. Los puntajes WASH FIT no sustituyen todas las preguntas del instrumento JMP.
 - El cumplimiento se calcula únicamente sobre indicadores respondidos. Siempre debe interpretarse junto a la cobertura. La valoración global del establecimiento se emite solo al completar todos los indicadores visibles.
 - El riesgo es **gravedad + probabilidad**, de 0 a 20: bajo 0–7, medio 8–14, alto 15–20. Se conserva la suma por instrucción del propietario.
 
