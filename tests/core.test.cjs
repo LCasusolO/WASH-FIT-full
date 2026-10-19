@@ -9,11 +9,11 @@ vm.runInContext(fs.readFileSync('js/data/indicators.js','utf8')+';globalThis.cat
 const catalog = Core.clone(context.catalog);
 function fixture(scores={}) { return { generalInfo:Core.defaults(), indicators:catalog.map(item=>({...item,score:scores[item.code]??null})) }; }
 const jmp = data => Core.calculateJmp(data.generalInfo,data.indicators);
-test('no responses never imply no service or a facility diagnosis',()=>{
+test('JMP counts empty responses as red while the general valuation uses answered indicators',()=>{
   const statuses=jmp(fixture());
-  assert.ok(Object.values(statuses).every(value=>value.status==='Sin evaluar'));
+  assert.ok(Object.values(statuses).every(value=>value.status==='Sin Servicio'));
   assert.equal(Core.valuation(0,89,0).label,'Sin evaluar');
-  assert.equal(Core.valuation(1,89,100).label,'Evaluación incompleta');
+  assert.equal(Core.valuation(1,89,100).label,'Mejora Avanzada');
   assert.equal(Core.valuation(89,89,100).label,'Mejora Avanzada');
 });
 test('water uses the selected facility level and the approved score matrix',()=>{
@@ -27,13 +27,13 @@ test('water uses the selected facility level and the approved score matrix',()=>
 });
 test('legacy water observations do not replace the indicator scores',()=>{
   const data=fixture();data.generalInfo.jmpWater={source:'improved',location:'near',available:'yes'};
-  assert.equal(jmp(data).water.status,'Sin evaluar');
-  data.generalInfo.jmpWater.location='far';assert.equal(jmp(data).water.status,'Sin evaluar');
+  assert.equal(jmp(data).water.status,'Sin Servicio');
+  data.generalInfo.jmpWater.location='far';assert.equal(jmp(data).water.status,'Sin Servicio');
 });
 test('hygiene requires care points and toilet stations; public areas cannot replace toilets',()=>{
   assert.equal(jmp(fixture({H_1:2,H_2:2,S_3:0})).hygiene.status,'Limitado');
   assert.equal(jmp(fixture({H_1:2,S_3:2})).hygiene.status,'Básico');
-  assert.equal(jmp(fixture({H_1:2})).hygiene.status,'Evaluación incompleta');
+  assert.equal(jmp(fixture({H_1:2})).hygiene.status,'Limitado');
 });
 test('waste uses segregation and the selected treatment score without additional confirmations',()=>{
   assert.equal(jmp(fixture({RES_2:2,RES_12:2})).waste.status,'Básico');
@@ -43,10 +43,10 @@ test('waste uses segregation and the selected treatment score without additional
   data.generalInfo.wasteSafeTreatment='yes';assert.equal(jmp(data).waste.status,'Básico');
   data.generalInfo.wasteSafeTreatment='no';assert.equal(jmp(data).waste.status,'Básico');
 });
-test('cleaning and sanitation need their required responses before issuing a category',()=>{
-  assert.equal(jmp(fixture({L_1:2})).cleaning.status,'Evaluación incompleta');
+test('cleaning and sanitation classify empty required responses as red',()=>{
+  assert.equal(jmp(fixture({L_1:2})).cleaning.status,'Limitado');
   assert.equal(jmp(fixture({L_1:2,L_5:2})).cleaning.status,'Básico');
-  assert.equal(jmp(fixture({S_1:2})).sanitation.status,'Evaluación incompleta');
+  assert.equal(jmp(fixture({S_1:2})).sanitation.status,'Sin Servicio');
 });
 test('legacy files merge into canonical catalog and fill missing fields',()=>{
   const data=fixture({A_1a:2});delete data.generalInfo.ageGroups;data.indicators=data.indicators.slice(0,2);data.indicators[0].title='Texto alterado';

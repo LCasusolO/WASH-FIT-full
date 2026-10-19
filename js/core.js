@@ -216,42 +216,35 @@
     return { status, class: styles[status], reason };
   }
   function calculateJmp(info, indicators) {
-    const score = code => indicators.find(item => item.code === code)?.score ?? null;
-    const incomplete = values => service(values.every(value => value === null) ? 'Sin evaluar' : 'Evaluación incompleta');
+    const rawScore = code => indicators.find(item => item.code === code)?.score ?? null;
+    // Solo para JMP, las respuestas vacías cuentan como rojo por decisión del propietario.
+    const score = code => rawScore(code) ?? 0;
     const hospital = /segundo|tercer|secundari|terciari/.test((info.level || '').toLocaleLowerCase('es'));
     const sourceScore = score(hospital ? 'A_1b' : 'A_1a');
     const availability = score('A_3');
     // Equivalencias numéricas de la matriz aprobadas por el propietario.
-    let water = incomplete([sourceScore, availability]);
-    if (sourceScore === 0) water = service('Sin Servicio');
-    else if (sourceScore !== null && availability !== null) water = service(availability >= 1 ? 'Básico' : 'Limitado');
+    const water = service(sourceScore === 0 ? 'Sin Servicio' : availability >= 1 ? 'Básico' : 'Limitado');
     const san = ['S_1', 'S_2', 'S_4', 'S_5', 'S_6', 'S_7'].map(score);
-    let sanitation = incomplete(san);
-    if (san[0] === 0 || san[1] === 0) sanitation = service('Sin Servicio');
-    else if (san.every(value => value !== null)) sanitation = service(san.every(value => value >= 1) ? 'Básico' : 'Limitado');
+    const sanitation = service(san[0] === 0 || san[1] === 0 ? 'Sin Servicio' : san.every(value => value >= 1) ? 'Básico' : 'Limitado');
     const hygieneScores = [score('H_1'), score('S_3')];
-    let hygiene = incomplete(hygieneScores);
-    if (hygieneScores.every(value => value !== null)) hygiene = service(hygieneScores.every(value => value >= 1) ? 'Básico' : hygieneScores.some(value => value >= 1) ? 'Limitado' : 'Sin Servicio');
+    const hygiene = service(hygieneScores.every(value => value >= 1) ? 'Básico' : hygieneScores.some(value => value >= 1) ? 'Limitado' : 'Sin Servicio');
     const route = info.wasteTreatmentRoute;
     const segregation = score('RES_2');
-    let treatment = null;
+    let treatment = 0;
     if (route === 'external') treatment = score('RES_12');
     else if (route === 'onsite') treatment = score('RES_10');
     else {
       // Sin ruta explícita, se usan los tratamientos evaluados; si hay dos, ambos deben cumplir.
-      const evaluated = [score('RES_10'), score('RES_12')].filter(value => value !== null);
+      const evaluated = [rawScore('RES_10'), rawScore('RES_12')].filter(value => value !== null);
       if (evaluated.length) treatment = Math.min(...evaluated);
     }
-    let waste = incomplete([segregation, treatment]);
-    if (segregation !== null && treatment !== null) waste = service(segregation >= 1 && treatment >= 1 ? 'Básico' : segregation >= 1 || treatment >= 1 ? 'Limitado' : 'Sin Servicio');
+    const waste = service(segregation >= 1 && treatment >= 1 ? 'Básico' : segregation >= 1 || treatment >= 1 ? 'Limitado' : 'Sin Servicio');
     const cleaningScores = [score('L_1'), score('L_5')];
-    let cleaning = incomplete(cleaningScores);
-    if (cleaningScores.every(value => value !== null)) cleaning = service(cleaningScores[0] >= 1 && cleaningScores[1] === 2 ? 'Básico' : cleaningScores.some(value => value >= 1) ? 'Limitado' : 'Sin Servicio');
+    const cleaning = service(cleaningScores[0] >= 1 && cleaningScores[1] === 2 ? 'Básico' : cleaningScores.some(value => value >= 1) ? 'Limitado' : 'Sin Servicio');
     return { water, sanitation, hygiene, waste, cleaning };
   }
   function valuation(answered, total, compliance) {
     if (!answered) return { label: 'Sin evaluar', colorClass: 'text-paho-gray-dark' };
-    if (answered < total) return { label: 'Evaluación incompleta', colorClass: 'text-paho-gray-dark' };
     return compliance > 75 ? { label: 'Mejora Avanzada', colorClass: 'text-emerald-700' } : compliance >= 60 ? { label: 'En Proceso de Mejora', colorClass: 'text-amber-700' } : { label: 'Requiere Mejoras Prioritarias', colorClass: 'text-rose-700' };
   }
   function assessmentResult(score) {
