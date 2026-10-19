@@ -74,6 +74,8 @@ Se aclararon límites de respuesta de `A_2`, `A_3`, `A_8` y `RES_2`, y se corrig
 
 Exportar e Imprimir reporte preparan el JSON y un PDF de seis pasos desde una misma captura y los envían a la carpeta configurada. Cada guardado busca en la carpeta el nombre de país/establecimiento y tipo de archivo. Si existe, actualiza el mismo ID; si no, lo crea. Ante duplicados anteriores, actualiza la copia más antigua sin borrar las demás. La aplicación confirma ambos archivos en Drive antes de anunciar el guardado. Si falla, conserva el par pendiente en memoria y permite reintentar sin duplicar los archivos confirmados. La descarga local de JSON y la impresión siguen disponibles.
 
+Al imprimir, el diálogo local se abre en cuanto el HTML está listo; la generación del PDF con Chrome y la subida al repositorio continúan en segundo plano sin bloquear la impresión. Ambos procesos utilizan la misma captura. El reporte y el mapa no se preparan por segunda vez para archivar esa captura.
+
 La subida requiere autorización del propietario en el servidor de Vercel. No usa la conexión Drive de un chat, y los visitantes no necesitan iniciar sesión con Google. Consulte [activar el repositorio](docs/activar-drive.md). Hasta completar esa configuración y una prueba real, el repositorio no está activado. El PDF archivado se genera con Chrome/Chromium a partir del mismo HTML y CSS de impresión: conserva las tablas, el mapa y el radar. El servidor incluye Chromium; no requiere un servicio externo. Si la generación falla, se muestra el error y se permite reintentar, sin sustituirlo por otra plantilla.
 
 ## Validación

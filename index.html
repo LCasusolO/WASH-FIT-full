@@ -1460,7 +1460,7 @@
 
             <div class="no-print flex justify-end gap-3 report-actions">
               <button @click="reportPreview = true" class="border border-paho-grid px-4 py-2 text-sm">Vista previa del reporte</button>
-              <button @click="printReport" class="flex items-center gap-2 px-4 py-2 bg-paho-dark-blue text-white text-sm font-bold"><i data-lucide="printer" class="w-5 h-5" aria-hidden="true"></i><span>Imprimir Reporte</span></button>
+              <button @click="printReport" :disabled="archiveBusy || printBusy" class="flex items-center gap-2 px-4 py-2 bg-paho-dark-blue text-white text-sm font-bold"><i data-lucide="printer" class="w-5 h-5" aria-hidden="true"></i><span>{{ printBusy ? 'Preparando impresión…' : 'Imprimir Reporte' }}</span></button>
             </div>
             <!-- KPI Summary Cards Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1934,7 +1934,7 @@
     <section class="print-report" :class="{ 'report-open': reportPreview }" aria-label="Reporte consolidado">
       <div class="no-print flex justify-between gap-3 p-4 border-b border-paho-grid">
         <button @click="reportPreview = false" :disabled="archiveBusy" class="border border-paho-grid px-4 py-2">Volver a la evaluación</button>
-        <button @click="printReport" :disabled="archiveBusy" class="bg-paho-dark-blue text-white px-4 py-2">Imprimir / guardar PDF</button>
+        <button @click="printReport" :disabled="archiveBusy || printBusy" class="bg-paho-dark-blue text-white px-4 py-2">{{ printBusy ? 'Preparando impresión…' : 'Imprimir / guardar PDF' }}</button>
       </div>
       <div v-if="archiveStatus" class="no-print p-4" role="status" aria-live="polite"><p>{{ archiveStatus }}</p><button v-if="archiveFailed" :disabled="archiveBusy" @click="retryArchive" class="text-paho-dark-blue underline">Reintentar guardado</button></div>
       <div class="report-content">
