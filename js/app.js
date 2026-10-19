@@ -750,6 +750,7 @@ createApp({
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     };
     const archiveBusy = ref(false);
+    const printBusy = ref(false);
     const archiveFailed = ref(false);
     const archiveStatus = ref('');
     const lastArchive = ref(null);
@@ -761,14 +762,16 @@ createApp({
     let archiveJob = null;
     const createArchiveJob = async (dataset, html) => {
       const wasPreview = reportPreview.value;
-      reportPreview.value = true;
+      if (!html) reportPreview.value = true;
       let pdf;
       try {
-        await nextTick();
-        await prepareReportMap();
+        if (!html) {
+          await nextTick();
+          await prepareReportMap();
+        }
         archiveStatus.value = 'Generando PDF con Chrome…';
         pdf = await WashChrome.generate(html || await WashChrome.serialize(document.querySelector('.report-content'), WashCore.fileBaseName(dataset.generalInfo)));
-      } finally { reportPreview.value = wasPreview; }
+      } finally { if (!html) reportPreview.value = wasPreview; }
       return {dataset, json: new Blob([JSON.stringify(dataset, null, 2)], {type: 'application/json'}), pdf};
     };
     const runArchive = async (dataset, html) => {
@@ -844,17 +847,20 @@ createApp({
     };
 
     const printReport = async () => {
-      if (archiveBusy.value) return;
+      if (archiveBusy.value || printBusy.value) return;
+      printBusy.value = true;
       const dataset = snapshot();
-      reportPreview.value = true;
-      await nextTick();
-      await prepareReportMap();
       try {
+        reportPreview.value = true;
+        await nextTick();
+        await prepareReportMap();
         const fileName = WashCore.fileBaseName(dataset.generalInfo);
         const html = await WashChrome.serialize(document.querySelector('.report-content'), fileName);
-        await runArchive(dataset, html);
+        // La generación y subida al repositorio no deben retrasar el diálogo local.
+        void runArchive(dataset, html);
         await WashChrome.print(html, fileName);
       } catch (error) { triggerToast(error.message || 'No se pudo preparar la impresión.', 'error'); }
+      finally { printBusy.value = false; }
     };
     const bulletValue = value => value || '';
     const focusBulletField = event => { if (!event.target.value) { event.target.value = '• '; event.target.setSelectionRange(2, 2); } };
@@ -1144,7 +1150,7 @@ createApp({
       handleFileChange,
       removePhoto,
       exportData,
-      archiveBusy, archiveFailed, archiveStatus, retryArchive, lastArchive, driveLabel, archiveTime,
+      archiveBusy, printBusy, archiveFailed, archiveStatus, retryArchive, lastArchive, driveLabel, archiveTime,
       importData,
       switchView,
       printReport,
