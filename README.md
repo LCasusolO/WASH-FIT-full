@@ -1,6 +1,6 @@
 # WASH FIT
 
-Aplicación estática en español para evaluación, riesgos, planificación y seguimiento WASH FIT. Incluye 99 indicadores en siete dominios; la cantidad visible depende de los filtros existentes.
+Aplicación estática en español para evaluación, riesgos, planificación y seguimiento WASH FIT. Incluye las 100 filas del catálogo final en siete dominios: 99 indicadores evaluables y una instrucción de selección del sistema de saneamiento, sin puntuación. La cantidad visible depende del nivel del establecimiento y del sistema seleccionado.
 
 ## Desarrollo y publicación
 

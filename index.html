@@ -757,7 +757,7 @@
                           <span class="px-2 py-0.5 bg-paho-gray-light text-paho-gray-dark text-[10px] font-bold rounded-none">{{ ind.module }}</span>
                         </div>
                         <h4 class="text-base font-extrabold text-paho-very-dark-blue pt-1">{{ ind.title }}</h4>
-                        <p class="text-xs text-paho-gray-dark leading-relaxed">{{ ind.desc }}</p>
+                        <p class="text-xs text-paho-gray-dark leading-relaxed whitespace-pre-line">{{ ind.desc }}</p>
                       </div>
 
                       <div class="flex items-center gap-2 flex-shrink-0">
@@ -823,7 +823,7 @@
                       </svg>
                       <p class="text-[11px] text-paho-gray-dark leading-relaxed">
                         <span class="font-bold text-paho-very-dark-blue">Nota aclaratoria:</span>
-                        <span v-html="ind.guidance"></span>
+                        <span class="whitespace-pre-line">{{ ind.guidance }}</span>
                       </p>
                     </div>
 
@@ -844,37 +844,18 @@
                         type="button"
                         @click="setSanitationSystem('alcantarillado')"
                         :class="['py-3 px-4 text-xs font-bold border transition-all text-center rounded-none', generalInfo.sanitationSystem === 'alcantarillado' ? 'bg-paho-dark-blue text-white border-paho-dark-blue' : 'bg-white text-paho-gray-dark border-paho-grid hover:bg-paho-card']">
-                        Sí — Red de Alcantarillado (Omite S_8 y S_9, pasa a S_10)
+                        Sí — Sistema con alcantarillado público
                       </button>
                       <button
                         type="button"
                         @click="setSanitationSystem('insitu')"
                         :class="['py-3 px-4 text-xs font-bold border transition-all text-center rounded-none', generalInfo.sanitationSystem === 'insitu' ? 'bg-paho-dark-blue text-white border-paho-dark-blue' : 'bg-white text-paho-gray-dark border-paho-grid hover:bg-paho-card']">
-                        No — Sistema In Situ (Evalúa S_8 y luego S_9a o S_9b)
+                        No — Sistema sin alcantarillado
                       </button>
                     </div>
+                    <p v-if="generalInfo.sanitationSystem === 'alcantarillado'" class="text-xs text-paho-gray-dark leading-relaxed">{{ indicators.find(item => item.code === 'S_8').title }}</p>
                   </div>
 
-                  <!-- 2. SELECTOR DE S_9 -->
-                  <div v-if="activeModuleTab === 'sanitation' && ind.code === 'S_8' && generalInfo.sanitationSystem === 'insitu'" class="mt-6 p-5 bg-paho-card border border-paho-blue space-y-3">
-                    <label class="block text-[11px] font-bold text-paho-gray-dark uppercase tracking-wider">
-                      Seleccione la opción a evaluar para S_9:
-                    </label>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        @click="generalInfo.selectedS9Option = 'S_9a'"
-                        :class="['py-2.5 px-3 text-xs font-bold border transition-all text-left rounded-none', generalInfo.selectedS9Option === 'S_9a' ? 'bg-paho-blue text-white border-paho-blue' : 'bg-white text-paho-gray-dark border-paho-grid']">
-                        Evaluar S_9a (Conexión / Tanque sin fugas)
-                      </button>
-                      <button
-                        type="button"
-                        @click="generalInfo.selectedS9Option = 'S_9b'"
-                        :class="['py-2.5 px-3 text-xs font-bold border transition-all text-left rounded-none', generalInfo.selectedS9Option === 'S_9b' ? 'bg-paho-blue text-white border-paho-blue' : 'bg-white text-paho-gray-dark border-paho-grid']">
-                        Evaluar S_9b (Vaciado periódico de lodos)
-                      </button>
-                    </div>
-                  </div>
 
                 </div>
               </template>

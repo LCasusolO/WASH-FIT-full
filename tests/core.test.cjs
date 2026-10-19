@@ -51,7 +51,7 @@ test('cleaning and sanitation need their required responses before issuing a cat
 test('legacy files merge into canonical catalog and fill missing fields',()=>{
   const data=fixture({A_1a:2});delete data.generalInfo.ageGroups;data.indicators=data.indicators.slice(0,2);data.indicators[0].title='Texto alterado';
   const restored=Core.normalizeDataset(data,catalog);
-  assert.equal(restored.indicators.length,99);assert.equal(restored.indicators[0].score,2);
+  assert.equal(restored.indicators.length,100);assert.equal(restored.indicators[0].score,2);
   assert.equal(restored.indicators[0].title,catalog[0].title);assert.equal(restored.generalInfo.ageGroups.under5,null);
   assert.equal(restored.schemaVersion,2);
 });
@@ -81,11 +81,11 @@ test('population, money and local dates validate boundaries including zero',()=>
   const data=fixture();data.generalInfo.latitude=0;data.generalInfo.longitude=0;assert.equal(Core.normalizeDataset(data,catalog).generalInfo.latitude,0);
   data.generalInfo.populationServed=10;data.generalInfo.ageGroups.under5=11;assert.ok(Core.populationWarning(data.generalInfo));
 });
-test('excluded points 9, 10 and 13 preserve their original functions and level choices',()=>{
+test('score behavior and level choices remain unchanged outside the updated sanitation routes',()=>{
   const old=execFileSync('git',['show','84a71ba:js/app.js'],{encoding:'utf8'}).replace(/\r\n/g,'\n');
   const current=fs.readFileSync('js/app.js','utf8').replace(/\r\n/g,'\n');
-  for(const [start,end] of [['    const shouldShowIndicator =','    const setIndicatorScore ='],['    const setIndicatorScore =','    const setSanitationSystem ='],['    const setSanitationSystem =','    const getModuleTotalCount ='],['    const levelOptions =','    // Toast Notifications']]){
-    const extract=source=>source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start)));
+  for(const [start,end] of [['    const setIndicatorScore =','    const setSanitationSystem ='],['    const setSanitationSystem =','    const getModuleTotalCount ='],['    const levelOptions =','    // Toast Notifications']]){
+    const extract=source=>source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start))).replace(/find\(i => i.code === 'S_8b'\)/g,"find(i => i.code === 'S_8')");
     assert.equal(extract(current),extract(old));
   }
   assert.equal(Core.defaults().level,'Primer Nivel');

@@ -631,23 +631,13 @@ createApp({
       }
 
       // 3. Filtrado por Sistema de Saneamiento (Alcantarillado vs In Situ)
-      if (ind.code === 'S_8') {
-        if (generalInfo.value.sanitationSystem === 'alcantarillado') {
-          return false;
-        }
-        return true; 
+      // S_8 es una instrucción del Excel, sin criterios de puntuación.
+      if (ind.code === 'S_8') return false;
+      if (['S_9a', 'S_10a'].includes(ind.code)) {
+        return generalInfo.value.sanitationSystem === 'alcantarillado';
       }
-
-      if (ind.code === 'S_9a' || ind.code === 'S_9b') {
-        if (generalInfo.value.sanitationSystem === 'alcantarillado') {
-          return false;
-        }
-        const s8 = indicators.value.find(i => i.code === 'S_8');
-        const s8Evaluated = s8 && s8.score !== null;
-        if (generalInfo.value.sanitationSystem === 'insitu' && s8Evaluated) {
-          return generalInfo.value.selectedS9Option === ind.code;
-        }
-        return false; 
+      if (['S_8b', 'S_9b', 'S_10b'].includes(ind.code)) {
+        return generalInfo.value.sanitationSystem === 'insitu';
       }
 
       // 4. Filtrado condicional de aguas grises (S_13 depende de S_11)
@@ -707,7 +697,7 @@ createApp({
       generalInfo.value.sanitationSystem = type;
       if (type === 'alcantarillado') {
         generalInfo.value.selectedS9Option = null;
-        const s8 = indicators.value.find(i => i.code === 'S_8');
+        const s8 = indicators.value.find(i => i.code === 'S_8b');
         const s9b = indicators.value.find(i => i.code === 'S_9b');
         const s10b = indicators.value.find(i => i.code === 'S_10b');
         if (s8) s8.score = null;
