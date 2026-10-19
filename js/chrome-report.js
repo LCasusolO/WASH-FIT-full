@@ -38,22 +38,33 @@
     if (!response.headers.get('content-type')?.includes('application/pdf')) throw new Error('El servidor no devolvió un PDF válido.');
     return response.blob();
   }
-  async function print(html) {
+  async function print(html, title) {
+    const originalTitle = document.title;
+    let printTitle;
     const frame = document.createElement('iframe');
     frame.className = 'no-print';
-    frame.title = 'Impresi�n del reporte';
+    frame.title = 'Impresión del reporte';
     frame.style.cssText = 'position:fixed;left:-2000px;top:0;width:1123px;height:794px;border:0';
     const loaded = new Promise(resolve => { frame.onload = resolve; });
     frame.srcdoc = html;
     document.body.appendChild(frame);
+    const cleanup = () => {
+      if (document.title === printTitle) document.title = originalTitle;
+      frame.remove();
+    };
     try {
       await loaded;
       await frame.contentDocument.fonts.ready;
       await Promise.all(Array.from(frame.contentDocument.images, image => image.decode()));
-      frame.contentWindow.addEventListener('afterprint', () => frame.remove(), {once: true});
+      printTitle = title || frame.contentDocument.title || originalTitle;
+      // Chrome puede proponer el título principal al guardar un reporte desde un iframe.
+      document.title = printTitle;
+      frame.contentDocument.title = printTitle;
+      frame.title = printTitle;
+      frame.contentWindow.addEventListener('afterprint', cleanup, {once: true});
       frame.contentWindow.focus();
       frame.contentWindow.print();
-    } catch (error) { frame.remove(); throw error; }
+    } catch (error) { cleanup(); throw error; }
   }
   root.WashChrome = {serialize, generate, print};
 })(window);

@@ -850,9 +850,10 @@ createApp({
       await nextTick();
       await prepareReportMap();
       try {
-        const html = await WashChrome.serialize(document.querySelector('.report-content'), WashCore.fileBaseName(dataset.generalInfo));
+        const fileName = WashCore.fileBaseName(dataset.generalInfo);
+        const html = await WashChrome.serialize(document.querySelector('.report-content'), fileName);
         await runArchive(dataset, html);
-        await WashChrome.print(html);
+        await WashChrome.print(html, fileName);
       } catch (error) { triggerToast(error.message || 'No se pudo preparar la impresión.', 'error'); }
     };
     const bulletValue = value => value || '';

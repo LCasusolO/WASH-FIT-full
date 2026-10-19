@@ -37,9 +37,10 @@
 
 
 /* Interfaz accesible y encabezado adaptable. */
-.brand-header { gap: 1rem; }
-.brand-header > div:first-child { width: 180px; flex: 0 0 auto; }
-.brand-title { flex: 1; padding-right: 180px; }
+.brand-header { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1rem; }
+.brand-header > div:first-child { width: 180px; max-width: 100%; }
+.brand-title { grid-column: 2; min-width: 0; }
+#app .brand-title h1 { text-align: center; }
 :focus-visible { outline: 3px solid #FF671F; outline-offset: 3px; }
 button, [role=button], summary { cursor: pointer; }
 .print-report { display: none; }
@@ -70,7 +71,7 @@ button, [role=button], summary { cursor: pointer; }
 @media (max-width: 767px) {
   .brand-header { padding: 0 1rem; height: 80px; }
   .brand-header > div:first-child { width: 105px; height: 45px; }
-  .brand-title { padding-right: 0; text-align: right; }
+  .brand-title { text-align: center; }
   .brand-title h1 { font-size: 2rem; }
   .print-page table:not(.domain-summary-table) { display: block; min-width: 0 !important; }
   .print-page table:not(.domain-summary-table) thead { display: none; }
