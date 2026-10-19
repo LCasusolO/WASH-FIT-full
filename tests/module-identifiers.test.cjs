@@ -33,6 +33,26 @@ function loadApp() {
   return app;
 }
 
+test('facility level controls primary and hospital indicators in assessment and reports without losing answers', () => {
+  const app = loadApp();
+  const hospitalCodes = ['A_16', 'RES_16', 'RES_17', 'L_13', 'L_15', 'L_16', 'M_11'];
+  const visible = code => app.shouldShowIndicator(app.indicators.value.find(i => i.code === code));
+  const primary = app.indicators.value.find(i => i.code === 'A_1a');
+  primary.score = 2; primary.notes = 'Respuesta guardada en atención primaria';
+  for (const [index, level] of app.levelOptions.entries()) {
+    app.generalInfo.value.level = level;
+    assert.equal(visible('A_1a'), index === 0);
+    assert.equal(visible('A_1b'), index !== 0);
+    for (const code of hospitalCodes) assert.equal(visible(code), index !== 0, code);
+    assert.equal(app.reportIndicators.value.some(i => i.code === 'A_16'), index !== 0);
+    assert.equal(app.modulesList.reduce((sum, mod) => sum + app.getModuleTotalCount(mod.id), 0), app.totalVisibleIndicators.value);
+  }
+  app.generalInfo.value.level = app.levelOptions[0];
+  assert.equal(primary.score, 2);
+  assert.equal(primary.notes, 'Respuesta guardada en atención primaria');
+  assert.equal(app.getModuleAnsweredCount('water'), 1);
+});
+
 test('all indicators belong to a stable module, and module totals match the global total', () => {
   const app = loadApp();
   const ids = new Set(app.modulesList.map(mod => mod.id));
