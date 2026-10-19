@@ -36,7 +36,7 @@ function loadApp() {
 test('all indicators belong to a stable module, and module totals match the global total', () => {
   const app = loadApp();
   const ids = new Set(app.modulesList.map(mod => mod.id));
-  assert.equal(app.indicators.value.length, 99);
+  assert.equal(app.indicators.value.length, 100);
   assert.ok(app.indicators.value.every(ind => ids.has(ind.moduleId)));
   assert.equal(app.modulesList.reduce((sum, mod) => sum + app.getModuleTotalCount(mod.id), 0), app.totalVisibleIndicators.value);
   app.activeModuleTab.value = 'waste';

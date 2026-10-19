@@ -161,7 +161,10 @@
     if (input.indicators.length > catalog.length) throw new Error('Cantidad de indicadores inválida.');
     const codes = new Set(catalog.map(item => item.code));
     const imported = new Map();
-    for (const item of input.indicators) {
+    // En catálogos anteriores, S_8 guardaba la contención que ahora corresponde a S_8b.
+    const legacyContainment = !input.indicators.some(item => item?.code === 'S_8b');
+    for (const source of input.indicators) {
+      const item = legacyContainment && source?.code === 'S_8' ? { ...source, code: 'S_8b' } : source;
       if (!isObject(item) || !codes.has(item.code) || imported.has(item.code)) throw new Error('Código de indicador desconocido o duplicado.');
       const normalized = answer(item);
       if (item.history !== undefined && (!Array.isArray(item.history) || item.history.length > 200)) throw new Error('Historial inválido o demasiado grande.');
