@@ -746,7 +746,7 @@
             <!-- Indicators List -->
             <div class="space-y-6">
               <template v-for="ind in (isPrintingAll ? indicators : getFilteredIndicatorsByModule)" :key="ind.id">
-                <div v-if="shouldShowIndicator(ind)" class="bg-white border border-paho-grid overflow-hidden transition-all duration-150 hover:border-paho-gray-medium">
+                <div v-if="shouldShowIndicator(ind)" class="indicator-card bg-white border border-paho-grid overflow-hidden transition-all duration-150 hover:border-paho-gray-medium">
 
                   <div class="p-6 md:p-8 space-y-6">
 
@@ -757,7 +757,7 @@
                           <span class="px-2 py-0.5 bg-paho-gray-light text-paho-gray-dark text-[10px] font-bold rounded-none">{{ ind.module }}</span>
                         </div>
                         <h4 class="text-base font-extrabold text-paho-very-dark-blue pt-1">{{ ind.title }}</h4>
-                        <p class="text-xs text-paho-gray-dark leading-relaxed whitespace-pre-line">{{ ind.desc }}</p>
+                        <p class="indicator-description text-xs text-paho-gray-dark leading-relaxed"><span v-for="(tag, index) in ind.desc.split(/\r?\n/).filter(Boolean)" :key="index" class="indicator-tag"><span class="indicator-tag-dot" aria-hidden="true">●</span> {{ tag }} </span></p>
                       </div>
 
                       <div class="flex items-center gap-2 flex-shrink-0">
@@ -822,7 +822,7 @@
                         <path d="M12 8h.01"></path>
                       </svg>
                       <p class="text-[11px] text-paho-gray-dark leading-relaxed">
-                        <span class="font-bold text-paho-very-dark-blue">Nota aclaratoria:</span>
+                        <span class="font-bold text-paho-very-dark-blue">Nota aclaratoria:{{ ' ' }}</span>
                         <span class="whitespace-pre-line">{{ ind.guidance }}</span>
                       </p>
                     </div>

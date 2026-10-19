@@ -618,15 +618,15 @@ createApp({
 
     // Lógica avanzada de visibilidad condicional según nivel y tipo de infraestructura
     const shouldShowIndicator = (ind) => {
-      const currentLevel = generalInfo.value.level || '';
-      const isHospital = currentLevel.includes('Segundo') || currentLevel.includes('Tercer');
+      const currentLevel = (generalInfo.value.level || '').toLocaleLowerCase('es');
+      const isHospital = /segundo|tercer|secundari|terciari/.test(currentLevel);
 
       // 1. Filtrado de agua según nivel primario vs hospitalario (A_1a / A_1b)
       if ((ind.code === 'A_1a') && isHospital) return false;
       if ((ind.code === 'A_1b') && !isHospital) return false;
 
       // 2. Indicadores exclusivos para hospitales / pac. hospitalizados
-      if (['RES_16', 'RES_17', 'EC_13', 'EC_15', 'EC_16', 'L_13', 'L_15', 'L_16', 'M_11'].includes(ind.code)) {
+      if (['A_16', 'RES_16', 'RES_17', 'L_13', 'L_15', 'L_16', 'M_11'].includes(ind.code)) {
         if (!isHospital) return false;
       }
 
