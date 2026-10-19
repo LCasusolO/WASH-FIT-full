@@ -5,10 +5,11 @@ const vm = require('node:vm');
 function deferred() { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return {promise,resolve,reject}; }
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function load({ serialize, generate, print, save } = {}) {
-  let app; const calls = { serialized:0, generated:[], printed:[], saved:[] };
+  let app; const calls = { serialized:0, generated:[], printed:[], saved:[], downloads:0 };
   const context = vm.createContext({
     Vue: {ref:value=>({value}),computed:getter=>({get value(){return getter();}}),watch(){},onMounted(){},nextTick:async cb=>cb?.(),createApp:options=>({mount(){app=options.setup();}})},
-    window:{innerWidth:1200},navigator:{onLine:true},document:{querySelector:()=>({})},
+    window:{innerWidth:1200},navigator:{onLine:true},document:{querySelector:()=>({}),createElement:()=>({click(){calls.downloads++;},remove(){}}),body:{appendChild(){}}},
+    URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL(){}},
     WashStorage:{createStore:()=>({write:async()=>{}})},
     WashChrome:{serialize:async(...args)=>{calls.serialized++;return serialize?serialize(...args):'<html>Snapshot</html>';},generate:async html=>{calls.generated.push(html);return generate?generate(html):new Blob(['pdf']);},print:async(...args)=>{calls.printed.push(args);return print?.(...args);}},
     WashArchive:{save:async job=>{calls.saved.push(job);return save?save(job):{savedAt:'2026-10-19T12:00:00Z',files:[]};}},
@@ -47,4 +48,23 @@ test('preparation prevents duplicate clicks and releases the print lock after an
   assert.equal(app.printBusy.value,true);await app.printReport();assert.equal(calls.serialized,1);
   html.reject(new Error('Image not ready'));await first;
   assert.equal(app.printBusy.value,false);assert.equal(calls.printed.length,0);assert.equal(calls.generated.length,0);
+});
+
+test('export downloads JSON and archives PDF without opening preview or calling print',async()=>{
+  const pdf=deferred();let rendering;
+  const {app,calls}=load({serialize:async()=>{rendering=app.reportRendering.value;assert.equal(app.reportPreview.value,false);return '<html>Hidden report</html>';},generate:()=>pdf.promise});
+  app.activeView.value='general';
+  const exporting=app.exportData();await flush();
+  assert.equal(calls.downloads,1);assert.equal(rendering,true);assert.equal(app.reportRendering.value,false);
+  assert.equal(app.reportPreview.value,false);assert.equal(app.activeView.value,'general');assert.equal(calls.printed.length,0);
+  pdf.resolve(new Blob(['pdf']));await exporting;
+  assert.equal(calls.saved.length,1);assert.equal(calls.generated[0],'<html>Hidden report</html>');
+  assert.equal(app.reportPreview.value,false);assert.equal(app.activeView.value,'general');assert.equal(calls.printed.length,0);
+});
+
+test('failed export preparation removes offscreen rendering without changing the current view',async()=>{
+  const {app,calls}=load({serialize:async()=>{throw Error('Image unavailable');}});
+  app.activeView.value='dashboard';await app.exportData();
+  assert.equal(app.reportRendering.value,false);assert.equal(app.reportPreview.value,false);
+  assert.equal(app.activeView.value,'dashboard');assert.equal(calls.printed.length,0);assert.equal(app.archiveFailed.value,true);
 });
