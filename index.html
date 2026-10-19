@@ -1931,7 +1931,7 @@
       </div>
     </div>
 
-    <section class="print-report" :class="{ 'report-open': reportPreview }" aria-label="Reporte consolidado">
+    <section class="print-report" :class="{ 'report-open': reportPreview || reportRendering, 'report-rendering': reportRendering && !reportPreview }" :aria-hidden="reportRendering && !reportPreview ? 'true' : undefined" :inert="reportRendering && !reportPreview" aria-label="Reporte consolidado">
       <div class="no-print flex justify-between gap-3 p-4 border-b border-paho-grid">
         <button @click="reportPreview = false" :disabled="archiveBusy" class="border border-paho-grid px-4 py-2">Volver a la evaluación</button>
         <button @click="printReport" :disabled="archiveBusy || printBusy" class="bg-paho-dark-blue text-white px-4 py-2">{{ printBusy ? 'Preparando impresión…' : 'Imprimir / guardar PDF' }}</button>

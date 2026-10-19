@@ -150,6 +150,7 @@ createApp({
     const offlineReady = ref(false);
     const photoBusy = ref(false);
     const reportPreview = ref(false);
+    const reportRendering = ref(false);
     const isMobile = ref(window.innerWidth < 1024);
     const populationWarning = computed(() => WashCore.populationWarning(generalInfo.value));
     const store = WashStorage.createStore(window.indexedDB);
@@ -761,17 +762,16 @@ createApp({
     onMounted(async () => {try { lastArchive.value = await store.read('lastArchive'); } catch (_) {} });
     let archiveJob = null;
     const createArchiveJob = async (dataset, html) => {
-      const wasPreview = reportPreview.value;
-      if (!html) reportPreview.value = true;
-      let pdf;
-      try {
-        if (!html) {
+      if (!html) {
+        reportRendering.value = true;
+        try {
           await nextTick();
           await prepareReportMap();
-        }
-        archiveStatus.value = 'Generando PDF con Chrome…';
-        pdf = await WashChrome.generate(html || await WashChrome.serialize(document.querySelector('.report-content'), WashCore.fileBaseName(dataset.generalInfo)));
-      } finally { if (!html) reportPreview.value = wasPreview; }
+          html = await WashChrome.serialize(document.querySelector('.report-content'), WashCore.fileBaseName(dataset.generalInfo));
+        } finally { reportRendering.value = false; }
+      }
+      archiveStatus.value = 'Generando PDF con Chrome…';
+      const pdf = await WashChrome.generate(html);
       return {dataset, json: new Blob([JSON.stringify(dataset, null, 2)], {type: 'application/json'}), pdf};
     };
     const runArchive = async (dataset, html) => {
@@ -1101,7 +1101,7 @@ createApp({
     return {
       loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile,
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
-      populationWarning, reportPreview, reportRadarSvg, reportIndicators, reportRisks, reportPlans,
+      populationWarning, reportPreview, reportRendering, reportRadarSvg, reportIndicators, reportRisks, reportPlans,
       getResponsibleName, getAssessmentResult, getTrackingStatus, recordReview, bulletValue, focusBulletField, updateBulletField, enterBulletField, blurBulletField, reviewHistoryText: WashCore.reviewHistoryText, reviewBullets: WashCore.reviewBullets, changeLabel: WashCore.changeLabel,
       reviewIndicator, reviewDraft, reviewError, reviewSaving, latestReview, openNewReview, closeReviewEditor, saveNewReview, historyIndicator, openHistoryDialog, closeHistoryDialog,
       activeView,

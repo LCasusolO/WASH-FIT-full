@@ -46,6 +46,7 @@ button, [role=button], summary { cursor: pointer; }
 .print-report { display: none; }
 .report-preview > header, .report-preview > div.flex-1 { display: none !important; }
 .print-report.report-open { display: block; }
+.print-report.report-rendering { position: fixed; left: -20000px; top: 0; width: 1100px; pointer-events: none; }
 .report-content { max-width: 1100px; margin: 0 auto; padding: 2rem; color: #111; }
 .report-content h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: .8rem; }
 .report-content h2 { font-size: 1.15rem; font-weight: 800; color: #004C97; margin: 1.8rem 0 .8rem; }
