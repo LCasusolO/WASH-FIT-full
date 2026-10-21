@@ -1,22 +1,38 @@
 const {gunzipSync} = require('node:zlib');
 const MAX_BODY = 4 * 1024 * 1024;
 const MAX_HTML = 40 * 1024 * 1024;
-async function render(html, env = process.env) {
+const {mkdtemp, rm} = require('node:fs/promises');
+const {tmpdir} = require('node:os');
+const {join} = require('node:path');
+let renderQueue = Promise.resolve();
+// Vercel puede atender varias solicitudes en la misma instancia y disco temporal.
+function render(html, env = process.env) {
+  const result = renderQueue.then(() => renderOne(html, env));
+  renderQueue = result.catch(() => {});
+  return result;
+}
+async function renderOne(html, env) {
   const {chromium: playwright} = require('playwright-core');
   let executablePath = env.WASH_CHROME_EXECUTABLE, args = [];
   if (!executablePath) {
     const {default: chromium} = await import('@sparticuz/chromium');
     // La ubicación de import.meta.url cambia cuando Vercel empaqueta el módulo.
-    const bin = require('node:path').join(process.cwd(), 'node_modules', '@sparticuz', 'chromium', 'bin');
+    chromium.setGraphicsMode = false;
+    const bin = join(process.cwd(), 'node_modules', '@sparticuz', 'chromium', 'bin');
     executablePath = await chromium.executablePath(bin);
-    args = chromium.args;
+    args = chromium.args.filter(arg => !arg.startsWith('--disk-cache-size='));
   }
-  const browser = await playwright.launch({executablePath, args, headless: true});
+  const scratch = await mkdtemp(join(tmpdir(), 'wash-report-'));
+  let context;
   try {
-    const context = await browser.newContext({javaScriptEnabled: false, viewport: {width: 1123, height: 794}, serviceWorkers: 'block'});
+    context = await playwright.launchPersistentContext(join(scratch, 'profile'), {
+      executablePath, args: [...args, '--disable-gpu', '--disk-cache-size=1', '--media-cache-size=1'],
+      artifactsDir: join(scratch, 'artifacts'), downloadsPath: join(scratch, 'downloads'),
+      headless: true, javaScriptEnabled: false, viewport: {width: 1123, height: 794}, serviceWorkers: 'block'
+    });
     // The report is self-contained. Block all network/file requests, including CSS URLs.
     await context.route('**/*', route => route.abort());
-    const page = await context.newPage();
+    const page = context.pages()[0] || await context.newPage();
     page.setDefaultTimeout(30000);
     await page.emulateMedia({media: 'print'});
     await page.setContent(html.replace(/<head>/i, `<head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:">`), {waitUntil: 'load'});
@@ -25,7 +41,10 @@ async function render(html, env = process.env) {
       await Promise.all(Array.from(document.images, image => image.decode()));
     });
     return await page.pdf({format: 'A4', landscape: true, preferCSSPageSize: true, printBackground: true, timeout: 30000});
-  } finally { await browser.close(); }
+  } finally {
+    try { await context?.close(); }
+    finally { await rm(scratch, {recursive: true, force: true, maxRetries: 3}); }
+  }
 }
 function createHandler({env = process.env, renderPdf = html => render(html, env)} = {}) {
   return async (req, res) => {
