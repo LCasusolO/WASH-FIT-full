@@ -24,6 +24,12 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       if (!body || JSON.stringify(body).length > 2 * 1024 * 1024) return res.status(400).json({error: 'Solicitud inválida.'});
       const folder = env.GOOGLE_DRIVE_FOLDER_ID || FOLDER;
+      if (body.action === 'health') {
+        const response = await call(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folder)}?supportsAllDrives=true&fields=id,mimeType,trashed,capabilities(canAddChildren)`, {headers: {Authorization: 'Bearer ' + await token()}});
+        const metadata = await response.json();
+        if (!response.ok || metadata.trashed || metadata.mimeType !== 'application/vnd.google-apps.folder' || metadata.capabilities?.canAddChildren === false) throw new Error('Repository folder unavailable');
+        return res.status(200).json({ready: true});
+      }
       if (body.action === 'start') {
         if (![body.jsonBytes, body.pdfBytes].every(x => Number.isSafeInteger(x) && x > 0 && x <= MAX_BYTES) || typeof body.facility !== 'string' || body.facility.length > 500) return res.status(400).json({error: 'Nombre o tamaño de archivos inválido (máximo 40 MB por archivo).'});
         const authorization = 'Bearer ' + await token();

@@ -16,6 +16,19 @@ test('missing owner configuration and foreign origins fail before contacting Goo
   assert.equal((await run(createHandler({env: {}, request}), {})).code, 503);
   assert.equal((await run(createHandler({env, request}), {}, 'https://foreign.example')).code, 403);
 });
+
+test('repository health checks authorization and folder access without creating files', async () => {
+  let writable=true;const calls=[];
+  const handler=createHandler({env,request:async(url,options)=>{
+    calls.push({url,method:options.method||'GET'});
+    if(url.includes('oauth2'))return Response.json({access_token:'private-owner-token',expires_in:3600});
+    return Response.json({id:folder,mimeType:'application/vnd.google-apps.folder',capabilities:{canAddChildren:writable}});
+  }});
+  const healthy=await run(handler,{action:'health'});assert.equal(healthy.code,200);assert.deepEqual(healthy.data,{ready:true});
+  assert.equal(calls.filter(x=>x.url.includes('googleapis.com/drive')).length,1);
+  assert.equal(calls.find(x=>x.url.includes('googleapis.com/drive')).method,'GET');
+  writable=false;assert.equal((await run(handler,{action:'health'})).code,502);
+});
 test('central repository hides owner credentials and verifies both file sizes, batch and folder', async () => {
   const metadata = [];
   let wrongFolder = false;

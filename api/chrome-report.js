@@ -3,12 +3,15 @@ const MAX_BODY = 4 * 1024 * 1024;
 const MAX_HTML = 40 * 1024 * 1024;
 async function render(html, env = process.env) {
   const {chromium: playwright} = require('playwright-core');
-  const {default: chromium} = await import('@sparticuz/chromium');
-  const browser = await playwright.launch({
-    executablePath: env.WASH_CHROME_EXECUTABLE || await chromium.executablePath(),
-    args: env.WASH_CHROME_EXECUTABLE ? [] : chromium.args,
-    headless: true
-  });
+  let executablePath = env.WASH_CHROME_EXECUTABLE, args = [];
+  if (!executablePath) {
+    const {default: chromium} = await import('@sparticuz/chromium');
+    // La ubicación de import.meta.url cambia cuando Vercel empaqueta el módulo.
+    const bin = require('node:path').join(process.cwd(), 'node_modules', '@sparticuz', 'chromium', 'bin');
+    executablePath = await chromium.executablePath(bin);
+    args = chromium.args;
+  }
+  const browser = await playwright.launch({executablePath, args, headless: true});
   try {
     const context = await browser.newContext({javaScriptEnabled: false, viewport: {width: 1123, height: 794}, serviceWorkers: 'block'});
     // The report is self-contained. Block all network/file requests, including CSS URLs.
@@ -41,7 +44,12 @@ function createHandler({env = process.env, renderPdf = html => render(html, env)
       if (pdf.length > 4 * 1024 * 1024) return res.status(413).json({error: 'El PDF supera el tamaño permitido. Reduzca el tamaño de las fotografías y reintente.'});
       res.setHeader('Content-Type', 'application/pdf');
       return res.status(200).end(pdf);
-    } catch (error) { console.error('Chrome PDF generation failed:', error.message); return res.status(502).json({error: 'No se pudo generar el PDF con Chrome. Reintente el guardado.', code: ['ERR_REQUIRE_ESM', 'MODULE_NOT_FOUND', 'ENOENT'].includes(error.code) ? error.code : 'CHROME_RENDER_FAILED'}); }
+    } catch (error) {
+      console.error('Chrome PDF generation failed:', error.message);
+      const message = error.message || '';
+      const code = /input directory|does not exist/.test(message) ? 'CHROME_BINARY_PATH' : /shared librar|lib[^ ]+\.so/.test(message) ? 'CHROME_LIBRARY_MISSING' : /launch|browser has been closed/.test(message) ? 'CHROME_LAUNCH_FAILED' : error.code || 'CHROME_RENDER_FAILED';
+      return res.status(502).json({error: 'No se pudo generar el PDF con Chrome. Reintente el guardado.', code});
+    }
   };
 }
 module.exports = createHandler();

@@ -849,6 +849,8 @@ createApp({
     const printReport = async () => {
       if (archiveBusy.value || printBusy.value) return;
       printBusy.value = true;
+      // La ventana se reserva durante el clic para que el navegador no bloquee la impresión.
+      const printWindow = WashChrome.preparePrint?.();
       const dataset = snapshot();
       try {
         reportPreview.value = true;
@@ -858,8 +860,8 @@ createApp({
         const html = await WashChrome.serialize(document.querySelector('.report-content'), fileName);
         // La generación y subida al repositorio no deben retrasar el diálogo local.
         void runArchive(dataset, html);
-        await WashChrome.print(html, fileName);
-      } catch (error) { triggerToast(error.message || 'No se pudo preparar la impresión.', 'error'); }
+        await WashChrome.print(html, fileName, printWindow);
+      } catch (error) { printWindow?.close(); triggerToast(error.message || 'No se pudo preparar la impresión.', 'error'); }
       finally { printBusy.value = false; }
     };
     const bulletValue = value => value || '';
