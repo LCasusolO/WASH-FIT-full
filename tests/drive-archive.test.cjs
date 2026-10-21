@@ -29,6 +29,14 @@ test('repository health checks authorization and folder access without creating 
   assert.equal(calls.find(x=>x.url.includes('googleapis.com/drive')).method,'GET');
   writable=false;assert.equal((await run(handler,{action:'health'})).code,502);
 });
+
+test('expired Google authorization returns an actionable error without exposing credentials', async () => {
+  let requests=0;
+  const handler=createHandler({env,request:async()=>{requests++;return Response.json({error:'invalid_grant'},{status:400});}});
+  const result=await run(handler,{action:'health'});
+  assert.equal(result.code,502);assert.equal(result.data.code,'GOOGLE_AUTH_REQUIRED');assert.match(result.data.error,/renovar/);
+  assert.equal(requests,1);assert.ok(!JSON.stringify(result.data).includes(env.GOOGLE_REFRESH_TOKEN));
+});
 test('central repository hides owner credentials and verifies both file sizes, batch and folder', async () => {
   const metadata = [];
   let wrongFolder = false;
