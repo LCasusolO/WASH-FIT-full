@@ -10,7 +10,10 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
     if (cachedToken?.expires > now()) return cachedToken.value;
     const result = await call('https://oauth2.googleapis.com/token', {method: 'POST', body: new URLSearchParams({client_id: env.GOOGLE_CLIENT_ID, client_secret: env.GOOGLE_CLIENT_SECRET, refresh_token: env.GOOGLE_REFRESH_TOKEN, grant_type: 'refresh_token'})});
     const data = await result.json();
-    if (!result.ok || !data.access_token) throw new Error('No se pudo autorizar el repositorio central.');
+    if (!result.ok || !data.access_token) {
+      const expired = data.error === 'invalid_grant';
+      throw Object.assign(new Error(expired ? 'La autorización de Google Drive venció o fue revocada. El administrador debe renovar la conexión del repositorio.' : 'No se pudo autorizar Google Drive. El administrador debe revisar la configuración del repositorio.'), {code: expired ? 'GOOGLE_AUTH_REQUIRED' : 'GOOGLE_AUTH_CONFIGURATION'});
+    }
     cachedToken = {value: data.access_token, expires: now() + Math.max(0, Number(data.expires_in) - 60) * 1000};
     return cachedToken.value;
   }
@@ -27,7 +30,7 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
       if (body.action === 'health') {
         const response = await call(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folder)}?supportsAllDrives=true&fields=id,mimeType,trashed,capabilities(canAddChildren)`, {headers: {Authorization: 'Bearer ' + await token()}});
         const metadata = await response.json();
-        if (!response.ok || metadata.trashed || metadata.mimeType !== 'application/vnd.google-apps.folder' || metadata.capabilities?.canAddChildren === false) throw new Error('Repository folder unavailable');
+        if (!response.ok || metadata.trashed || metadata.mimeType !== 'application/vnd.google-apps.folder' || metadata.capabilities?.canAddChildren === false) throw Object.assign(new Error('La carpeta del repositorio no está disponible o la cuenta autorizada no puede guardar en ella.'), {code: 'GOOGLE_FOLDER_ACCESS'});
         return res.status(200).json({ready: true});
       }
       if (body.action === 'start') {
@@ -95,7 +98,10 @@ function createHandler({env = process.env, request = fetch, now = Date.now} = {}
         return res.status(200).json({saved: true, savedAt: new Date(now()).toISOString(), files: receipt.files.map((file, i) => ({id: body.ids[i], name: file.name, url: `https://drive.google.com/file/d/${body.ids[i]}/view`}))});
       }
       return res.status(400).json({error: 'Acción no válida.'});
-    } catch (_) { return res.status(502).json({error: 'No se pudo completar el guardado en el repositorio. Revise la conexión y la configuración del repositorio.'}); }
+    } catch (error) {
+      if (['GOOGLE_AUTH_REQUIRED', 'GOOGLE_AUTH_CONFIGURATION', 'GOOGLE_FOLDER_ACCESS'].includes(error.code)) return res.status(502).json({error: error.message, code: error.code});
+      return res.status(502).json({error: 'No se pudo completar el guardado en el repositorio. Revise la conexión y la configuración del repositorio.'});
+    }
   };
 }
 module.exports = createHandler();
