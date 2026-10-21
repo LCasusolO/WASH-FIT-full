@@ -8,6 +8,8 @@
     const images = Array.from(copy.querySelectorAll('img'));
     await Promise.all(images.map(async (image, index) => {
       const source = originals[index];
+      // Los mosaicos del mapa son opcionales; una descarga fallida no debe bloquear el reporte.
+      if (image.classList.contains('leaflet-tile') && (!source.complete || !source.naturalWidth)) { image.remove(); return; }
       try {
         await source.decode();
         const canvas = document.createElement('canvas');
@@ -17,7 +19,10 @@
         image.removeAttribute('srcset');
         // Leaflet fades new tiles with JS. The static report must keep every decoded tile visible.
         if (image.classList.contains('leaflet-tile')) { image.style.opacity = '1'; image.classList.add('leaflet-tile-loaded'); }
-      } catch (_) { throw new Error('No se pudo cargar una imagen del reporte. Revise la conexión y reintente.'); }
+      } catch (_) {
+        if (image.classList.contains('leaflet-tile')) { image.remove(); return; }
+        throw new Error('No se pudo cargar una imagen del reporte. Revise la conexión y reintente.');
+      }
     }));
     const css = Array.from(document.styleSheets).map(sheet => Array.from(sheet.cssRules).map(rule => rule.cssText).join('\n')).join('\n');
     const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -38,7 +43,30 @@
     if (!response.headers.get('content-type')?.includes('application/pdf')) throw new Error('El servidor no devolvió un PDF válido.');
     return response.blob();
   }
-  async function print(html, title) {
+  function preparePrint() {
+    try {
+      const popup = window.open('', '_blank');
+      if (popup) { popup.document.title = 'Preparando reporte'; popup.document.body.textContent = 'Preparando reporte para imprimir…'; }
+      return popup;
+    } catch (_) { return null; }
+  }
+  async function print(html, title, popup) {
+    if (popup && !popup.closed) {
+      try {
+        popup.document.open();
+        const loaded = new Promise(resolve => popup.addEventListener('load', resolve, {once: true}));
+        popup.document.write(html);
+        popup.document.close();
+        await loaded;
+        await popup.document.fonts.ready;
+        await Promise.all(Array.from(popup.document.images, image => image.decode()));
+        popup.document.title = title || popup.document.title;
+        popup.addEventListener('afterprint', () => popup.close(), {once: true});
+        popup.focus();
+        popup.print();
+        return;
+      } catch (error) { popup.close(); throw error; }
+    }
     const originalTitle = document.title;
     let printTitle;
     const frame = document.createElement('iframe');
@@ -66,5 +94,5 @@
       frame.contentWindow.print();
     } catch (error) { cleanup(); throw error; }
   }
-  root.WashChrome = {serialize, generate, print};
+  root.WashChrome = {serialize, generate, preparePrint, print};
 })(window);

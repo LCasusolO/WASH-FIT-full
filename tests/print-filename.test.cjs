@@ -40,3 +40,17 @@ test('a print failure restores the title and removes the print frame', async () 
   assert.equal(app.document.title, 'WASH FIT - OPS');
   assert.equal(app.removed, true);
 });
+
+test('a window reserved by the click prints the report and closes after the dialog finishes', async () => {
+  const events = {}; let printedTitle, closed = false;
+  const popup = {
+    closed: false, document: { title: '', body: {}, fonts: {ready:Promise.resolve()}, images: [], open(){}, write(){}, close(){events.load();} },
+    addEventListener: (name, fn) => {events[name]=fn;}, focus(){}, print(){printedTitle=this.document.title;}, close(){closed=true;}
+  };
+  const context=vm.createContext({window:{open:()=>popup},document:{}});
+  vm.runInContext(fs.readFileSync('js/chrome-report.js','utf8'),context);
+  const prepared=context.window.WashChrome.preparePrint();assert.equal(prepared,popup);
+  await context.window.WashChrome.print('<html>Report</html>','BOL-Hospital_internacional',prepared);
+  assert.equal(printedTitle,'BOL-Hospital_internacional');assert.equal(closed,false);
+  events.afterprint();assert.equal(closed,true);
+});
