@@ -141,7 +141,7 @@ createApp({
     ];
 
     const generalInfo = ref(WashCore.defaults());
-    const indicators = ref(WashCore.clone(INDICATORS_DATA));
+    const indicators = ref(WashCore.clone(INDICATORS_DATA).map(ind => ({...ind, assessmentStatus: ''})));
     const loadingDraft = ref(true);
     const saveState = ref('loading');
     const savedAt = ref('');
@@ -195,7 +195,7 @@ createApp({
     const newEvaluation = async () => {
       if (!window.confirm('Se guardará el borrador actual como respaldo y se abrirá una evaluación nueva. ¿Continuar?')) return;
       if (!await saveDraft(true)) { triggerToast('No se pudo guardar el respaldo. Exporte el JSON antes de comenzar otra evaluación.', 'error'); return; }
-      applyDataset({ generalInfo: WashCore.defaults(), indicators: WashCore.clone(INDICATORS_DATA) });
+      applyDataset({ generalInfo: WashCore.defaults(), indicators: WashCore.clone(INDICATORS_DATA).map(ind => ({...ind, assessmentStatus: ''})) });
       await saveDraft();
     };
     const restoreBackup = async () => {
@@ -225,11 +225,11 @@ createApp({
     };
 
     const answeredCount = computed(() => {
-      return indicators.value.filter(ind => shouldShowIndicator(ind) && ind.score !== null).length;
+      return indicators.value.filter(ind => shouldShowIndicator(ind) && WashCore.hasAssessmentScore(ind)).length;
     });
 
     const totalVisibleIndicators = computed(() => {
-      return indicators.value.filter(ind => shouldShowIndicator(ind)).length;
+      return indicators.value.filter(ind => shouldShowIndicator(ind) && !WashCore.isNotApplicable(ind)).length;
     });
 
     const progressPercentage = computed(() => {
@@ -243,12 +243,12 @@ createApp({
 
     const totalScoreAchieved = computed(() => {
       return indicators.value.reduce((acc, ind) => {
-        return acc + (shouldShowIndicator(ind) && ind.score !== null ? ind.score : 0);
+        return acc + (shouldShowIndicator(ind) && WashCore.hasAssessmentScore(ind) ? ind.score : 0);
       }, 0);
     });
 
     const overallCompliance = computed(() => {
-      const evaluated = indicators.value.filter(ind => shouldShowIndicator(ind) && ind.score !== null);
+      const evaluated = indicators.value.filter(ind => shouldShowIndicator(ind) && WashCore.hasAssessmentScore(ind));
       if (evaluated.length === 0) return 0;
       const maxPossible = evaluated.length * 2;
       const sum = evaluated.reduce((acc, ind) => acc + ind.score, 0);
@@ -469,12 +469,12 @@ createApp({
     });
 
     const getModuleAnsweredCount = (moduleId) => {
-      return indicators.value.filter(i => getIndicatorModuleId(i) === moduleId && shouldShowIndicator(i) && i.score !== null).length;
+      return indicators.value.filter(i => getIndicatorModuleId(i) === moduleId && shouldShowIndicator(i) && WashCore.hasAssessmentScore(i)).length;
     };
 
     const getModuleScoreAchieved = (moduleId) => {
       return indicators.value
-        .filter(i => getIndicatorModuleId(i) === moduleId && shouldShowIndicator(i) && i.score !== null)
+        .filter(i => getIndicatorModuleId(i) === moduleId && shouldShowIndicator(i) && WashCore.hasAssessmentScore(i))
         .reduce((sum, i) => sum + i.score, 0);
     };
 
@@ -491,7 +491,7 @@ createApp({
     const validateAssessmentDomain = () => {
       assessmentAttempted.value = true;
       if (!assessmentPending.value.length) return true;
-      triggerToast('Complete los indicadores pendientes o escriba INDICADOR NO APLICA seguido del motivo en sus hallazgos.', 'error');
+      triggerToast('Seleccione una respuesta o explique en Notas/hallazgos por qué no se aplica el indicador o no pudo evaluarlo.', 'error');
       nextTick(() => {
         const field = document.getElementById('assessment-notes-' + assessmentPending.value[0]?.id);
         field?.scrollIntoView({block: 'center', behavior: 'smooth'});
@@ -522,6 +522,7 @@ createApp({
       
       moduleIndicators.forEach(ind => {
         ind.score = null;
+        ind.assessmentStatus = '';
         ind.notes = '';
         ind.problemDesc = '';
         ind.associatedRisks = '';
@@ -665,6 +666,7 @@ createApp({
       }
 
       ind.score = score;
+      ind.assessmentStatus = '';
 
       if (ind.code === 'S_11' && score !== 1 && score !== 2) {
         const s13 = indicators.value.find(i => i.code === 'S_13');
@@ -705,7 +707,7 @@ createApp({
     };
 
     const getModuleTotalCount = (moduleId) => {
-      return indicators.value.filter(i => getIndicatorModuleId(i) === moduleId && shouldShowIndicator(i)).length;
+      return indicators.value.filter(i => getIndicatorModuleId(i) === moduleId && shouldShowIndicator(i) && !WashCore.isNotApplicable(i)).length;
     };
 
     const triggerMockUpload = () => {
@@ -892,7 +894,7 @@ createApp({
     };
     const blurBulletField = event => { if (!WashCore.bulletHasContent(event.target.value)) event.target.value = ''; };
     const getResponsibleName = ind => WashCore.responsibleName(ind, generalInfo.value.team);
-    const getAssessmentResult = ind => WashCore.assessmentResult(ind.score);
+    const getAssessmentResult = ind => WashCore.assessmentResult(ind);
     const getTrackingStatus = ind => WashCore.trackingStatus(ind);
     const recordReview = ind => {
       try { WashCore.recordReview(ind, generalInfo.value.team); triggerToast('Revisión agregada al historial.'); }
@@ -1098,7 +1100,7 @@ createApp({
         } catch (_) { offlineReady.value = false; }
       }
     });
-    const facilityValuation = computed(() => WashCore.valuation(answeredCount.value, totalVisibleIndicators.value, overallCompliance.value));
+    const facilityValuation = computed(() => answeredCount.value ? WashCore.valuation(answeredCount.value, totalVisibleIndicators.value, overallCompliance.value) : {label: 'Sin indicadores evaluados', colorClass: 'text-paho-gray-dark'});
 
     return {
       loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile,
