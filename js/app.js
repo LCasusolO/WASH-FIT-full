@@ -511,6 +511,7 @@ createApp({
       nextTick(() => window.lucide?.createIcons());
     };
     const navigateNextModule = () => {
+      if (!validateAssessmentDomain()) return;
       const currentIndex = modulesList.findIndex(d => d.id === activeModuleTab.value);
       const nextIndex = (currentIndex + 1) % modulesList.length;
       selectAssessmentModule(modulesList[nextIndex].id);

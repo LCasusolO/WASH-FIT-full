@@ -11,3 +11,5 @@ El cumplimiento usa puntos obtenidos / (2 × indicadores con puntaje). El genera
 No se cambian las reglas JMP: un indicador requerido sin puntaje sigue contando como 0, incluso si está justificado como no aplicable al cumplimiento general.
 
 El campo opcional `assessmentStatus` admite `not_applicable`, `no_information` o cadena vacía. Se conserva junto con `notes` en borrador, respaldo, JSON, repositorio e historial. El PDF muestra el estado y los hallazgos. Los JSON anteriores conservan todas sus notas y pueden avanzar con una explicación; no se clasifican automáticamente por el texto. Estos estados se conservan por compatibilidad con los archivos anteriores; la interfaz ya no pide seleccionar una clasificación. Las nuevas explicaciones libres no se interpretan como una clasificación automática.
+
+El botón «Siguiente Dominio» siempre exige completar o justificar todos los indicadores visibles del dominio actual, aunque el siguiente dominio ya esté completo. Las pestañas permiten regresar a un dominio ya completo incluso si el actual está pendiente; desde un dominio completo se puede ir a cualquier otro.
