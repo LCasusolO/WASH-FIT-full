@@ -81,11 +81,11 @@ test('population, money and local dates validate boundaries including zero',()=>
   const data=fixture();data.generalInfo.latitude=0;data.generalInfo.longitude=0;assert.equal(Core.normalizeDataset(data,catalog).generalInfo.latitude,0);
   data.generalInfo.populationServed=10;data.generalInfo.ageGroups.under5=11;assert.ok(Core.populationWarning(data.generalInfo));
 });
-test('score behavior and level choices remain unchanged outside the updated sanitation routes',()=>{
+test('score behavior and level choices remain unchanged apart from clearing the new no-score status',()=>{
   const old=execFileSync('git',['show','84a71ba:js/app.js'],{encoding:'utf8'}).replace(/\r\n/g,'\n');
   const current=fs.readFileSync('js/app.js','utf8').replace(/\r\n/g,'\n');
   for(const [start,end] of [['    const setIndicatorScore =','    const setSanitationSystem ='],['    const setSanitationSystem =','    const getModuleTotalCount ='],['    const levelOptions =','    // Toast Notifications']]){
-    const extract=source=>source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start))).replace(/find\(i => i.code === 'S_8b'\)/g,"find(i => i.code === 'S_8')");
+    const extract=source=>source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start))).replace(/find\(i => i.code === 'S_8b'\)/g,"find(i => i.code === 'S_8')").replace(/      ind\.assessmentStatus = '';\n/g,'');
     assert.equal(extract(current),extract(old));
   }
   assert.equal(Core.defaults().level,'Primer Nivel');

@@ -147,6 +147,8 @@
     const result = {};
     for (const key of TEXT_FIELDS) result[key] = text(input[key], key);
     result.score = option(input.score, 'puntuación', [0, 1, 2]);
+    result.assessmentStatus = option(input.assessmentStatus, 'estado de evaluación', ['not_applicable', 'no_information'], '');
+    if (hasAssessmentScore(result)) result.assessmentStatus = '';
     for (const key of ['severity', 'likelihood']) result[key] = number(input[key], key, 0, 10, true);
     result.cost = number(input.cost, 'costo');
     for (const key of ['targetDate', 'nextReviewDate']) result[key] = date(input[key], key);
@@ -247,18 +249,27 @@
     if (!answered) return { label: 'Sin evaluar', colorClass: 'text-paho-gray-dark' };
     return compliance > 75 ? { label: 'Mejora Avanzada', colorClass: 'text-emerald-700' } : compliance >= 60 ? { label: 'En Proceso de Mejora', colorClass: 'text-amber-700' } : { label: 'Requiere Mejoras Prioritarias', colorClass: 'text-rose-700' };
   }
-  function assessmentResult(score) {
+  function hasAssessmentScore(indicator) { return [0, 1, 2].includes(indicator.score); }
+  function hasAssessmentExplanation(indicator) {
+    const reason = String(indicator.notes || '').trim()
+      .replace(/^(?:INDICADOR\s+)?NO\s+(?:SE\s+)?APLICA\b[\s:;,.()—-]*/i, '')
+      .replace(/^XQ\b[\s:;,.()—-]*/i, '');
+    return /\p{L}/u.test(reason);
+  }
+  function isNotApplicable(indicator) {
+    return !hasAssessmentScore(indicator) && indicator.assessmentStatus === 'not_applicable' && hasAssessmentExplanation(indicator);
+  }
+  function assessmentResult(value) {
+    const indicator = typeof value === 'object' && value !== null ? value : {score: value};
+    const score = indicator.score;
     if (score === 2) return { label: 'Cumple', class: 'bg-emerald-50 text-emerald-800 border-emerald-300' };
     if (score === 1) return { label: 'Cumple Parcialmente', class: 'bg-amber-50 text-amber-800 border-amber-300' };
     if (score === 0) return { label: 'No Cumple', class: 'bg-rose-50 text-rose-700 border-rose-300' };
-    return { label: 'Sin evaluar', class: 'bg-gray-50 text-gray-600 border-gray-300' };
+    const label = isNotApplicable(indicator) ? 'No se aplica' : hasAssessmentExplanation(indicator) ? (indicator.assessmentStatus === 'no_information' ? 'Sin información' : 'Sin puntaje, con justificación') : 'Sin evaluar';
+    return { label, class: 'bg-gray-50 text-gray-600 border-gray-300' };
   }
   function assessmentComplete(indicator) {
-    if ([0, 1, 2].includes(indicator.score)) return true;
-    const match = String(indicator.notes || '').trim().match(/^INDICADOR\s+NO\s+APLICA(?:\s+|:\s*)([\s\S]*)$/i);
-    // Keep previously saved XQ notes valid while accepting the shorter wording.
-    const reason = match?.[1].replace(/^XQ\b\s*:?\s*/i, '') || '';
-    return /\p{L}/u.test(reason);
+    return hasAssessmentScore(indicator) || hasAssessmentExplanation(indicator);
   }
   function responsibleName(indicator, team) {
     return team.find(member => member.id === indicator.responsibleId)?.name || indicator.responsible || '';
@@ -305,5 +316,5 @@
     const added = field === 'correctiveMeasures' ? changes.newCorrectiveMeasures : changes.newMonitoringComments;
     return (added ? 'Nuevo en esta revisión:\n' + reviewBullets(added) : 'Sin información nueva en esta revisión.') + '\n\nAcumulado:\n' + full;
   }
-  return { assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });
