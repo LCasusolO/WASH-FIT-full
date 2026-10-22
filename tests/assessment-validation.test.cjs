@@ -105,3 +105,18 @@ test('all justified non-applicable indicators allow navigation without inventing
  app.navigateNextModule();assert.equal(app.activeModuleTab.value,'sanitation');
  app.clearCurrentModule();assert.equal(app.getFilteredIndicatorsByModule.value.every(ind=>ind.assessmentStatus===''),true);
 });
+
+
+test('the assessment form uses only scores or free findings and has no extra classification selector',()=>{
+ const html=fs.readFileSync('index.html','utf8');
+ assert.ok(!html.includes('v-model="ind.assessmentStatus"'));
+ assert.ok(!html.includes('Motivo sin puntaje:'));
+ assert.ok(!html.includes('Marque «No se aplica»'));
+ const app=load();app.activeView.value='assessment';
+ app.getFilteredIndicatorsByModule.value.forEach((ind,index)=>{ind.score=null;ind.notes=index%2?'Sin información disponible':'No se presta este servicio';});
+ assert.equal(app.assessmentPending.value.length,0);
+ app.navigateNextModule();assert.equal(app.activeModuleTab.value,'sanitation');
+ app.indicators.value.filter(ind=>ind.moduleId==='sanitation').forEach(ind=>{ind.score=2;});const current=app.getFilteredIndicatorsByModule.value;
+ current[0].score=null;current[0].notes='...';app.navigateNextModule();assert.equal(app.activeModuleTab.value,'sanitation');
+ current[0].notes='No se pudo verificar durante la visita';app.navigateNextModule();assert.equal(app.activeModuleTab.value,'waste');
+});

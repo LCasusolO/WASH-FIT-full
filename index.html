@@ -706,7 +706,7 @@
           <div v-show="activeView === 'assessment' || isPrintingAll" class="space-y-8">
             <div class="bg-paho-card p-6 border border-paho-grid">
               <h3 class="text-lg font-bold text-paho-very-dark-blue">Paso 2: Evaluación de la Situación</h3>
-              <p class="text-xs text-paho-gray-medium mt-1">Evalúe los indicadores de cada dominio seleccionando Cumple, Cumple Parcialmente o No Cumple. Si no selecciona una respuesta, explique en sus hallazgos por qué no se aplica el indicador o no pudo evaluarlo. Marque «No se aplica» para excluirlo del total aplicable; «Sin información» queda pendiente.</p>
+              <p class="text-xs text-paho-gray-medium mt-1">Evalúe los indicadores de cada dominio seleccionando Cumple, Cumple Parcialmente o No Cumple. Si no selecciona una respuesta, explique en sus hallazgos por qué no se aplica el indicador o no pudo evaluarlo.</p>
             </div>
 
             <!-- Tabbed Sub-navigation -->
@@ -827,14 +827,7 @@
                     </div>
 
                     <div class="space-y-1.5 w-full">
-                      <div class="flex flex-wrap items-center justify-between gap-2">
-                        <label :for="'assessment-notes-' + ind.id" class="text-[10px] font-bold text-paho-gray-dark uppercase tracking-wider block">Comentarios de Campo / Hallazgos</label>
-                        <select v-if="ind.score === null" v-model="ind.assessmentStatus" :aria-label="'Motivo sin puntaje: ' + ind.title" class="max-w-full text-xs border border-paho-grid bg-white px-2 py-1 text-paho-gray-dark rounded-none">
-                          <option value="">Sin puntaje / Sin clasificar</option>
-                          <option value="not_applicable">No se aplica</option>
-                          <option value="no_information">Sin información / No se pudo verificar</option>
-                        </select>
-                      </div>
+                      <label :for="'assessment-notes-' + ind.id" class="text-[10px] font-bold text-paho-gray-dark uppercase tracking-wider block">Comentarios de Campo / Hallazgos</label>
                       <input :id="'assessment-notes-' + ind.id" aria-label="Comentarios de campo" :aria-invalid="assessmentInvalid(ind) ? 'true' : undefined" :aria-describedby="assessmentInvalid(ind) ? 'assessment-error-' + ind.id : undefined" type="text" v-model="ind.notes" :placeholder="ind.score === null ? 'Explique por qué no se aplica o no pudo evaluarlo...' : 'Describa el estado, fecha o condiciones...'" class="w-full px-4 py-2.5 text-xs border border-paho-grid bg-white focus:outline-none focus:border-paho-blue text-paho-gray-dark rounded-none">
                       <p v-if="assessmentInvalid(ind)" :id="'assessment-error-' + ind.id" class="text-xs text-red-700">Seleccione una respuesta o explique por qué no se aplica el indicador o no pudo evaluarlo. No basta con dejar el campo vacío o solo símbolos.</p>
                     </div>
