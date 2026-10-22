@@ -120,3 +120,20 @@ test('the assessment form uses only scores or free findings and has no extra cla
  current[0].score=null;current[0].notes='...';app.navigateNextModule();assert.equal(app.activeModuleTab.value,'sanitation');
  current[0].notes='No se pudo verificar durante la visita';app.navigateNextModule();assert.equal(app.activeModuleTab.value,'waste');
 });
+
+
+test('Next always validates the current domain even when its destination is already complete',()=>{
+ const app=load();app.activeView.value='assessment';
+ app.indicators.value.filter(ind=>ind.moduleId==='sanitation').forEach(ind=>ind.score=2);
+ assert.ok(app.assessmentPending.value.length>0);
+ app.navigateNextModule();assert.equal(app.activeModuleTab.value,'water');assert.equal(app.assessmentAttempted.value,true);
+ // The tabs retain the explicit exception for revisiting an already completed domain.
+ app.selectAssessmentModule('sanitation');assert.equal(app.activeModuleTab.value,'sanitation');
+ // From a completed domain one can still jump to any unfinished domain.
+ app.selectAssessmentModule('water');assert.equal(app.activeModuleTab.value,'water');
+ app.getFilteredIndicatorsByModule.value.forEach(ind=>{ind.score=2;});
+ const unanswered=app.getFilteredIndicatorsByModule.value[0];unanswered.score=null;unanswered.notes='';
+ app.navigateNextModule();assert.equal(app.activeModuleTab.value,'water');
+ unanswered.notes='...';app.navigateNextModule();assert.equal(app.activeModuleTab.value,'water');
+ unanswered.notes='No se pudo verificar durante la visita';app.navigateNextModule();assert.equal(app.activeModuleTab.value,'sanitation');
+});
