@@ -160,9 +160,42 @@ createApp({
     let persistedRevision = 0;
     let photoOrigin = null;
     const snapshot = () => ({ schemaVersion: WashCore.SCHEMA_VERSION, savedAt: new Date().toISOString(), generalInfo: WashCore.clone(generalInfo.value), indicators: WashCore.clone(indicators.value) });
+    const incompleteDates = ref({});
+    const recoveryError = ref('');
+    const protectedDraft = ref(null);
+    const dateIssues = computed(() => WashCore.datasetDateIssues({generalInfo: generalInfo.value, indicators: indicators.value}));
+    const dateFieldMessage = (value, location) => incompleteDates.value[location] || WashCore.dateMessage(value);
+    const updateDateField = (event, owner, field, location) => {
+      if (event.target.validity?.badInput) {
+        incompleteDates.value[location] = `${location}: completa la fecha o borra todos sus componentes. Se conserva el valor anterior hasta terminar.`;
+        return;
+      }
+      delete incompleteDates.value[location];
+      owner[field] = event.target.value;
+    };
+    const validateExportDataset = dataset => {
+      // Validar sin reemplazar la captura: conserva los datos y la fecha de guardado.
+      WashCore.normalizeDataset(dataset, INDICATORS_DATA);
+      if (new Blob([JSON.stringify(dataset, null, 2)]).size > WashCore.MAX_IMPORT_BYTES) throw new Error('El JSON supera el límite de importación de 40 MB. Reduce las fotografías antes de exportar.');
+    };
+    const checkedSnapshot = () => {
+      if (recoveryError.value) throw new Error(recoveryError.value);
+      const incomplete = Object.values(incompleteDates.value)[0];
+      if (incomplete) throw new Error(incomplete);
+      const dataset = snapshot();
+      validateExportDataset(dataset);
+      const unusual = WashCore.datasetDateIssues(dataset);
+      if (unusual.length) {
+        const details = unusual.slice(0, 10).map(issue => `${issue.location}: ${issue.message}`).join('\n');
+        const more = unusual.length > 10 ? `\nY ${unusual.length - 10} fechas más; revisa el aviso de fechas.` : '';
+        if (!window.confirm(`Hay ${unusual.length} fechas con años inusuales.\n\n${details}${more}\n\n¿Confirmas conservar estas fechas en el JSON y el reporte? Cancelar permite corregirlas.`)) return null;
+      }
+      return dataset;
+    };
     const saveDraft = (backup = false) => {
       clearTimeout(saveTimer);
-      const dataset = snapshot();
+      if (recoveryError.value && (!backup || !protectedDraft.value)) return Promise.resolve(false);
+      const dataset = recoveryError.value ? WashCore.clone(protectedDraft.value) : snapshot();
       const savingRevision = revision;
       saveState.value = 'saving';
       saveQueue = saveQueue.catch(() => {}).then(() => store.save(dataset, backup)).then(time => {
@@ -175,13 +208,16 @@ createApp({
       return saveQueue;
     };
     watch([generalInfo, indicators], () => {
-      if (loadingDraft.value) return;
+      if (loadingDraft.value || recoveryError.value) return;
       revision++;
       saveState.value = 'pending';
       clearTimeout(saveTimer);
       saveTimer = setTimeout(() => saveDraft(), 800);
     }, { deep: true, flush: 'sync' });
     const applyDataset = (dataset) => {
+      incompleteDates.value = {};
+      recoveryError.value = '';
+      protectedDraft.value = null;
       generalInfo.value = dataset.generalInfo;
       indicators.value = dataset.indicators.map(ind => {
         const result = {...ind, responsible: WashCore.responsibleName(ind, dataset.generalInfo.team), responsibleId: ''};
@@ -202,7 +238,7 @@ createApp({
       try {
         const backup = await store.read('backup');
         if (!backup) throw new Error('No hay un respaldo previo.');
-        const restored = WashCore.normalizeDataset(backup, INDICATORS_DATA);
+        const restored = WashCore.normalizeDataset(backup, INDICATORS_DATA, {allowInvalidDates: true});
         if (!window.confirm('Se recuperará el respaldo anterior. El borrador actual quedará como respaldo. ¿Continuar?')) return;
         if (!await saveDraft(true)) throw new Error('No se pudo conservar el borrador actual.');
         applyDataset(restored);
@@ -744,14 +780,18 @@ createApp({
       triggerToast('Evidencia fotográfica removida.', 'error');
     };
 
-    const downloadDataset = dataset => {
+    const downloadDataset = (dataset, fileName) => {
       const blob = new Blob([JSON.stringify(dataset, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = WashCore.fileBaseName(dataset.generalInfo) + '.json';
+      link.download = fileName || WashCore.fileBaseName(dataset.generalInfo) + '.json';
       document.body.appendChild(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    const downloadProtectedDraft = () => {
+      const dataset = protectedDraft.value || (dateIssues.value.some(issue => issue.invalid) ? snapshot() : null);
+      if (dataset) downloadDataset(dataset, 'WASH-FIT-respaldo-recuperacion.json');
     };
     const archiveBusy = ref(false);
     const printBusy = ref(false);
@@ -783,6 +823,7 @@ createApp({
       archiveFailed.value = false;
       archiveStatus.value = 'Preparando evaluación…';
       try {
+        if (dataset || archiveJob) validateExportDataset(dataset || archiveJob.dataset);
         if (dataset) { archiveJob = null; archiveJob = await createArchiveJob(dataset, html); }
         if (!archiveJob) throw new Error('No hay una evaluación pendiente. Vuelva a Exportar.');
         const result = await WashArchive.save(archiveJob, text => { archiveStatus.value = text; });
@@ -799,12 +840,21 @@ createApp({
         return false;
       } finally { archiveBusy.value = false; nextTick(() => window.lucide?.createIcons()); }
     };
-    const retryArchive = () => runArchive(archiveJob ? null : snapshot());
+    const retryArchive = () => {
+      try {
+        if (archiveJob) return runArchive(null);
+        const dataset = checkedSnapshot();
+        if (dataset) return runArchive(dataset);
+      } catch (error) { triggerToast(error.message, 'error'); }
+    };
     const exportData = async () => {
       if (archiveBusy.value) return;
-      const dataset = snapshot();
-      downloadDataset(dataset);
-      await runArchive(dataset);
+      try {
+        const dataset = checkedSnapshot();
+        if (!dataset) return;
+        downloadDataset(dataset);
+        await runArchive(dataset);
+      } catch (error) { triggerToast(error.message, 'error'); }
     };
     const importData = event => {
       const file = event.target.files?.[0];
@@ -851,10 +901,13 @@ createApp({
 
     const printReport = async () => {
       if (archiveBusy.value || printBusy.value) return;
+      let dataset;
+      try { dataset = checkedSnapshot(); }
+      catch (error) { triggerToast(error.message, 'error'); return; }
+      if (!dataset) return;
       printBusy.value = true;
       // La ventana se reserva durante el clic para que el navegador no bloquee la impresión.
       const printWindow = WashChrome.preparePrint?.();
-      const dataset = snapshot();
       try {
         reportPreview.value = true;
         await nextTick();
@@ -917,6 +970,7 @@ createApp({
       nextTick(() => { document.getElementById('review-editor').showModal(); document.getElementById('review-change').focus(); });
     };
     const closeReviewEditor = () => {
+      delete incompleteDates.value['Revisión — Próxima revisión'];
       document.getElementById('review-editor')?.close();
       reviewIndicator.value = null;
       reviewDraft.value = null;
@@ -927,6 +981,7 @@ createApp({
       if (reviewSaving.value || !reviewIndicator.value || !reviewDraft.value) return;
       reviewSaving.value = true;
       try {
+        if (incompleteDates.value['Revisión — Próxima revisión']) throw new Error(incompleteDates.value['Revisión — Próxima revisión']);
         WashCore.saveReviewDraft(reviewIndicator.value, reviewDraft.value, generalInfo.value.team);
         closeReviewEditor();
         triggerToast('Revisión registrada.');
@@ -1077,12 +1132,17 @@ createApp({
       document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && !loadingDraft.value && revision !== persistedRevision) saveDraft(); });
       window.addEventListener('beforeunload', event => { if (!loadingDraft.value && revision !== persistedRevision) { event.preventDefault(); event.returnValue = ''; } });
       window.addEventListener('afterprint', () => { reportPreview.value = false; });
+      let storedDraft;
       try {
-        const draft = await store.read();
-        if (draft) { applyDataset(WashCore.normalizeDataset(draft, INDICATORS_DATA)); savedAt.value = draft.savedAt || ''; }
+        const draft = storedDraft = await store.read();
+        if (draft) { applyDataset(WashCore.normalizeDataset(draft, INDICATORS_DATA, {allowInvalidDates: true})); savedAt.value = draft.savedAt || ''; }
         hasBackup.value = Boolean(await store.read('backup'));
         saveState.value = 'saved';
-      } catch (error) { saveState.value = 'error'; triggerToast('No se pudo recuperar el borrador. ' + error.message, 'error'); }
+      } catch (error) {
+        protectedDraft.value = storedDraft || null;
+        recoveryError.value = 'No se pudo recuperar el borrador. Se conserva sin sobrescribir. ' + error.message;
+        saveState.value = 'error'; triggerToast(recoveryError.value, 'error');
+      }
       finally { loadingDraft.value = false; }
       if (activeView.value === 'general') initMap();
       if ('serviceWorker' in navigator) {
@@ -1104,6 +1164,7 @@ createApp({
     const facilityValuation = computed(() => answeredCount.value ? WashCore.valuation(answeredCount.value, totalVisibleIndicators.value, overallCompliance.value) : {label: 'Sin indicadores evaluados', colorClass: 'text-paho-gray-dark'});
 
     return {
+      dateIssues, dateFieldMessage, updateDateField, recoveryError, protectedDraft, downloadProtectedDraft,
       loadingDraft, saveState, savedAt, saveLabel, hasBackup, isOnline, offlineReady, photoBusy, isMobile,
       newEvaluation, restoreBackup, saveDraft, handlePhotoDrop, handlePhotoKeys,
       populationWarning, reportPreview, reportRendering, reportRadarSvg, reportIndicators, reportRisks, reportPlans,

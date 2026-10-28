@@ -247,3 +247,10 @@ button, [role=button], summary { cursor: pointer; }
 .report-radar figcaption { font-size: .8rem; margin-top: .5rem; }
 @media (max-width: 767px) { .report-actions button { flex: 1; font-size: .75rem; } }
 @media print { .report-radar svg { max-width: 175mm; } }
+
+.date-feedback, .date-notice { color: #713f12; background: #fffbeb; border: 1px solid #d97706; padding: .6rem .75rem; font-size: .75rem; line-height: 1.5; text-align: left; overflow-wrap: anywhere; }
+.date-feedback { margin-top: .5rem; max-width: 30rem; }
+.date-notice summary { cursor: pointer; font-weight: 700; }
+.date-notice p, .date-notice ul { margin-top: .75rem; }
+.date-notice ul { padding-left: 1.25rem; list-style: disc; }
+.date-notice li + li { margin-top: .5rem; }

@@ -219,6 +219,16 @@
 
         <!-- PANELS FRAME -->
         <div class="flex-1 p-6 lg:p-10 space-y-8">
+          <div v-if="recoveryError" class="date-feedback no-print" role="alert">
+            <p>{{ recoveryError }}</p>
+            <button v-if="protectedDraft" @click="downloadProtectedDraft" class="underline font-bold">Descargar borrador original para recuperación</button>
+          </div>
+          <details v-if="dateIssues.length" class="date-notice no-print">
+            <summary>Revisar fechas ({{ dateIssues.length }})</summary>
+            <p>Las fechas se conservan. Corrige las inválidas antes de exportar; los años inusuales requieren confirmación.</p>
+            <ul><li v-for="(issue, index) in dateIssues" :key="index"><strong>{{ issue.location }}:</strong> {{ issue.message }}</li></ul>
+            <button v-if="dateIssues.some(issue => issue.invalid)" @click="downloadProtectedDraft" class="underline font-bold">Descargar copia para recuperación (contiene fechas por corregir)</button>
+          </details>
 
           <!-- MODULE 0: INSTRUCCIONES DE USO -->
           <div v-show="activeView === 'instructions'" class="space-y-8">
@@ -333,7 +343,8 @@
               </div>
               <div class="p-4 bg-paho-very-dark-blue border border-white/10 text-center w-full md:w-auto">
                 <span class="block text-xs text-paho-light-blue">Fecha de Registro</span>
-                <input aria-label="Fecha de evaluación" type="date" v-model="generalInfo.evaluationDate" class="bg-transparent text-white text-sm font-bold focus:outline-none text-center mt-1 border-b border-dashed border-paho-light-blue pb-1 w-full md:w-auto">
+                <input aria-label="Fecha de evaluación" type="date" :value="generalInfo.evaluationDate" @input="updateDateField($event, generalInfo, 'evaluationDate', 'Fecha de evaluación')" :aria-describedby="dateFieldMessage(generalInfo.evaluationDate, 'Fecha de evaluación') ? 'evaluation-date-message' : undefined" class="bg-transparent text-white text-sm font-bold focus:outline-none text-center mt-1 border-b border-dashed border-paho-light-blue pb-1 w-full md:w-auto">
+                <p v-if="dateFieldMessage(generalInfo.evaluationDate, 'Fecha de evaluación')" id="evaluation-date-message" class="date-feedback" role="status">{{ dateFieldMessage(generalInfo.evaluationDate, 'Fecha de evaluación') }}</p>
               </div>
             </div>
 
@@ -1192,9 +1203,12 @@
             <td data-label="Fecha de Realización" class="py-5 px-4 align-top">
               <input aria-label="Plazo"
                 type="date"
-                v-model="ind.targetDate"
+                :value="ind.targetDate"
+                @input="updateDateField($event, ind, 'targetDate', ind.code + ' — Fecha de realización')"
+                :aria-describedby="dateFieldMessage(ind.targetDate, ind.code + ' — Fecha de realización') ? 'target-date-' + ind.code : undefined"
                 class="w-full p-2.5 border border-paho-grid rounded-none text-xs text-paho-gray-dark focus:outline-none focus:border-paho-blue bg-white"
               >
+              <p v-if="dateFieldMessage(ind.targetDate, ind.code + ' — Fecha de realización')" :id="'target-date-' + ind.code" class="date-feedback" role="status">{{ dateFieldMessage(ind.targetDate, ind.code + ' — Fecha de realización') }}</p>
             </td>
 
             <!-- Recursos Necesarios -->
@@ -1400,9 +1414,12 @@
             <td data-label="Fecha de Revisión" class="py-5 px-4 align-top">
               <input aria-label="Próxima revisión"
                 type="date"
-                v-model="ind.nextReviewDate"
+                :value="ind.nextReviewDate"
+                @input="updateDateField($event, ind, 'nextReviewDate', ind.code + ' — Próxima revisión')"
+                :aria-describedby="dateFieldMessage(ind.nextReviewDate, ind.code + ' — Próxima revisión') ? 'next-date-' + ind.code : undefined"
                 class="w-full p-2.5 border border-paho-grid rounded-none text-xs text-paho-gray-dark focus:outline-none focus:border-paho-blue bg-white"
               >
+              <p v-if="dateFieldMessage(ind.nextReviewDate, ind.code + ' — Próxima revisión')" :id="'next-date-' + ind.code" class="date-feedback" role="status">{{ dateFieldMessage(ind.nextReviewDate, ind.code + ' — Próxima revisión') }}</p>
             </td>
 
             <!-- Comentarios / Notas Adicionales -->
@@ -1852,7 +1869,7 @@
 
             <section class="review-full review-additions" aria-labelledby="review-measures-title"><h3 id="review-measures-title">Medidas correctivas o adicionales</h3><div class="review-previous"><h4>Registrado anteriormente</h4><p>{{ reviewBullets(reviewDraft.previousCorrectiveMeasures) || 'Sin registros anteriores.' }}</p></div><label for="review-measures">Agregar nueva medida correctiva</label><textarea id="review-measures" :value="bulletValue(reviewDraft.newCorrectiveMeasures)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'newCorrectiveMeasures')" @keydown="enterBulletField($event, reviewDraft, 'newCorrectiveMeasures')" @blur="blurBulletField" rows="3"></textarea></section>
             <section class="review-full review-additions" aria-labelledby="review-comments-title"><h3 id="review-comments-title">Comentarios y notas adicionales</h3><div class="review-previous"><h4>Registrado anteriormente</h4><p>{{ reviewBullets(reviewDraft.previousMonitoringComments) || 'Sin registros anteriores.' }}</p></div><label for="review-comments">Agregar nuevo comentario adicional</label><textarea id="review-comments" :value="bulletValue(reviewDraft.newMonitoringComments)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'newMonitoringComments')" @keydown="enterBulletField($event, reviewDraft, 'newMonitoringComments')" @blur="blurBulletField" rows="3"></textarea></section>
-            <div class="review-full"><label for="review-next-date">Próxima revisión (opcional)</label><input id="review-next-date" type="date" v-model="reviewDraft.nextReviewDate"></div>
+            <div class="review-full"><label for="review-next-date">Próxima revisión (opcional)</label><input id="review-next-date" type="date" :value="reviewDraft.nextReviewDate" @input="updateDateField($event, reviewDraft, 'nextReviewDate', 'Revisión — Próxima revisión')" :aria-describedby="dateFieldMessage(reviewDraft.nextReviewDate, 'Revisión — Próxima revisión') ? 'review-date-message' : undefined"><p v-if="dateFieldMessage(reviewDraft.nextReviewDate, 'Revisión — Próxima revisión')" id="review-date-message" class="date-feedback" role="status">{{ dateFieldMessage(reviewDraft.nextReviewDate, 'Revisión — Próxima revisión') }}</p></div>
           </div>
         </div>
         <footer class="review-editor-footer"><button type="button" @click="closeReviewEditor" class="review-cancel">Cancelar</button><button type="submit" :disabled="reviewSaving" class="review-save">Guardar revisión</button></footer>

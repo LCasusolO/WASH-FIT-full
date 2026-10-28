@@ -11,18 +11,47 @@
   const TEXT_FIELDS = ['notes', 'problemDesc', 'associatedRisks', 'action', 'resources', 'responsible', 'responsibleId', 'revisionNotes', 'correctiveMeasures', 'monitoringComments'];
   const STATUSES = ['No Iniciado', 'En Progreso', 'Retrasado', 'Completado'];
   const CHANGES = ['', 'sin_cambios', 'mejorado', 'empeorado'];
+  const DATE_LABELS = { evaluationDate: 'Fecha de evaluación', targetDate: 'Fecha de realización', nextReviewDate: 'Próxima revisión' };
   let sequence = 0;
   const newId = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `wash-${Date.now()}-${++sequence}`;
   const clone = value => JSON.parse(JSON.stringify(value));
   const isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   function localDate(date = new Date()) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return `${String(date.getFullYear()).padStart(4, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
   function validDate(value) {
     if (value === '') return true;
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-    const date = new Date(`${value}T12:00:00`);
-    return !Number.isNaN(date.getTime()) && localDate(date) === value;
+    // Fechas de calendario, independientes de la zona horaria y sin convertir años 00–99.
+    const [year, month, day] = value.split('-').map(Number);
+    const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return year >= 1 && month >= 1 && month <= 12 && day >= 1 && day <= days[month - 1];
+  }
+  function dateMessage(value) {
+    if (value === undefined || value === '') return '';
+    if (!validDate(value)) return `Fecha inválida (${String(value).slice(0, 40)}). Usa una fecha real con formato AAAA-MM-DD o deja el campo vacío.`;
+    const year = Number(value.slice(0, 4));
+    return year < 1900 || year > 2100 ? `Revisa el año ${value.slice(0, 4)} (${value}). Está fuera del intervalo habitual 1900–2100; se conservará si lo confirmas al exportar.` : '';
+  }
+  function datasetDateIssues(dataset) {
+    const issues = [];
+    const inspect = (record, field, location) => {
+      const message = dateMessage(record?.[field]);
+      if (message) issues.push({ field, location, message, invalid: !validDate(record[field]) });
+    };
+    inspect(dataset.generalInfo, 'evaluationDate', 'Datos generales — Fecha de evaluación');
+    for (const ind of dataset.indicators || []) {
+      for (const field of ['targetDate', 'nextReviewDate']) inspect(ind, field, `${ind.code} — ${DATE_LABELS[field]}`);
+      (ind.history || []).forEach((entry, index) => {
+        for (const field of ['targetDate', 'nextReviewDate']) inspect(entry, field, `${ind.code} — historial, revisión ${index + 1} — ${DATE_LABELS[field]}`);
+      });
+    }
+    return issues;
+  }
+  function inContext(location, normalize) {
+    try { return normalize(); }
+    catch (error) { throw new Error(`${location} — ${error.message}`); }
   }
   function text(value, name, max = 20000) {
     if (value === undefined) return '';
@@ -39,9 +68,10 @@
     if (!choices.includes(value)) throw new Error(`Opción inválida: ${name}.`);
     return value;
   }
-  function date(value, name) {
-    const result = text(value, name, 10);
-    if (!validDate(result)) throw new Error(`Fecha inválida: ${name}.`);
+  function date(value, name, options = {}) {
+    const result = text(value, name);
+    // Solo la recuperación local puede conservar fechas incompletas para corregirlas.
+    if (!options.allowInvalidDates && !validDate(result)) throw new Error(`Fecha inválida: ${name}. Usa AAAA-MM-DD y una fecha real, o deja el campo vacío.`);
     return result;
   }
   const countries = [['ARG','Argentina'],['BOL','Bolivia'],['BRA','Brasil'],['CHL','Chile'],['COL','Colombia'],['CRI','Costa Rica'],['CUB','Cuba'],['ECU','Ecuador'],['SLV','El Salvador'],['GTM','Guatemala'],['HTI','Haití'],['HND','Honduras'],['MEX','México'],['NIC','Nicaragua'],['PAN','Panamá'],['PRY','Paraguay'],['PER','Perú'],['DOM','República Dominicana'],['URY','Uruguay'],['VEN','Venezuela'],['CAN','Canadá'],['USA','Estados Unidos'],['BLZ','Belice'],['GUY','Guyana'],['SUR','Surinam'],['JAM','Jamaica'],['TTO','Trinidad y Tobago'],['BHS','Bahamas'],['BRB','Barbados'],['ATG','Antigua y Barbuda'],['DMA','Dominica'],['GRD','Granada'],['KNA','San Cristóbal y Nieves'],['LCA','Santa Lucía'],['VCT','San Vicente y las Granadinas']];
@@ -102,7 +132,7 @@
       wasteTreatmentRoute: null, wasteSafeTreatment: null
     };
   }
-  function normalizeGeneral(input) {
+  function normalizeGeneral(input, options) {
     if (!isObject(input)) throw new Error('Faltan los datos generales de la evaluación.');
     const info = defaults();
     for (const key of ['facilityName', 'district', 'summary']) info[key] = text(input[key], key);
@@ -117,7 +147,7 @@
     for (const key of Object.keys(info.ageGroups)) info.ageGroups[key] = number(input.ageGroups?.[key], key, 0, Number.MAX_SAFE_INTEGER, true);
     info.sanitationSystem = option(input.sanitationSystem, 'saneamiento', ['alcantarillado', 'insitu']);
     info.selectedS9Option = option(input.selectedS9Option, 'opción S9', ['S_9a', 'S_9b']);
-    info.evaluationDate = input.evaluationDate === undefined ? info.evaluationDate : date(input.evaluationDate, 'evaluación');
+    info.evaluationDate = input.evaluationDate === undefined ? info.evaluationDate : date(input.evaluationDate, 'Fecha de evaluación (evaluationDate)', options);
     if (input.jmpWater !== undefined && !isObject(input.jmpWater)) throw new Error('Observación JMP de agua inválida.');
     info.jmpWater.source = option(input.jmpWater?.source, 'fuente de agua', ['improved', 'unimproved', 'none']);
     info.jmpWater.location = option(input.jmpWater?.location, 'ubicación de fuente', ['premises', 'near', 'far']);
@@ -142,7 +172,7 @@
     });
     return info;
   }
-  function answer(input) {
+  function answer(input, options) {
     if (!isObject(input)) throw new Error('Indicador inválido.');
     const result = {};
     for (const key of TEXT_FIELDS) result[key] = text(input[key], key);
@@ -151,15 +181,15 @@
     if (hasAssessmentScore(result)) result.assessmentStatus = '';
     for (const key of ['severity', 'likelihood']) result[key] = number(input[key], key, 0, 10, true);
     result.cost = number(input.cost, 'costo');
-    for (const key of ['targetDate', 'nextReviewDate']) result[key] = date(input[key], key);
+    for (const key of ['targetDate', 'nextReviewDate']) result[key] = date(input[key], `${DATE_LABELS[key]} (${key})`, options);
     result.trackingStatus = option(input.trackingStatus, 'seguimiento', STATUSES, 'No Iniciado');
     result.indicatorChange = option(input.indicatorChange, 'cambio', CHANGES, 'sin_cambios');
     return result;
   }
-  function normalizeDataset(input, catalog) {
+  function normalizeDataset(input, catalog, options = {}) {
     if (!isObject(input) || !Array.isArray(input.indicators)) throw new Error('El JSON debe contener datos generales y una lista de indicadores.');
     if (input.schemaVersion !== undefined && ![1, SCHEMA_VERSION].includes(input.schemaVersion)) throw new Error('Versión de archivo no compatible.');
-    const generalInfo = normalizeGeneral(input.generalInfo);
+    const generalInfo = inContext('Datos generales', () => normalizeGeneral(input.generalInfo, options));
     if (input.indicators.length > catalog.length) throw new Error('Cantidad de indicadores inválida.');
     const codes = new Set(catalog.map(item => item.code));
     const imported = new Map();
@@ -168,18 +198,18 @@
     for (const source of input.indicators) {
       const item = legacyContainment && source?.code === 'S_8' ? { ...source, code: 'S_8b' } : source;
       if (!isObject(item) || !codes.has(item.code) || imported.has(item.code)) throw new Error('Código de indicador desconocido o duplicado.');
-      const normalized = answer(item);
-      if (item.history !== undefined && (!Array.isArray(item.history) || item.history.length > 200)) throw new Error('Historial inválido o demasiado grande.');
-      normalized.history = (item.history || []).map(entry => {
-        if (!isObject(entry) || typeof entry.recordedAt !== 'string' || !Number.isFinite(Date.parse(entry.recordedAt))) throw new Error('Fecha del historial inválida.');
-        const result = { recordedAt: entry.recordedAt, ...answer(entry) };
+      const normalized = inContext(item.code, () => answer(item, options));
+      if (item.history !== undefined && (!Array.isArray(item.history) || item.history.length > 200)) throw new Error(`${item.code} — Historial inválido o demasiado grande.`);
+      normalized.history = (item.history || []).map((entry, index) => inContext(`${item.code} — historial, revisión ${index + 1}`, () => {
+        if (!isObject(entry) || typeof entry.recordedAt !== 'string' || !Number.isFinite(Date.parse(entry.recordedAt))) throw new Error('Fecha de registro del historial inválida (recordedAt).');
+        const result = { recordedAt: entry.recordedAt, ...answer(entry, options) };
         if (entry.reviewChanges !== undefined) {
           const changes = entry.reviewChanges;
           if (!isObject(changes) || typeof changes.responsibleChanged !== 'boolean') throw new Error('Cambios de revisión inválidos.');
           result.reviewChanges = {responsibleChanged: changes.responsibleChanged, previousResponsible: text(changes.previousResponsible, 'responsable anterior'), newCorrectiveMeasures: text(changes.newCorrectiveMeasures, 'nueva medida correctiva'), newMonitoringComments: text(changes.newMonitoringComments, 'nuevo comentario')};
         }
         return result;
-      });
+      }));
       if (!normalized.responsibleId && normalized.responsible) {
         const matches = generalInfo.team.filter(member => member.name === normalized.responsible);
         if (matches.length === 1) normalized.responsibleId = matches[0].id;
@@ -281,7 +311,7 @@
   }
   function recordReview(indicator, team, now = new Date().toISOString()) {
     if ((indicator.history || []).length >= 200) throw new Error('Máximo 200 revisiones por indicador. Exporte un respaldo antes de iniciar otra evaluación.');
-    const snapshot = { recordedAt: now, ...answer(indicator), responsible: responsibleName(indicator, team), trackingStatus: trackingStatus(indicator) };
+    const snapshot = { recordedAt: now, ...inContext(indicator.code || 'Indicador', () => answer(indicator)), responsible: responsibleName(indicator, team), trackingStatus: trackingStatus(indicator) };
     indicator.history = [...(indicator.history || []), snapshot];
     return snapshot;
   }
@@ -316,5 +346,5 @@
     const added = field === 'correctiveMeasures' ? changes.newCorrectiveMeasures : changes.newMonitoringComments;
     return (added ? 'Nuevo en esta revisión:\n' + reviewBullets(added) : 'Sin información nueva en esta revisión.') + '\n\nAcumulado:\n' + full;
   }
-  return { hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { dateMessage, datasetDateIssues, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });
