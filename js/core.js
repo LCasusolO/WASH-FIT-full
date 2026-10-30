@@ -57,6 +57,10 @@
     name = name[0].toUpperCase()+name.slice(1);
     return (countryCode(info) || 'SIN')+'-'+name;
   }
+  function reportLocation(info) {
+    const country = countries.find(([code]) => code === info.countryCode)?.[1] || '';
+    return [String(info.district || '').trim(), country].filter(Boolean).join(' / ') || 'Sin registrar';
+  }
   function filterRisks(list, domain, priority, order) {
     const risk = ind => ind.severity == null || ind.severity === '' || ind.likelihood == null || ind.likelihood === '' ? null : Number(ind.severity)+Number(ind.likelihood);
     const level = n => n === null ? 'pending' : n >= 15 ? 'high' : n >= 8 ? 'medium' : 'low';
@@ -316,5 +320,5 @@
     const added = field === 'correctiveMeasures' ? changes.newCorrectiveMeasures : changes.newMonitoringComments;
     return (added ? 'Nuevo en esta revisión:\n' + reviewBullets(added) : 'Sin información nueva en esta revisión.') + '\n\nAcumulado:\n' + full;
   }
-  return { hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });
