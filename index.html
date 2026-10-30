@@ -1945,7 +1945,7 @@
           <h2 id="report-step-1">Paso 1: Datos Generales</h2>
           <dl class="report-info">
             <div><dt>Nombre</dt><dd>{{ generalInfo.facilityName || 'Sin registrar' }}</dd></div>
-            <div><dt>Ciudad / país</dt><dd>{{ generalInfo.district || 'Sin registrar' }}</dd></div>
+            <div><dt>Ciudad / país</dt><dd>{{ reportLocation(generalInfo) }}</dd></div>
             <div><dt>Nivel</dt><dd>{{ generalInfo.level }}</dd></div>
             <div><dt>Tipo / ámbito</dt><dd>{{ generalInfo.type }} / {{ generalInfo.setting }}</dd></div>
             <div><dt>Población</dt><dd>{{ generalInfo.populationServed === null ? 'Sin registrar' : formatThousands(generalInfo.populationServed) }}</dd></div>
