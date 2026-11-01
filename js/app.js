@@ -338,6 +338,23 @@ createApp({
       return result;
     });
 
+    // Cronograma del Resumen: solo brechas (puntaje 0 o 1) con fecha de inicio y de finalización.
+    const GANTT_DAY_PX = 8;
+    const ganttView = computed(() => WashCore.buildGantt(
+      indicators.value
+        .filter(ind => shouldShowIndicator(ind) && (ind.score === 0 || ind.score === 1))
+        .map(ind => ({ id: ind.id, code: ind.code, module: ind.module, moduleId: ind.moduleId, title: ind.title, action: ind.action, startDate: ind.startDate, targetDate: ind.targetDate, status: WashCore.trackingStatus(ind), risk: calculateRiskScore(ind) })),
+      WashCore.localDate()
+    ));
+    const ganttBarClass = status => status === 'Completado' ? 'bg-emerald-600 text-white'
+      : status === 'Retrasado' ? 'bg-red-600 text-white'
+      : status === 'En Progreso' ? 'bg-paho-blue text-white'
+      : 'bg-paho-gray-light text-paho-gray-dark';
+    const ganttModuleClass = moduleId => {
+      const mod = modulesList.find(m => m.id === moduleId);
+      return (mod ? mod.color : 'bg-paho-dark-blue') + (moduleId === 'energy' ? ' text-slate-900' : ' text-white');
+    };
+
     const trackingSummary = computed(() => {
       const gaps = indicators.value.filter(ind => shouldShowIndicator(ind) && (ind.score === 0 || ind.score === 1));
       const counts = { noIniciado: 0, enProgreso: 0, completado: 0, retrasado: 0 };
@@ -1152,6 +1169,7 @@ createApp({
       getFilteredIndicatorsByModule,
       getActiveModuleProgressPercentage,
       getSortedGaps,
+      ganttView, GANTT_DAY_PX, ganttBarClass, ganttModuleClass,
       jmpCalculatedStatus,
       radarChartData,
       getViewTitle,

@@ -87,3 +87,5 @@ La subida requiere autorización del propietario en el servidor de Vercel. No us
 ### Fechas del Plan de Mejora
 
 Cada acción admite «Fecha de inicio» y «Fecha de finalización», ambas opcionales mientras se prepara el borrador. La finalización no puede ser anterior al inicio; un cambio inválido se rechaza sin alterar lo guardado. Los respaldos anteriores conservan su fecha de realización como finalización (campo JSON `targetDate`); el inicio (`startDate`) queda vacío hasta ingresarlo. Ambas fechas se conservan en los respaldos y revisiones, y aparecen en los reportes. El estado retrasado sigue calculándose con la fecha de finalización.
+
+El Resumen incluye, debajo de «Consolidado por Dominios (WASH)», un «Cronograma de acciones» (diagrama de Gantt) con las brechas —indicadores con puntaje 0 o 1— que tienen fecha de inicio y de finalización. Las barras usan el estado de seguimiento y una línea punteada marca el día de hoy; las brechas sin ambas fechas no se dibujan.

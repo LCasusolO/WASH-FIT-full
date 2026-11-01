@@ -295,6 +295,32 @@
     if (indicator.targetDate && indicator.targetDate < today) return 'Retrasado';
     return indicator.trackingStatus || 'No Iniciado';
   }
+  const DAY_MS = 86400000;
+  const MONTHS_ES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const dayNumber = iso => { const [y, m, d] = iso.split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / DAY_MS); };
+  const weekdayOf = day => (new Date(day * DAY_MS).getUTCDay() + 6) % 7;
+  const firstActionLine = value => String(value || '').split('\n').map(line => line.replace(/^\s*[•\-–]\s*/, '').trim()).find(Boolean) || '';
+  // Cronograma: solo se dibujan acciones con ambas fechas; el eje va de lunes a domingo y llega hasta "hoy" si está cerca.
+  function buildGantt(items, today = localDate()) {
+    const rows = (items || []).filter(item => item.startDate && item.targetDate && item.startDate <= item.targetDate);
+    if (!rows.length) return { rows: [], weeks: [], totalDays: 0, todayOffset: null };
+    let first = Math.min(...rows.map(item => dayNumber(item.startDate)));
+    let last = Math.max(...rows.map(item => dayNumber(item.targetDate)));
+    const todayDay = dayNumber(today);
+    const nearToday = todayDay >= first - 28 && todayDay <= last + 28;
+    if (nearToday) { first = Math.min(first, todayDay); last = Math.max(last, todayDay); }
+    first -= weekdayOf(first);
+    last += 6 - weekdayOf(last);
+    while ((last - first + 1) / 7 < 4) last += 7;
+    const weeks = [];
+    for (let day = first; day <= last; day += 7) { const date = new Date(day * DAY_MS); weeks.push(`${date.getUTCDate()} ${MONTHS_ES[date.getUTCMonth()]}`); }
+    return {
+      weeks,
+      totalDays: last - first + 1,
+      todayOffset: todayDay >= first && todayDay <= last ? todayDay - first : null,
+      rows: rows.map(item => ({ ...item, actionText: firstActionLine(item.action), offset: dayNumber(item.startDate) - first, days: dayNumber(item.targetDate) - dayNumber(item.startDate) + 1 }))
+    };
+  }
   function recordReview(indicator, team, now = new Date().toISOString()) {
     if ((indicator.history || []).length >= 200) throw new Error('Máximo 200 revisiones por indicador. Exporte un respaldo antes de iniciar otra evaluación.');
     const snapshot = { recordedAt: now, ...answer(indicator), responsible: responsibleName(indicator, team), trackingStatus: trackingStatus(indicator) };
@@ -332,5 +358,5 @@
     const added = field === 'correctiveMeasures' ? changes.newCorrectiveMeasures : changes.newMonitoringComments;
     return (added ? 'Nuevo en esta revisión:\n' + reviewBullets(added) : 'Sin información nueva en esta revisión.') + '\n\nAcumulado:\n' + full;
   }
-  return { validatePlanDates, updatePlanDate, reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { buildGantt, validatePlanDates, updatePlanDate, reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });

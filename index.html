@@ -1657,6 +1657,59 @@
                 </div>
               </div>
 
+              <!-- Cronograma de acciones del plan de mejora (solo brechas) -->
+              <div class="gantt-box bg-paho-card border border-paho-grid p-8 space-y-6">
+                <div class="border-b border-paho-grid pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <h3 class="text-base font-bold text-paho-very-dark-blue">Cronograma de acciones</h3>
+                  <div class="flex flex-wrap items-center gap-4 text-[11px] text-paho-gray-dark">
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-paho-gray-light"></span>No iniciado</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-paho-blue"></span>En curso</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-red-600"></span>Retrasado</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-emerald-600"></span>Completado</span>
+                    <span class="flex items-center gap-1.5"><span class="h-3" style="border-left:2px dashed #ff671f"></span>Hoy</span>
+                  </div>
+                </div>
+
+                <p v-if="!ganttView.rows.length" class="text-xs text-paho-gray-medium">Aún no hay acciones con fecha de inicio y de finalización.</p>
+                <div v-else class="overflow-x-auto bg-white border border-paho-grid" tabindex="0" role="region" aria-label="Cronograma de acciones: tabla desplazable">
+                  <table class="text-left border-collapse" :style="{ minWidth: (410 + ganttView.totalDays * GANTT_DAY_PX) + 'px' }">
+                    <thead>
+                      <tr class="bg-paho-card border-b border-paho-grid text-[10px] font-extrabold uppercase tracking-wider text-paho-gray-medium">
+                        <th class="py-2.5 px-3 w-[230px] min-w-[230px] text-center">Dominio / Indicador</th>
+                        <th class="py-2.5 px-3 w-[180px] min-w-[180px] text-center">Acción</th>
+                        <th class="p-0" :style="{ width: ganttView.totalDays * GANTT_DAY_PX + 'px' }">
+                          <div class="flex normal-case tracking-normal font-semibold text-[11px]">
+                            <div v-for="(week, i) in ganttView.weeks" :key="i" class="py-2.5 pl-1.5 shrink-0 overflow-hidden whitespace-nowrap" :style="{ width: 7 * GANTT_DAY_PX + 'px' }">{{ week }}</div>
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-paho-grid text-xs">
+                      <tr v-for="row in ganttView.rows" :key="row.id" class="align-middle">
+                        <td class="py-3 px-3 border-r border-paho-grid">
+                          <div class="flex flex-col items-center text-center gap-1.5">
+                            <span class="inline-block px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-none" :class="ganttModuleClass(row.moduleId)">{{ row.module }}</span>
+                            <span class="font-bold text-paho-dark-blue leading-snug line-clamp-2" :title="row.title">{{ row.code }} · {{ row.title }}</span>
+                            <span v-if="row.risk !== null" class="inline-block px-2 py-0.5 text-[11px] font-semibold border rounded-none" :class="getRiskColorClass(row.risk)">Riesgo {{ getRiskLabel(row.risk) }}</span>
+                          </div>
+                        </td>
+                        <td class="py-3 px-3 border-r border-paho-grid">
+                          <p v-if="row.actionText" class="line-clamp-2 leading-snug" :title="row.actionText">{{ row.actionText }}</p>
+                          <p v-else class="italic text-paho-gray-medium">Sin texto de acción</p>
+                          <p class="text-[11px] text-paho-gray-medium mt-0.5">{{ formatDate(row.startDate) }} – {{ formatDate(row.targetDate) }}</p>
+                        </td>
+                        <td class="relative p-0" :style="{ height: '56px', backgroundImage: 'repeating-linear-gradient(to right,#E6E6E6 0 1px,transparent 1px ' + 7 * GANTT_DAY_PX + 'px)' }">
+                          <div v-if="ganttView.todayOffset !== null" class="absolute top-0 bottom-0" :style="{ left: ganttView.todayOffset * GANTT_DAY_PX + 'px', borderLeft: '2px dashed #ff671f' }"></div>
+                          <div class="absolute flex items-center px-2 text-[11px] font-semibold overflow-hidden whitespace-nowrap" :class="ganttBarClass(row.status)"
+                               :style="{ top: '17px', height: '22px', left: row.offset * GANTT_DAY_PX + 'px', width: row.days * GANTT_DAY_PX + 'px' }"
+                               :title="row.code + ' · ' + formatDate(row.startDate) + ' – ' + formatDate(row.targetDate) + ' · ' + row.status">{{ row.days * GANTT_DAY_PX >= 40 ? row.days + ' d' : '' }}</div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
               <!-- VALORACIÓN GLOBAL DEL ESTABLECIMIENTO -->
               <div class="bg-paho-card border border-paho-grid p-8 space-y-6">
                 <div class="border-b border-paho-grid pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
