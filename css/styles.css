@@ -247,3 +247,16 @@ button, [role=button], summary { cursor: pointer; }
 .report-radar figcaption { font-size: .8rem; margin-top: .5rem; }
 @media (max-width: 767px) { .report-actions button { flex: 1; font-size: .75rem; } }
 @media print { .report-radar svg { max-width: 175mm; } }
+
+/* Cronograma de acciones dentro del reporte (Paso 4) */
+.report-gantt { margin-top: 1.5rem; break-inside: avoid-page; page-break-inside: avoid; }
+.report-gantt-legend { break-after: avoid; page-break-after: avoid; display: flex; flex-wrap: wrap; gap: 1rem; margin: .3rem 0 .6rem; font-size: .75rem; }
+.report-gantt-legend span { display: inline-flex; align-items: center; gap: .3rem; }
+.report-gantt-legend i { display: inline-block; width: .7rem; height: .7rem; }
+.report-gantt-legend i.report-gantt-today { width: 0; height: .8rem; background: none !important; border-left: 2px dashed #FF671F; }
+.report-content .report-gantt th.report-gantt-axis, .report-content .report-gantt td.report-gantt-track { padding: 0; }
+.report-gantt-axis > div { display: flex; }
+.report-gantt-axis span { display: block; box-sizing: border-box; padding: .5rem 0 .5rem .25rem; font-size: .7rem; font-weight: 600; white-space: nowrap; overflow: hidden; }
+.report-gantt-track { position: relative; height: 12mm; background-image: linear-gradient(to right, #DDD 1px, transparent 1px); background-repeat: repeat-x; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.report-gantt-bar { position: absolute; top: 50%; height: 5mm; margin-top: -2.5mm; box-sizing: border-box; padding: 0 1.5mm; font-size: .7rem; font-weight: 700; line-height: 5mm; white-space: nowrap; overflow: hidden; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.report-gantt-today-line { position: absolute; top: 0; bottom: 0; border-left: 2px dashed #FF671F; z-index: 1; }

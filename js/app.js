@@ -350,6 +350,10 @@ createApp({
       : status === 'Retrasado' ? 'bg-red-600 text-white'
       : status === 'En Progreso' ? 'bg-paho-blue text-white'
       : 'bg-paho-gray-light text-paho-gray-dark';
+    const ganttBarColor = status => status === 'Completado' ? { background: '#059669', color: '#fff' }
+      : status === 'Retrasado' ? { background: '#dc2626', color: '#fff' }
+      : status === 'En Progreso' ? { background: '#008DC9', color: '#fff' }
+      : { background: '#D9D9D6', color: '#4D4D4D' };
     const ganttModuleClass = moduleId => {
       const mod = modulesList.find(m => m.id === moduleId);
       return (mod ? mod.color : 'bg-paho-dark-blue') + (moduleId === 'energy' ? ' text-slate-900' : ' text-white');
@@ -1169,7 +1173,7 @@ createApp({
       getFilteredIndicatorsByModule,
       getActiveModuleProgressPercentage,
       getSortedGaps,
-      ganttView, GANTT_DAY_PX, ganttBarClass, ganttModuleClass,
+      ganttView, GANTT_DAY_PX, ganttBarClass, ganttBarColor, ganttModuleClass,
       jmpCalculatedStatus,
       radarChartData,
       getViewTitle,

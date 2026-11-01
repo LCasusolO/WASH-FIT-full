@@ -2051,6 +2051,30 @@
             <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}<p>{{ getAssessmentResult(ind).label }} · Riesgo: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p></td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.resources) || '—' }}</td><td class="report-text">{{ reviewBullets(getResponsibleName(ind)) || 'Sin responsable' }}</td><td style="white-space:nowrap">{{ formatDate(ind.startDate) || '—' }}</td><td style="white-space:nowrap">{{ formatDate(ind.targetDate) || '—' }}</td><td>{{ ind.cost === null ? '—' : formatThousands(ind.cost) }}</td><td>{{ getTrackingStatus(ind) }}</td></tr>
             <tr v-if="!reportPlans.length"><td colspan="10">Sin acciones o brechas registradas.</td></tr>
           </tbody></table></div>
+          <div v-if="ganttView.rows.length" class="report-gantt">
+            <h3>Cronograma de acciones</h3>
+            <p class="report-gantt-legend">
+              <span v-for="item in [['No iniciado', 'No Iniciado'], ['En curso', 'En Progreso'], ['Retrasado', 'Retrasado'], ['Completado', 'Completado']]" :key="item[1]"><i :style="{ background: ganttBarColor(item[1]).background }"></i>{{ item[0] }}</span>
+              <span><i class="report-gantt-today"></i>Hoy</span>
+            </p>
+            <table>
+              <colgroup><col style="width:24%"><col style="width:19%"><col style="width:57%"></colgroup>
+              <thead><tr>
+                <th>Dominio / Indicador</th><th>Acción</th>
+                <th class="report-gantt-axis"><div><span v-for="(week, i) in ganttView.weeks" :key="i" :style="{ width: 100 / ganttView.weeks.length + '%' }">{{ week }}</span></div></th>
+              </tr></thead>
+              <tbody>
+                <tr v-for="row in ganttView.rows" :key="row.id">
+                  <td><strong>{{ row.module }}</strong><br>{{ row.code }} · {{ row.title }}<p v-if="row.risk !== null">Riesgo: {{ row.risk }} ({{ getRiskLabel(row.risk) }})</p></td>
+                  <td><span v-if="row.actionText" class="report-text">{{ row.actionText }}</span><em v-else>Sin texto de acción</em><p>{{ formatDate(row.startDate) }} – {{ formatDate(row.targetDate) }}</p></td>
+                  <td class="report-gantt-track" :style="{ backgroundSize: 100 / ganttView.weeks.length + '% 100%' }">
+                    <span v-if="ganttView.todayOffset !== null" class="report-gantt-today-line" :style="{ left: ganttView.todayOffset / ganttView.totalDays * 100 + '%' }"></span>
+                    <span class="report-gantt-bar" :style="{ left: row.offset / ganttView.totalDays * 100 + '%', width: row.days / ganttView.totalDays * 100 + '%', background: ganttBarColor(row.status).background, color: ganttBarColor(row.status).color }">{{ row.days / ganttView.totalDays >= 0.06 ? row.days + ' d' : '' }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section class="report-step" data-report-step="5" aria-labelledby="report-step-5">
