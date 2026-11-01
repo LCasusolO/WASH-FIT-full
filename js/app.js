@@ -530,6 +530,7 @@ createApp({
         ind.severity = null;
         ind.likelihood = null;
         ind.action = '';
+        ind.startDate = '';
         ind.targetDate = '';
         ind.resources = '';
         ind.responsible = '';
@@ -554,6 +555,15 @@ createApp({
       if (status === 'En Progreso') return 'bg-amber-50 text-amber-800 border-amber-300 font-bold';
       if (status === 'Retrasado') return 'bg-red-50 text-red-800 border-red-300 font-bold';
       return 'bg-paho-card text-paho-gray-dark border-paho-grid';
+    };
+
+    const updatePlanDate = (ind, field, event) => {
+      try {
+        WashCore.updatePlanDate(ind, field, event.target.value);
+      } catch (error) {
+        event.target.value = ind[field] || '';
+        alert(error.message + ' No se guardó ese cambio.');
+      }
     };
 
     const formatDate = (dateStr) => {
@@ -652,6 +662,7 @@ createApp({
         ind.severity = null;
         ind.likelihood = null;
         ind.action = '';
+        ind.startDate = '';
         ind.targetDate = '';
         ind.resources = '';
         ind.responsible = '';
@@ -1167,6 +1178,7 @@ createApp({
       planProgressPercentage,
       getStatusColorClass,
       formatDate,
+      updatePlanDate,
       isPopFocused,
       updatePopulation,
       focusedAgeGroup,

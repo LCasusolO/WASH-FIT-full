@@ -85,7 +85,7 @@ test('score behavior and level choices remain unchanged apart from clearing the 
   const old=execFileSync('git',['show','84a71ba:js/app.js'],{encoding:'utf8'}).replace(/\r\n/g,'\n');
   const current=fs.readFileSync('js/app.js','utf8').replace(/\r\n/g,'\n');
   for(const [start,end] of [['    const setIndicatorScore =','    const setSanitationSystem ='],['    const setSanitationSystem =','    const getModuleTotalCount ='],['    const levelOptions =','    // Toast Notifications']]){
-    const extract=source=>source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start))).replace(/find\(i => i.code === 'S_8b'\)/g,"find(i => i.code === 'S_8')").replace(/      ind\.assessmentStatus = '';\n/g,'');
+    const extract=source=>source.slice(source.indexOf(start),source.indexOf(end,source.indexOf(start))).replace(/find\(i => i.code === 'S_8b'\)/g,"find(i => i.code === 'S_8')").replace(/      ind\.assessmentStatus = '';\n/g,'').replace(/        ind\.startDate = '';\n/g,'');
     assert.equal(extract(current),extract(old));
   }
   assert.equal(Core.defaults().level,'Primer Nivel');
