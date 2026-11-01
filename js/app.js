@@ -755,15 +755,15 @@ createApp({
       triggerToast('Evidencia fotográfica removida.', 'error');
     };
 
-    const downloadDataset = dataset => {
-      const blob = new Blob([JSON.stringify(dataset, null, 2)], { type: 'application/json' });
+    const downloadBlob = (blob, fileName) => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = WashCore.fileBaseName(dataset.generalInfo) + '.json';
+      link.download = fileName;
       document.body.appendChild(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     };
+    const downloadDataset = dataset => downloadBlob(new Blob([JSON.stringify(dataset, null, 2)], { type: 'application/json' }), WashCore.fileBaseName(dataset.generalInfo) + '.json');
     const archiveBusy = ref(false);
     const printBusy = ref(false);
     const archiveFailed = ref(false);
@@ -788,13 +788,17 @@ createApp({
       const pdf = await WashChrome.generate(html);
       return {dataset, json: new Blob([JSON.stringify(dataset, null, 2)], {type: 'application/json'}), pdf};
     };
-    const runArchive = async (dataset, html) => {
+    const runArchive = async (dataset, html, { downloadPdf = false } = {}) => {
       if (archiveBusy.value) return false;
       archiveBusy.value = true;
       archiveFailed.value = false;
       archiveStatus.value = 'Preparando evaluación…';
       try {
-        if (dataset) { archiveJob = null; archiveJob = await createArchiveJob(dataset, html); }
+        if (dataset) {
+          archiveJob = null; archiveJob = await createArchiveJob(dataset, html);
+          // El PDF se descarga en cuanto está listo, antes de subirlo al repositorio, para que el usuario lo reciba aunque falle el guardado.
+          if (downloadPdf) downloadBlob(archiveJob.pdf, WashCore.fileBaseName(dataset.generalInfo) + '.pdf');
+        }
         if (!archiveJob) throw new Error('No hay una evaluación pendiente. Vuelva a Exportar.');
         const result = await WashArchive.save(archiveJob, text => { archiveStatus.value = text; });
         lastArchive.value = {savedAt: result.savedAt, files: result.files, fingerprint: archiveFingerprint(archiveJob.dataset)};
@@ -815,7 +819,7 @@ createApp({
       if (archiveBusy.value) return;
       const dataset = snapshot();
       downloadDataset(dataset);
-      await runArchive(dataset);
+      await runArchive(dataset, null, { downloadPdf: true });
     };
     const importData = event => {
       const file = event.target.files?.[0];
