@@ -1418,6 +1418,7 @@ const INDICATORS_DATA = [
   problemDesc: '',
   associatedRisks: '',
   action: '',
+  startDate: '',
   targetDate: '',
   resources: '',
   responsible: '',

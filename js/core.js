@@ -155,7 +155,8 @@
     if (hasAssessmentScore(result)) result.assessmentStatus = '';
     for (const key of ['severity', 'likelihood']) result[key] = number(input[key], key, 0, 10, true);
     result.cost = number(input.cost, 'costo');
-    for (const key of ['targetDate', 'nextReviewDate']) result[key] = date(input[key], key);
+    for (const key of ['startDate', 'targetDate', 'nextReviewDate']) result[key] = date(input[key], key);
+    validatePlanDates(result.startDate, result.targetDate);
     result.trackingStatus = option(input.trackingStatus, 'seguimiento', STATUSES, 'No Iniciado');
     result.indicatorChange = option(input.indicatorChange, 'cambio', CHANGES, 'sin_cambios');
     return result;
@@ -278,6 +279,17 @@
   function responsibleName(indicator, team) {
     return team.find(member => member.id === indicator.responsibleId)?.name || indicator.responsible || '';
   }
+  function validatePlanDates(startDate, targetDate) {
+    const start = date(startDate, 'fecha de inicio');
+    const end = date(targetDate, 'fecha de finalización');
+    if (start && end && end < start) throw new Error('La fecha de finalización no puede ser anterior a la fecha de inicio.');
+  }
+  function updatePlanDate(indicator, field, value) {
+    if (!['startDate', 'targetDate'].includes(field)) throw new Error('Campo de fecha no válido.');
+    const candidate = { ...indicator, [field]: date(value, field) };
+    validatePlanDates(candidate.startDate, candidate.targetDate);
+    indicator[field] = candidate[field];
+  }
   function trackingStatus(indicator, today = localDate()) {
     if (indicator.trackingStatus === 'Completado') return 'Completado';
     if (indicator.targetDate && indicator.targetDate < today) return 'Retrasado';
@@ -320,5 +332,5 @@
     const added = field === 'correctiveMeasures' ? changes.newCorrectiveMeasures : changes.newMonitoringComments;
     return (added ? 'Nuevo en esta revisión:\n' + reviewBullets(added) : 'Sin información nueva en esta revisión.') + '\n\nAcumulado:\n' + full;
   }
-  return { reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { validatePlanDates, updatePlanDate, reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });

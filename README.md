@@ -83,3 +83,7 @@ La subida requiere autorización del propietario en el servidor de Vercel. No us
 ## Validación
 
 `npm test` verifica clasificaciones completas/incompletas, errores de importación, migración de JSON, responsabilidades/historial, límites numéricos, persistencia/respaldos y conservación de los puntos excluidos. Las pruebas de aplicación aíslan Vue para comprobar las reglas; la interfaz se verifica también en navegador.
+
+### Fechas del Plan de Mejora
+
+Cada acción admite «Fecha de inicio» y «Fecha de finalización», ambas opcionales mientras se prepara el borrador. La finalización no puede ser anterior al inicio; un cambio inválido se rechaza sin alterar lo guardado. Los respaldos anteriores conservan su fecha de realización como finalización (campo JSON `targetDate`); el inicio (`startDate`) queda vacío hasta ingresarlo. Ambas fechas se conservan en los respaldos y revisiones, y aparecen en los reportes. El estado retrasado sigue calculándose con la fecha de finalización.

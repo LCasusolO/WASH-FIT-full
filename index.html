@@ -1113,7 +1113,8 @@
             <th class="py-4 px-6 w-80 min-w-[280px] max-w-[320px] text-center bg-paho-card">Dominio / Indicador</th>
             <th class="py-4 px-4 min-w-[260px] text-center bg-paho-card">Descripción del Problema</th>
             <th class="py-4 px-4 min-w-[260px] text-center bg-paho-card">Acción de Mitigación</th>
-            <th class="py-4 px-4 w-40 min-w-[150px] text-center bg-paho-card">Fecha de Realización</th>
+            <th class="py-4 px-4 w-40 min-w-[150px] text-center bg-paho-card">Fecha de inicio</th>
+            <th class="py-4 px-4 w-40 min-w-[150px] text-center bg-paho-card">Fecha de finalización</th>
             <th class="py-4 px-4 min-w-[230px] text-center bg-paho-card">Recursos Necesarios</th>
             <th class="py-4 px-4 min-w-[180px] text-center bg-paho-card">Responsable</th>
             <th class="py-4 px-4 w-36 min-w-[140px] text-center bg-paho-card">Presupuesto</th>
@@ -1188,11 +1189,22 @@
               ></textarea>
             </td>
 
-            <!-- Fecha de Realización -->
-            <td data-label="Fecha de Realización" class="py-5 px-4 align-top">
-              <input aria-label="Plazo"
+            <!-- Fechas del plan: targetDate conserva la fecha final de archivos anteriores. -->
+            <td data-label="Fecha de inicio" class="py-5 px-4 align-top">
+              <input aria-label="Fecha de inicio"
                 type="date"
-                v-model="ind.targetDate"
+                :value="ind.startDate"
+                :max="ind.targetDate || undefined"
+                @change="updatePlanDate(ind, 'startDate', $event)"
+                class="w-full p-2.5 border border-paho-grid rounded-none text-xs text-paho-gray-dark focus:outline-none focus:border-paho-blue bg-white"
+              >
+            </td>
+            <td data-label="Fecha de finalización" class="py-5 px-4 align-top">
+              <input aria-label="Fecha de finalización"
+                type="date"
+                :value="ind.targetDate"
+                :min="ind.startDate || undefined"
+                @change="updatePlanDate(ind, 'targetDate', $event)"
                 class="w-full p-2.5 border border-paho-grid rounded-none text-xs text-paho-gray-dark focus:outline-none focus:border-paho-blue bg-white"
               >
             </td>
@@ -1248,7 +1260,7 @@
 
           <!-- Mensaje cuando no hay brechas registradas -->
           <tr v-if="getSortedGaps.length === 0">
-            <td data-label="Dominio / Indicador" colspan="8" class="py-12 text-center text-xs text-paho-gray-medium">
+            <td data-label="Dominio / Indicador" colspan="9" class="py-12 text-center text-xs text-paho-gray-medium">
               No hay brechas para mostrar. Complete la evaluación y la matriz de riesgos para poder planificar las medidas de mejora.
             </td>
           </tr>
@@ -1982,9 +1994,9 @@
 
         <section class="report-step" data-report-step="4" aria-labelledby="report-step-4">
           <h2 id="report-step-4">Paso 4: Plan de Mejora</h2>
-          <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:8%"><col style="width:18%"><col style="width:12%"><col style="width:17%"><col style="width:13%"><col style="width:12%"><col style="width:7%"><col style="width:5%"><col style="width:8%"></colgroup><thead><tr><th>Módulo</th><th>Indicador / resultado / riesgo</th><th>Problema</th><th>Acción</th><th>Recursos</th><th>Responsables</th><th>Plazo</th><th>Costo USD</th><th>Estado</th></tr></thead><tbody>
-            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}<p>{{ getAssessmentResult(ind).label }} · Riesgo: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p></td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.resources) || '—' }}</td><td class="report-text">{{ reviewBullets(getResponsibleName(ind)) || 'Sin responsable' }}</td><td>{{ formatDate(ind.targetDate) || '—' }}</td><td>{{ ind.cost === null ? '—' : formatThousands(ind.cost) }}</td><td>{{ getTrackingStatus(ind) }}</td></tr>
-            <tr v-if="!reportPlans.length"><td colspan="9">Sin acciones o brechas registradas.</td></tr>
+          <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:7%"><col style="width:15%"><col style="width:10%"><col style="width:13%"><col style="width:11%"><col style="width:11%"><col style="width:9%"><col style="width:10%"><col style="width:6%"><col style="width:8%"></colgroup><thead><tr><th>Módulo</th><th>Indicador / resultado / riesgo</th><th>Problema</th><th>Acción</th><th>Recursos</th><th>Responsables</th><th>Fecha de inicio</th><th>Fecha de finalización</th><th>Costo USD</th><th>Estado</th></tr></thead><tbody>
+            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}<p>{{ getAssessmentResult(ind).label }} · Riesgo: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p></td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.resources) || '—' }}</td><td class="report-text">{{ reviewBullets(getResponsibleName(ind)) || 'Sin responsable' }}</td><td style="white-space:nowrap">{{ formatDate(ind.startDate) || '—' }}</td><td style="white-space:nowrap">{{ formatDate(ind.targetDate) || '—' }}</td><td>{{ ind.cost === null ? '—' : formatThousands(ind.cost) }}</td><td>{{ getTrackingStatus(ind) }}</td></tr>
+            <tr v-if="!reportPlans.length"><td colspan="10">Sin acciones o brechas registradas.</td></tr>
           </tbody></table></div>
         </section>
 
