@@ -5,10 +5,10 @@ const vm = require('node:vm');
 function deferred() { let resolve, reject; const promise = new Promise((a,b) => { resolve=a; reject=b; }); return {promise,resolve,reject}; }
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function load({ serialize, generate, print, save } = {}) {
-  let app; const calls = { serialized:0, generated:[], printed:[], saved:[], downloads:0 };
+  let app; const calls = { serialized:0, generated:[], printed:[], saved:[], downloads:0, names:[] };
   const context = vm.createContext({
     Vue: {ref:value=>({value}),computed:getter=>({get value(){return getter();}}),watch(){},onMounted(){},nextTick:async cb=>cb?.(),createApp:options=>({mount(){app=options.setup();}})},
-    window:{innerWidth:1200},navigator:{onLine:true},document:{querySelector:()=>({}),createElement:()=>({click(){calls.downloads++;},remove(){}}),body:{appendChild(){}}},
+    window:{innerWidth:1200},navigator:{onLine:true},document:{querySelector:()=>({}),createElement:()=>({click(){calls.downloads++;calls.names.push(this.download);},remove(){}}),body:{appendChild(){}}},
     URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL(){}},
     WashStorage:{createStore:()=>({write:async()=>{}})},
     WashChrome:{serialize:async(...args)=>{calls.serialized++;return serialize?serialize(...args):'<html>Snapshot</html>';},generate:async html=>{calls.generated.push(html);return generate?generate(html):new Blob(['pdf']);},print:async(...args)=>{calls.printed.push(args);return print?.(...args);}},
@@ -57,7 +57,10 @@ test('export downloads JSON and archives PDF without opening preview or calling 
   const exporting=app.exportData();await flush();
   assert.equal(calls.downloads,1);assert.equal(rendering,true);assert.equal(app.reportRendering.value,false);
   assert.equal(app.reportPreview.value,false);assert.equal(app.activeView.value,'general');assert.equal(calls.printed.length,0);
+  assert.equal(calls.downloads,1);
   pdf.resolve(new Blob(['pdf']));await exporting;
+  assert.equal(calls.downloads,2);assert.match(calls.names[0],/\.json$/);assert.match(calls.names[1],/\.pdf$/);
+  assert.equal(calls.names[0].replace(/\.json$/,''),calls.names[1].replace(/\.pdf$/,''));
   assert.equal(calls.saved.length,1);assert.equal(calls.generated[0],'<html>Hidden report</html>');
   assert.equal(app.reportPreview.value,false);assert.equal(app.activeView.value,'general');assert.equal(calls.printed.length,0);
 });
@@ -67,4 +70,19 @@ test('failed export preparation removes offscreen rendering without changing the
   app.activeView.value='dashboard';await app.exportData();
   assert.equal(app.reportRendering.value,false);assert.equal(app.reportPreview.value,false);
   assert.equal(app.activeView.value,'dashboard');assert.equal(calls.printed.length,0);assert.equal(app.archiveFailed.value,true);
+});
+
+test('export still downloads the PDF when the repository upload fails, and retry does not download again',async()=>{
+  let fail=true;
+  const {app,calls}=load({save:async()=>{if(fail)throw new Error('Upload unavailable');return {savedAt:'2026-10-19T12:00:00Z',files:[]};}});
+  await app.exportData();
+  assert.equal(calls.downloads,2);assert.equal(app.archiveFailed.value,true);
+  fail=false;await app.retryArchive();
+  assert.equal(calls.downloads,2);assert.equal(app.archiveFailed.value,false);
+});
+
+test('printing does not download the PDF',async()=>{
+  const {app,calls}=load();
+  await app.printReport();await flush();
+  assert.equal(calls.downloads,0);
 });
