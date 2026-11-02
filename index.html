@@ -1122,10 +1122,11 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-paho-grid text-xs">
-          <tr v-for="ind in getSortedGaps" :key="ind.id" class="hover:bg-paho-card/20 align-top">
+          <template v-for="ind in getSortedGaps" :key="ind.id">
+          <tr v-for="(act, ai) in planActions(ind)" :key="act.id || ind.id" class="hover:bg-paho-card/20 align-top">
 
             <!-- Columna Unificada: dominio en Box / Indicador / Badge de Riesgo y Puntos -->
-            <td data-label="Dominio / Indicador" class="py-5 px-6 align-top">
+            <td v-if="ai === 0" :rowspan="planActions(ind).length" data-label="Dominio / Indicador" class="py-5 px-6 align-top">
               <div class="flex flex-col items-center text-center gap-2.5">
 
                 <!-- 1. Box del dominio con color oficial -->
@@ -1165,11 +1166,17 @@
                     Sin evaluar
                   </span>
                 </div>
+
+                <!-- Resumen del plan cuando el indicador tiene varias acciones -->
+                <p v-if="planActions(ind).length > 1" class="text-[11px] text-paho-gray-medium leading-snug">
+                  {{ planSummary(ind).count }} acciones · USD {{ formatThousands(planSummary(ind).cost) || '0' }}<br v-if="planSummary(ind).delayed">
+                  <span v-if="planSummary(ind).delayed" class="text-red-700 font-semibold">{{ planSummary(ind).delayed }} {{ planSummary(ind).delayed === 1 ? 'retrasada' : 'retrasadas' }}</span>
+                </p>
               </div>
             </td>
 
             <!-- Descripción del Problema (Solo lectura / Bloqueado) -->
-            <td data-label="Descripción del Problema" class="py-5 px-4 align-top">
+            <td v-if="ai === 0" :rowspan="planActions(ind).length" data-label="Descripción del Problema" class="py-5 px-4 align-top">
               <textarea aria-label="Descripción del problema"
                 v-model="ind.problemDesc"
                 rows="6"
@@ -1182,29 +1189,32 @@
             <!-- Acción de Mitigación -->
             <td data-label="Acción de Mitigación" class="py-5 px-4 align-top">
               <textarea aria-label="Acción de mitigación"
-                :value="bulletValue(ind.action)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'action')" @keydown="enterBulletField($event, ind, 'action')" @blur="blurBulletField"
+                :value="bulletValue(act.action)" @focus="focusBulletField" @input="updateBulletField($event, act, 'action')" @keydown="enterBulletField($event, act, 'action')" @blur="blurBulletField"
                 rows="6"
                 placeholder="Inicie con un verbo en infinitivo indicando la solución técnica o conductual. Ej.: Instalar nueva línea de PVC y dos grifos clínicos."
-                class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue focus:ring-1 focus:ring-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
+                class="w-full p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue focus:ring-1 focus:ring-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
+                :class="planActions(ind).length > 1 ? 'h-24 min-h-[96px]' : 'h-36 min-h-[140px]'"
               ></textarea>
+              <button v-if="ai === planActions(ind).length - 1" type="button" @click="addPlanAction(ind)" :disabled="planActions(ind).length >= MAX_PLAN_ACTIONS"
+                class="mt-2 w-full px-3 py-1.5 text-[11px] font-bold border border-dashed border-paho-dark-blue text-paho-dark-blue bg-white rounded-none hover:bg-paho-card disabled:opacity-40 disabled:cursor-not-allowed">+ Agregar acción</button>
             </td>
 
             <!-- Fechas del plan: targetDate conserva la fecha final de archivos anteriores. -->
             <td data-label="Fecha de inicio" class="py-5 px-4 align-top">
               <input aria-label="Fecha de inicio"
                 type="date"
-                :value="ind.startDate"
-                :max="ind.targetDate || undefined"
-                @change="updatePlanDate(ind, 'startDate', $event)"
+                :value="act.startDate"
+                :max="act.targetDate || undefined"
+                @change="updatePlanDate(act, 'startDate', $event)"
                 class="w-full p-2.5 border border-paho-grid rounded-none text-xs text-paho-gray-dark focus:outline-none focus:border-paho-blue bg-white"
               >
             </td>
             <td data-label="Fecha de finalización" class="py-5 px-4 align-top">
               <input aria-label="Fecha de finalización"
                 type="date"
-                :value="ind.targetDate"
-                :min="ind.startDate || undefined"
-                @change="updatePlanDate(ind, 'targetDate', $event)"
+                :value="act.targetDate"
+                :min="act.startDate || undefined"
+                @change="updatePlanDate(act, 'targetDate', $event)"
                 class="w-full p-2.5 border border-paho-grid rounded-none text-xs text-paho-gray-dark focus:outline-none focus:border-paho-blue bg-white"
               >
             </td>
@@ -1212,16 +1222,17 @@
             <!-- Recursos Necesarios -->
             <td data-label="Recursos Necesarios" class="py-5 px-4 align-top">
               <textarea aria-label="Recursos"
-                :value="bulletValue(ind.resources)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'resources')" @keydown="enterBulletField($event, ind, 'resources')" @blur="blurBulletField"
+                :value="bulletValue(act.resources)" @focus="focusBulletField" @input="updateBulletField($event, act, 'resources')" @keydown="enterBulletField($event, act, 'resources')" @blur="blurBulletField"
                 rows="6"
                 placeholder="Detalle los materiales, herramientas y perfiles humanos requeridos. Ej.: Tanque 1.000 L, tubos PVC, herramientas y fontanero institucional."
-                class="w-full h-36 min-h-[140px] p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
+                class="w-full p-3 border border-paho-grid rounded-none text-xs text-left resize-none bg-white text-paho-gray-dark focus:border-paho-blue outline-none leading-relaxed placeholder:text-paho-gray-medium/60 block"
+                :class="planActions(ind).length > 1 ? 'h-24 min-h-[96px]' : 'h-36 min-h-[140px]'"
               ></textarea>
             </td>
 
             <!-- Responsable -->
             <td data-label="Responsable" class="py-5 px-4 align-top">
-              <textarea :value="bulletValue(ind.responsible)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'responsible')" @keydown="enterBulletField($event, ind, 'responsible')" @blur="blurBulletField" aria-label="Responsables" rows="3" placeholder="Escriba uno o varios responsables" class="w-full min-w-0 h-24 p-2 border border-paho-grid text-xs resize-none overflow-y-auto"></textarea>
+              <textarea :value="bulletValue(act.responsible)" @focus="focusBulletField" @input="updateBulletField($event, act, 'responsible')" @keydown="enterBulletField($event, act, 'responsible')" @blur="blurBulletField" aria-label="Responsables" rows="3" placeholder="Escriba uno o varios responsables" class="w-full min-w-0 h-24 p-2 border border-paho-grid text-xs resize-none overflow-y-auto"></textarea>
             </td>
 
             <!-- Presupuesto (USD) -->
@@ -1231,9 +1242,9 @@
                   <span class="absolute left-2.5 top-2.5 text-paho-gray-medium text-[11px] font-bold">$</span>
                   <input
                     type="text"
-                    :value="focusedCostId === ind.id ? ind.cost : formatThousands(ind.cost)"
-                    @input="e => updateCost(ind, e.target.value)"
-                    @focus="focusedCostId = ind.id"
+                    :value="focusedCostId === act.id ? act.cost : formatThousands(act.cost)"
+                    @input="e => updateCost(act, e.target.value)"
+                    @focus="focusedCostId = act.id"
                     @blur="focusedCostId = null"
                     placeholder="0.00"
                     class="w-full pl-6 pr-2 py-2 border border-paho-grid text-xs font-semibold focus:outline-none focus:border-paho-blue bg-white text-paho-gray-dark rounded-none text-right"
@@ -1246,7 +1257,7 @@
             <!-- Estado de Seguimiento -->
             <td data-label="Estado" class="py-5 px-4 align-top">
               <select aria-label="Estado de seguimiento"
-                v-model="ind.trackingStatus"
+                v-model="act.trackingStatus"
                 class="w-full p-2.5 border border-paho-grid rounded-none text-xs bg-white text-paho-gray-dark focus:outline-none focus:border-paho-blue font-medium cursor-pointer"
               >
                 <option value="No Iniciado">No iniciado</option>
@@ -1254,9 +1265,11 @@
                 <option value="Retrasado">En curso (se prevé retraso)</option>
                 <option value="Completado">Completado</option>
               </select>
-              <p v-if="getTrackingStatus(ind) === 'Retrasado'" class="text-xs text-red-700 mt-2">Plazo vencido o retraso informado</p>
+              <p v-if="actionStatus(act) === 'Retrasado'" class="text-xs text-red-700 mt-2">Plazo vencido o retraso informado</p>
+              <button v-if="planActions(ind).length > 1" type="button" @click="removePlanAction(ind, ai)" class="mt-2 text-[11px] text-paho-gray-medium underline hover:text-red-700">Quitar acción</button>
             </td>
           </tr>
+        </template>
 
           <!-- Mensaje cuando no hay brechas registradas -->
           <tr v-if="getSortedGaps.length === 0">
@@ -1378,7 +1391,7 @@
             <!-- Acción de Mitigación (Solo lectura / Bloqueado) -->
             <td data-label="Acción de Mitigación" class="py-5 px-4 align-top">
               <textarea aria-label="Acción de mitigación"
-                :value="bulletValue(ind.action)" @focus="focusBulletField" @input="updateBulletField($event, ind, 'action')" @keydown="enterBulletField($event, ind, 'action')" @blur="blurBulletField"
+                :value="actionsText(ind)"
                 rows="6"
                 disabled
                 placeholder="— Sin medida redactada aún —"
@@ -1686,7 +1699,7 @@
                     </thead>
                     <tbody class="divide-y divide-paho-grid text-xs">
                       <tr v-for="row in ganttView.rows" :key="row.id" class="align-middle">
-                        <td class="py-3 px-3 border-r border-paho-grid">
+                        <td v-if="row.groupStart" :rowspan="row.groupSize" class="py-3 px-3 border-r border-paho-grid align-top">
                           <div class="flex flex-col items-center text-center gap-1.5">
                             <span class="inline-block px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-none" :class="ganttModuleClass(row.moduleId)">{{ row.module }}</span>
                             <span class="font-bold text-paho-dark-blue leading-snug line-clamp-2" :title="row.title">{{ row.code }} · {{ row.title }}</span>
@@ -1910,7 +1923,7 @@
         <div class="review-editor-body">
           <p class="text-sm text-paho-gray-medium mb-5">Completa el seguimiento y pulsa Guardar revisión para agregar un nuevo registro al historial.</p>
           <p v-if="reviewError" role="alert" class="text-sm text-red-700 mb-4">{{ reviewError }}</p>
-          <section class="p-4 bg-paho-card border border-paho-grid mb-5"><h3 class="text-sm font-bold mb-2">Acción de mejora</h3><p class="text-sm whitespace-pre-wrap">{{ reviewBullets(reviewIndicator.action) || 'Sin acción de mejora registrada.' }}</p></section>
+          <section class="p-4 bg-paho-card border border-paho-grid mb-5"><h3 class="text-sm font-bold mb-2">Acción de mejora</h3><p class="text-sm whitespace-pre-wrap">{{ reviewBullets(actionsText(reviewIndicator)) || 'Sin acción de mejora registrada.' }}</p></section>
           <div class="review-form-grid">
             <div class="review-full"><label for="review-change">¿Ha mejorado, empeorado o no ha cambiado?</label><select id="review-change" v-model="reviewDraft.indicatorChange"><option value="mejorado">Ha mejorado</option><option value="empeorado">Ha empeorado</option><option value="sin_cambios">No ha cambiado</option></select></div>
             <div><label for="review-responsible">Responsables del Plan de mejora</label><textarea id="review-responsible" :value="bulletValue(reviewDraft.responsible)" @focus="focusBulletField" @input="updateBulletField($event, reviewDraft, 'responsible')" @keydown="enterBulletField($event, reviewDraft, 'responsible')" @blur="blurBulletField" rows="3"></textarea></div>
@@ -1939,7 +1952,7 @@
             </div>
             <details class="mt-3"><summary class="text-paho-dark-blue font-semibold py-2">Ver detalle</summary><dl class="review-details mt-3">
               <div><dt>Responsables</dt><dd>{{ reviewHistoryText(entry, 'responsible') }}</dd></div>
-              <div><dt>Acción</dt><dd>{{ reviewBullets(entry.action) || '—' }}</dd></div>
+              <div><dt>Acción</dt><dd>{{ reviewBullets(actionsText(entry)) || '—' }}</dd></div>
               <div><dt>Medidas correctivas o adicionales</dt><dd>{{ reviewHistoryText(entry, 'correctiveMeasures') }}</dd></div>
               <div><dt>Comentarios y notas adicionales</dt><dd>{{ reviewHistoryText(entry, 'monitoringComments') }}</dd></div>
               <div><dt>Próxima revisión</dt><dd>{{ formatDate(entry.nextReviewDate) || 'Sin programar' }}</dd></div>
@@ -2048,7 +2061,7 @@
         <section class="report-step" data-report-step="4" aria-labelledby="report-step-4">
           <h2 id="report-step-4">Paso 4: Plan de Mejora</h2>
           <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:7%"><col style="width:15%"><col style="width:10%"><col style="width:13%"><col style="width:11%"><col style="width:11%"><col style="width:9%"><col style="width:10%"><col style="width:6%"><col style="width:8%"></colgroup><thead><tr><th>Módulo</th><th>Indicador / resultado / riesgo</th><th>Problema</th><th>Acción</th><th>Recursos</th><th>Responsables</th><th>Fecha de inicio</th><th>Fecha de finalización</th><th>Costo USD</th><th>Estado</th></tr></thead><tbody>
-            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}<p>{{ getAssessmentResult(ind).label }} · Riesgo: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p></td><td class="report-text">{{ ind.problemDesc || '—' }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.resources) || '—' }}</td><td class="report-text">{{ reviewBullets(getResponsibleName(ind)) || 'Sin responsable' }}</td><td style="white-space:nowrap">{{ formatDate(ind.startDate) || '—' }}</td><td style="white-space:nowrap">{{ formatDate(ind.targetDate) || '—' }}</td><td>{{ ind.cost === null ? '—' : formatThousands(ind.cost) }}</td><td>{{ getTrackingStatus(ind) }}</td></tr>
+            <template v-for="ind in reportPlans" :key="ind.id"><tr v-for="(act, ai) in planActions(ind)" :key="act.id || ind.id"><template v-if="ai === 0"><td :rowspan="planActions(ind).length">{{ ind.module }}</td><td :rowspan="planActions(ind).length">{{ ind.title }}<p>{{ getAssessmentResult(ind).label }} · Riesgo: {{ calculateRiskScore(ind) ?? '—' }} ({{ getRiskLabel(calculateRiskScore(ind)) }})</p><p v-if="planActions(ind).length > 1">{{ planSummary(ind).count }} acciones · USD {{ formatThousands(planSummary(ind).cost) || '0' }}</p></td><td class="report-text" :rowspan="planActions(ind).length">{{ ind.problemDesc || '—' }}</td></template><td class="report-text">{{ reviewBullets(act.action) || '—' }}</td><td class="report-text">{{ reviewBullets(act.resources) || '—' }}</td><td class="report-text">{{ reviewBullets(getResponsibleName(act)) || 'Sin responsable' }}</td><td style="white-space:nowrap">{{ formatDate(act.startDate) || '—' }}</td><td style="white-space:nowrap">{{ formatDate(act.targetDate) || '—' }}</td><td>{{ act.cost === null ? '—' : formatThousands(act.cost) }}</td><td>{{ actionStatus(act) }}</td></tr></template>
             <tr v-if="!reportPlans.length"><td colspan="10">Sin acciones o brechas registradas.</td></tr>
           </tbody></table></div>
           <div v-if="ganttView.rows.length" class="report-gantt">
@@ -2065,7 +2078,7 @@
               </tr></thead>
               <tbody>
                 <tr v-for="row in ganttView.rows" :key="row.id">
-                  <td><strong>{{ row.module }}</strong><br>{{ row.code }} · {{ row.title }}<p v-if="row.risk !== null">Riesgo: {{ row.risk }} ({{ getRiskLabel(row.risk) }})</p></td>
+                  <td v-if="row.groupStart" :rowspan="row.groupSize"><strong>{{ row.module }}</strong><br>{{ row.code }} · {{ row.title }}<p v-if="row.risk !== null">Riesgo: {{ row.risk }} ({{ getRiskLabel(row.risk) }})</p></td>
                   <td><span v-if="row.actionText" class="report-text">{{ row.actionText }}</span><em v-else>Sin texto de acción</em><p>{{ formatDate(row.startDate) }} – {{ formatDate(row.targetDate) }}</p></td>
                   <td class="report-gantt-track" :style="{ backgroundSize: 100 / ganttView.weeks.length + '% 100%' }">
                     <span v-if="ganttView.todayOffset !== null" class="report-gantt-today-line" :style="{ left: ganttView.todayOffset / ganttView.totalDays * 100 + '%' }"></span>
@@ -2080,13 +2093,13 @@
         <section class="report-step" data-report-step="5" aria-labelledby="report-step-5">
           <h2 id="report-step-5">Paso 5: Monitoreo y Revisión</h2>
           <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:8%"><col style="width:16%"><col style="width:18%"><col style="width:12%"><col style="width:18%"><col style="width:8%"><col style="width:20%"></colgroup><thead><tr><th>Módulo</th><th>Indicador</th><th>Acción en seguimiento</th><th>Cambio</th><th>Medidas correctivas</th><th>Próxima revisión</th><th>Comentarios</th></tr></thead><tbody>
-            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}</td><td class="report-text">{{ reviewBullets(ind.action) || '—' }}</td><td>{{ changeLabel(ind.indicatorChange) }}</td><td class="report-text">{{ reviewBullets(ind.correctiveMeasures) || '—' }}</td><td>{{ formatDate(ind.nextReviewDate) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.monitoringComments) || '—' }}</td></tr>
+            <tr v-for="ind in reportPlans" :key="ind.id"><td>{{ ind.module }}</td><td>{{ ind.title }}</td><td class="report-text">{{ reviewBullets(actionsText(ind)) || '—' }}</td><td>{{ changeLabel(ind.indicatorChange) }}</td><td class="report-text">{{ reviewBullets(ind.correctiveMeasures) || '—' }}</td><td>{{ formatDate(ind.nextReviewDate) || '—' }}</td><td class="report-text">{{ reviewBullets(ind.monitoringComments) || '—' }}</td></tr>
             <tr v-if="!reportPlans.length"><td colspan="7">Sin acciones en seguimiento.</td></tr>
           </tbody></table></div>
           <template v-if="reportPlans.some(ind => ind.history?.length)">
             <h3>Historial de revisiones</h3>
             <div class="report-table-scroll"><table class="report-wide"><colgroup><col style="width:8%"><col style="width:16%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:14%"><col style="width:14%"><col style="width:12%"></colgroup><thead><tr><th>Módulo</th><th>Indicador</th><th>Revisión / próxima</th><th>Cambio</th><th>Responsables</th><th>Acción</th><th>Medidas</th><th>Comentarios</th></tr></thead><tbody>
-              <template v-for="ind in reportPlans" :key="ind.id"><tr v-for="(entry, index) in ind.history || []" :key="index"><td>{{ ind.module }}</td><td>{{ ind.title }}</td><td>{{ new Date(entry.recordedAt).toLocaleString('es') }}<p>Próxima: {{ formatDate(entry.nextReviewDate) || '—' }}</p></td><td>{{ changeLabel(entry.indicatorChange) }}</td><td class="report-text">{{ reviewHistoryText(entry, 'responsible') }}</td><td class="report-text">{{ reviewBullets(entry.action) || '—' }}</td><td class="report-text">{{ reviewHistoryText(entry, 'correctiveMeasures') }}</td><td class="report-text">{{ reviewHistoryText(entry, 'monitoringComments') }}</td></tr></template>
+              <template v-for="ind in reportPlans" :key="ind.id"><tr v-for="(entry, index) in ind.history || []" :key="index"><td>{{ ind.module }}</td><td>{{ ind.title }}</td><td>{{ new Date(entry.recordedAt).toLocaleString('es') }}<p>Próxima: {{ formatDate(entry.nextReviewDate) || '—' }}</p></td><td>{{ changeLabel(entry.indicatorChange) }}</td><td class="report-text">{{ reviewHistoryText(entry, 'responsible') }}</td><td class="report-text">{{ reviewBullets(actionsText(entry)) || '—' }}</td><td class="report-text">{{ reviewHistoryText(entry, 'correctiveMeasures') }}</td><td class="report-text">{{ reviewHistoryText(entry, 'monitoringComments') }}</td></tr></template>
             </tbody></table></div>
           </template>
         </section>

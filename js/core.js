@@ -10,6 +10,8 @@
   const MAX_IMPORT_BYTES = 40 * 1024 * 1024;
   const TEXT_FIELDS = ['notes', 'problemDesc', 'associatedRisks', 'action', 'resources', 'responsible', 'responsibleId', 'revisionNotes', 'correctiveMeasures', 'monitoringComments'];
   const STATUSES = ['No Iniciado', 'En Progreso', 'Retrasado', 'Completado'];
+  const MAX_PLAN_ACTIONS = 10;
+  const PLAN_ACTION_TEXT_FIELDS = ['action', 'resources', 'responsible', 'responsibleId'];
   const CHANGES = ['', 'sin_cambios', 'mejorado', 'empeorado'];
   let sequence = 0;
   const newId = () => typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `wash-${Date.now()}-${++sequence}`;
@@ -159,7 +161,51 @@
     validatePlanDates(result.startDate, result.targetDate);
     result.trackingStatus = option(input.trackingStatus, 'seguimiento', STATUSES, 'No Iniciado');
     result.indicatorChange = option(input.indicatorChange, 'cambio', CHANGES, 'sin_cambios');
+    result.extraActions = extraPlanActions(input.extraActions);
     return result;
+  }
+  // La primera acción vive en los campos del indicador (compatibilidad con archivos anteriores); las demás, en extraActions.
+  function extraPlanActions(value) {
+    if (value === undefined) return [];
+    if (!Array.isArray(value) || value.length > MAX_PLAN_ACTIONS - 1) throw new Error(`Máximo ${MAX_PLAN_ACTIONS} acciones por indicador.`);
+    const ids = new Set();
+    return value.map(item => {
+      if (!isObject(item)) throw new Error('Acción inválida.');
+      const result = { id: text(item.id, 'id de acción', 200) || newId() };
+      if (ids.has(result.id)) result.id = newId();
+      ids.add(result.id);
+      for (const key of PLAN_ACTION_TEXT_FIELDS) result[key] = text(item[key], key);
+      result.cost = number(item.cost, 'costo');
+      for (const key of ['startDate', 'targetDate']) result[key] = date(item[key], key);
+      validatePlanDates(result.startDate, result.targetDate);
+      result.trackingStatus = option(item.trackingStatus, 'seguimiento', STATUSES, 'No Iniciado');
+      return result;
+    });
+  }
+  function newPlanAction() {
+    return { id: newId(), action: '', resources: '', responsible: '', responsibleId: '', cost: null, startDate: '', targetDate: '', trackingStatus: 'No Iniciado' };
+  }
+  // Devuelve los "titulares" de cada acción: el propio indicador (primera acción) y las acciones adicionales.
+  function planActions(indicator) {
+    return [indicator, ...(Array.isArray(indicator.extraActions) ? indicator.extraActions : [])];
+  }
+  function addPlanAction(indicator) {
+    if (!Array.isArray(indicator.extraActions)) indicator.extraActions = [];
+    if (indicator.extraActions.length >= MAX_PLAN_ACTIONS - 1) throw new Error(`Máximo ${MAX_PLAN_ACTIONS} acciones por indicador.`);
+    const action = newPlanAction();
+    indicator.extraActions.push(action);
+    return action;
+  }
+  // Quitar la primera acción promueve la siguiente a los campos del indicador.
+  function removePlanAction(indicator, index) {
+    const extras = indicator.extraActions || [];
+    if (!extras.length || index < 0 || index > extras.length) return;
+    if (index === 0) {
+      const next = extras.shift();
+      for (const key of [...PLAN_ACTION_TEXT_FIELDS, 'cost', 'startDate', 'targetDate', 'trackingStatus']) indicator[key] = next[key];
+    } else {
+      extras.splice(index - 1, 1);
+    }
   }
   function normalizeDataset(input, catalog) {
     if (!isObject(input) || !Array.isArray(input.indicators)) throw new Error('El JSON debe contener datos generales y una lista de indicadores.');
@@ -190,6 +236,13 @@
         if (matches.length === 1) normalized.responsibleId = matches[0].id;
       }
       if (normalized.responsibleId && !generalInfo.team.some(member => member.id === normalized.responsibleId)) normalized.responsibleId = '';
+      for (const extra of normalized.extraActions) {
+        if (!extra.responsibleId && extra.responsible) {
+          const matches = generalInfo.team.filter(member => member.name === extra.responsible);
+          if (matches.length === 1) extra.responsibleId = matches[0].id;
+        }
+        if (extra.responsibleId && !generalInfo.team.some(member => member.id === extra.responsibleId)) extra.responsibleId = '';
+      }
       imported.set(item.code, normalized);
     }
     return {
@@ -290,10 +343,37 @@
     validatePlanDates(candidate.startDate, candidate.targetDate);
     indicator[field] = candidate[field];
   }
+  function actionStatus(action, today = localDate()) {
+    if (action.trackingStatus === 'Completado') return 'Completado';
+    if (action.targetDate && action.targetDate < today) return 'Retrasado';
+    return action.trackingStatus || 'No Iniciado';
+  }
+  // Estado del indicador a partir de todas sus acciones (con una sola acción coincide con el estado de esa acción).
   function trackingStatus(indicator, today = localDate()) {
-    if (indicator.trackingStatus === 'Completado') return 'Completado';
-    if (indicator.targetDate && indicator.targetDate < today) return 'Retrasado';
-    return indicator.trackingStatus || 'No Iniciado';
+    const statuses = planActions(indicator).map(action => actionStatus(action, today));
+    if (statuses.every(status => status === 'Completado')) return 'Completado';
+    if (statuses.includes('Retrasado')) return 'Retrasado';
+    if (statuses.includes('En Progreso') || statuses.includes('Completado')) return 'En Progreso';
+    return 'No Iniciado';
+  }
+  // Resumen del plan de un indicador: cantidad, rango de fechas, costo total y acciones retrasadas.
+  function planSummary(indicator, today = localDate()) {
+    const actions = planActions(indicator);
+    const starts = actions.map(action => action.startDate).filter(Boolean).sort();
+    const ends = actions.map(action => action.targetDate).filter(Boolean).sort();
+    return {
+      count: actions.length,
+      startDate: starts[0] || '',
+      targetDate: ends[ends.length - 1] || '',
+      cost: actions.reduce((sum, action) => sum + (action.cost || 0), 0),
+      delayed: actions.filter(action => actionStatus(action, today) === 'Retrasado').length
+    };
+  }
+  // Texto único de las acciones, para seguimiento (Paso 5) e historial: con varias acciones se numeran.
+  function actionsText(indicator) {
+    const texts = planActions(indicator).map(action => String(action.action || '').trim());
+    if (texts.filter(Boolean).length <= 1) return texts.find(Boolean) || '';
+    return texts.map((value, index) => value ? `Acción ${index + 1}:\n${value}` : '').filter(Boolean).join('\n\n');
   }
   const DAY_MS = 86400000;
   const MONTHS_ES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -318,7 +398,13 @@
       weeks,
       totalDays: last - first + 1,
       todayOffset: todayDay >= first && todayDay <= last ? todayDay - first : null,
-      rows: rows.map(item => ({ ...item, actionText: firstActionLine(item.action), offset: dayNumber(item.startDate) - first, days: dayNumber(item.targetDate) - dayNumber(item.startDate) + 1 }))
+      rows: rows.map((item, index) => {
+        const groupId = item.groupId ?? item.id;
+        const groupStart = index === 0 || (rows[index - 1].groupId ?? rows[index - 1].id) !== groupId;
+        let groupSize = 1;
+        if (groupStart) while (index + groupSize < rows.length && (rows[index + groupSize].groupId ?? rows[index + groupSize].id) === groupId) groupSize++;
+        return { ...item, groupStart, groupSize, actionText: firstActionLine(item.action), offset: dayNumber(item.startDate) - first, days: dayNumber(item.targetDate) - dayNumber(item.startDate) + 1 };
+      })
     };
   }
   function recordReview(indicator, team, now = new Date().toISOString()) {
@@ -343,7 +429,7 @@
     if (Object.hasOwn(draft, 'newMonitoringComments')) candidate.monitoringComments = appendReviewText(indicator.history?.at(-1)?.monitoringComments || indicator.monitoringComments || '', draft.newMonitoringComments);
     recordReview(candidate, team, now);
     const entry = candidate.history.at(-1);
-    entry.trackingStatus = indicator.trackingStatus || 'No Iniciado';
+    entry.trackingStatus = trackingStatus(indicator, '0000-00-00');
     entry.responsible = text(draft.responsible, 'responsable de revisión');
     entry.responsibleId = '';
     entry.reviewChanges = {responsibleChanged: reviewBullets(entry.responsible) !== reviewBullets(responsibleName(indicator, team)), previousResponsible: responsibleName(indicator, team), newCorrectiveMeasures: reviewBullets(draft.newCorrectiveMeasures || '').replace(/^•(?:[ \t]*•)+[ \t]*/gm, '• '), newMonitoringComments: reviewBullets(draft.newMonitoringComments || '').replace(/^•(?:[ \t]*•)+[ \t]*/gm, '• ')};
@@ -358,5 +444,5 @@
     const added = field === 'correctiveMeasures' ? changes.newCorrectiveMeasures : changes.newMonitoringComments;
     return (added ? 'Nuevo en esta revisión:\n' + reviewBullets(added) : 'Sin información nueva en esta revisión.') + '\n\nAcumulado:\n' + full;
   }
-  return { buildGantt, validatePlanDates, updatePlanDate, reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { MAX_PLAN_ACTIONS, newPlanAction, planActions, addPlanAction, removePlanAction, actionStatus, planSummary, actionsText, buildGantt, validatePlanDates, updatePlanDate, reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });

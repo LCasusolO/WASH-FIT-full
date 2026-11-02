@@ -91,3 +91,5 @@ Cada acción admite «Fecha de inicio» y «Fecha de finalización», ambas opci
 El Resumen incluye, debajo de «Consolidado por Dominios (WASH)», un «Cronograma de acciones» (diagrama de Gantt) con las brechas —indicadores con puntaje 0 o 1— que tienen fecha de inicio y de finalización. Las barras usan el estado de seguimiento y una línea punteada marca el día de hoy; las brechas sin ambas fechas no se dibujan.
 
 El mismo cronograma aparece en el reporte y en el PDF, al final de las tablas del Paso 4 y antes del Paso 5, con el título y la leyenda junto a la tabla.
+
+Cada indicador del Plan de Mejora admite hasta 10 acciones de mitigación, cada una con sus propios recursos, responsable, fechas, presupuesto y estado. «+ Agregar acción» (bajo el cuadro de la acción) añade una fila; «Quitar acción» la elimina. La primera acción sigue guardándose en los campos del indicador y las demás en `extraActions`, por lo que los archivos anteriores se abren sin cambios. El estado del indicador se calcula a partir de todas sus acciones, el seguimiento del Paso 5 sigue siendo por indicador (muestra las acciones juntas) y el cronograma dibuja una barra por acción.
