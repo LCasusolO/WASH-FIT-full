@@ -260,3 +260,4 @@ button, [role=button], summary { cursor: pointer; }
 .report-gantt-track { position: relative; height: 12mm; background-image: linear-gradient(to right, #DDD 1px, transparent 1px); background-repeat: repeat-x; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .report-gantt-bar { position: absolute; top: 50%; height: 5mm; margin-top: -2.5mm; box-sizing: border-box; padding: 0 1.5mm; font-size: .7rem; font-weight: 700; line-height: 5mm; white-space: nowrap; overflow: hidden; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .report-gantt-today-line { position: absolute; top: 0; bottom: 0; border-left: 2px dashed #FF671F; z-index: 1; }
+.report-gantt-axis span + span { border-left: 1px solid #DDD; }

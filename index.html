@@ -1265,7 +1265,7 @@
                 <option value="Retrasado">En curso (se prevé retraso)</option>
                 <option value="Completado">Completado</option>
               </select>
-              <p v-if="actionStatus(act) === 'Retrasado'" class="text-xs text-red-700 mt-2">Plazo vencido o retraso informado</p>
+              <p v-if="actionOverdue(act)" class="text-xs text-red-700 mt-2">Plazo vencido</p>
               <button v-if="planActions(ind).length > 1" type="button" @click="removePlanAction(ind, ai)" class="mt-2 text-[11px] text-paho-gray-medium underline hover:text-red-700">Quitar acción</button>
             </td>
           </tr>
@@ -1684,21 +1684,33 @@
                 </div>
 
                 <p v-if="!ganttView.rows.length" class="text-xs text-paho-gray-medium">Aún no hay acciones con fecha de inicio y de finalización.</p>
-                <div v-else class="overflow-x-auto bg-white border border-paho-grid" tabindex="0" role="region" aria-label="Cronograma de acciones: tabla desplazable">
-                  <table class="text-left border-collapse" :style="{ minWidth: (410 + ganttView.totalDays * GANTT_DAY_PX) + 'px' }">
-                    <thead>
-                      <tr class="bg-paho-card border-b border-paho-grid text-[10px] font-extrabold uppercase tracking-wider text-paho-gray-medium">
-                        <th class="py-2.5 px-3 w-[230px] min-w-[230px] text-center">Dominio / Indicador</th>
-                        <th class="py-2.5 px-3 w-[180px] min-w-[180px] text-center">Acción</th>
-                        <th class="p-0" :style="{ width: ganttView.totalDays * GANTT_DAY_PX + 'px' }">
-                          <div class="flex normal-case tracking-normal font-semibold text-[11px]">
-                            <div v-for="(week, i) in ganttView.weeks" :key="i" class="py-2.5 pl-1.5 shrink-0 overflow-hidden whitespace-nowrap" :style="{ width: 7 * GANTT_DAY_PX + 'px' }">{{ week }}</div>
+                <div v-if="ganttView.rows.length && ganttDomains.length" class="flex flex-wrap items-center gap-2" role="group" aria-label="Ver el cronograma por dominio">
+                  <button v-for="mod in ganttDomains" :key="mod.id" type="button" @click="toggleGanttDomain(mod.id)" :aria-pressed="ganttActiveDomain === mod.id"
+                    class="px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider rounded-none border transition-colors"
+                    :class="ganttActiveDomain === mod.id ? ganttModuleClass(mod.id) + ' border-transparent shadow-xs' : 'bg-white text-paho-gray-dark border-paho-grid hover:bg-paho-card'">{{ mod.name }}</button>
+                </div>
+                <div v-if="ganttView.rows.length" ref="ganttScroll" class="overflow-auto bg-white border border-paho-grid" :style="{ maxHeight: ganttMaxHeight + 'px' }" tabindex="0" role="region" aria-label="Cronograma de acciones: tabla desplazable">
+                  <table class="text-left border-collapse" :style="{ minWidth: (410 + ganttShown.totalDays * GANTT_DAY_PX) + 'px' }">
+                    <thead class="text-[10px] font-extrabold uppercase tracking-wider text-paho-gray-medium">
+                      <tr>
+                        <th rowspan="2" class="sticky top-0 z-20 bg-paho-card py-2.5 px-3 w-[230px] min-w-[230px] text-center" style="box-shadow: 0 1px 0 #E6E6E6">Dominio / Indicador</th>
+                        <th rowspan="2" class="sticky top-0 z-20 bg-paho-card py-2.5 px-3 w-[180px] min-w-[180px] text-center" style="box-shadow: 0 1px 0 #E6E6E6">Acción</th>
+                        <th class="sticky top-0 z-10 bg-paho-card p-0" :style="{ height: '28px', width: ganttShown.totalDays * GANTT_DAY_PX + 'px', boxShadow: '0 1px 0 #E6E6E6' }">
+                          <div class="flex normal-case tracking-normal text-[12px] font-bold text-paho-dark-blue">
+                            <div v-for="year in ganttShown.years" :key="year.year" class="px-1.5 leading-7 overflow-hidden whitespace-nowrap border-l border-paho-grid" :style="{ width: year.days * GANTT_DAY_PX + 'px' }">{{ year.days * GANTT_DAY_PX >= 36 ? year.year : '' }}</div>
+                          </div>
+                        </th>
+                      </tr>
+                      <tr>
+                        <th class="sticky z-10 bg-paho-card p-0" :style="{ top: '28px', height: '28px', boxShadow: '0 1px 0 #E6E6E6' }">
+                          <div class="flex normal-case tracking-normal text-[11px] font-semibold">
+                            <div v-for="month in ganttShown.months" :key="month.year + '-' + month.month" class="px-1.5 leading-7 overflow-hidden whitespace-nowrap border-l border-paho-grid" :style="{ width: month.days * GANTT_DAY_PX + 'px' }">{{ month.days * GANTT_DAY_PX >= 28 ? month.label : '' }}</div>
                           </div>
                         </th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-paho-grid text-xs">
-                      <tr v-for="row in ganttView.rows" :key="row.id" class="align-middle">
+                      <tr v-for="row in ganttShown.rows" :key="row.id" class="align-middle">
                         <td v-if="row.groupStart" :rowspan="row.groupSize" class="py-3 px-3 border-r border-paho-grid align-top">
                           <div class="flex flex-col items-center text-center gap-1.5">
                             <span class="inline-block px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-none" :class="ganttModuleClass(row.moduleId)">{{ row.module }}</span>
@@ -1712,7 +1724,7 @@
                           <p class="text-[11px] text-paho-gray-medium mt-0.5">{{ formatDate(row.startDate) }} – {{ formatDate(row.targetDate) }}</p>
                         </td>
                         <td class="relative p-0" :style="{ height: '56px', backgroundImage: 'repeating-linear-gradient(to right,#E6E6E6 0 1px,transparent 1px ' + 7 * GANTT_DAY_PX + 'px)' }">
-                          <div v-if="ganttView.todayOffset !== null" class="absolute top-0 bottom-0" :style="{ left: ganttView.todayOffset * GANTT_DAY_PX + 'px', borderLeft: '2px dashed #ff671f' }"></div>
+                          <div v-if="ganttShown.todayOffset !== null" class="absolute top-0 bottom-0" :style="{ left: ganttShown.todayOffset * GANTT_DAY_PX + 'px', borderLeft: '2px dashed #ff671f' }"></div>
                           <div class="absolute flex items-center px-2 text-[11px] font-semibold overflow-hidden whitespace-nowrap" :class="ganttBarClass(row.status)"
                                :style="{ top: '17px', height: '22px', left: row.offset * GANTT_DAY_PX + 'px', width: row.days * GANTT_DAY_PX + 'px' }"
                                :title="row.code + ' · ' + formatDate(row.startDate) + ' – ' + formatDate(row.targetDate) + ' · ' + row.status">{{ row.days * GANTT_DAY_PX >= 40 ? row.days + ' d' : '' }}</div>
@@ -2072,10 +2084,15 @@
             </p>
             <table>
               <colgroup><col style="width:24%"><col style="width:19%"><col style="width:57%"></colgroup>
-              <thead><tr>
-                <th>Dominio / Indicador</th><th>Acción</th>
-                <th class="report-gantt-axis"><div><span v-for="(week, i) in ganttView.weeks" :key="i" :style="{ width: 100 / ganttView.weeks.length + '%' }">{{ week }}</span></div></th>
-              </tr></thead>
+              <thead>
+                <tr>
+                  <th rowspan="2">Dominio / Indicador</th><th rowspan="2">Acción</th>
+                  <th class="report-gantt-axis"><div><span v-for="year in ganttView.years" :key="year.year" :style="{ width: year.days / ganttView.totalDays * 100 + '%' }">{{ year.days / ganttView.totalDays >= 0.06 ? year.year : '' }}</span></div></th>
+                </tr>
+                <tr>
+                  <th class="report-gantt-axis"><div><span v-for="month in ganttView.months" :key="month.year + '-' + month.month" :style="{ width: month.days / ganttView.totalDays * 100 + '%' }">{{ month.days / ganttView.totalDays >= 0.04 ? month.label : '' }}</span></div></th>
+                </tr>
+              </thead>
               <tbody>
                 <tr v-for="row in ganttView.rows" :key="row.id">
                   <td v-if="row.groupStart" :rowspan="row.groupSize"><strong>{{ row.module }}</strong><br>{{ row.code }} · {{ row.title }}<p v-if="row.risk !== null">Riesgo: {{ row.risk }} ({{ getRiskLabel(row.risk) }})</p></td>

@@ -348,6 +348,10 @@
     if (action.targetDate && action.targetDate < today) return 'Retrasado';
     return action.trackingStatus || 'No Iniciado';
   }
+  // Plazo vencido: la fecha de finalización ya pasó y la acción no está completada.
+  function isOverdue(action, today = localDate()) {
+    return action.trackingStatus !== 'Completado' && !!action.targetDate && action.targetDate < today;
+  }
   // Estado del indicador a partir de todas sus acciones (con una sola acción coincide con el estado de esa acción).
   function trackingStatus(indicator, today = localDate()) {
     const statuses = planActions(indicator).map(action => actionStatus(action, today));
@@ -383,7 +387,7 @@
   // Cronograma: solo se dibujan acciones con ambas fechas; el eje va de lunes a domingo y llega hasta "hoy" si está cerca.
   function buildGantt(items, today = localDate()) {
     const rows = (items || []).filter(item => item.startDate && item.targetDate && item.startDate <= item.targetDate);
-    if (!rows.length) return { rows: [], weeks: [], totalDays: 0, todayOffset: null };
+    if (!rows.length) return { rows: [], weeks: [], years: [], months: [], totalDays: 0, todayOffset: null };
     let first = Math.min(...rows.map(item => dayNumber(item.startDate)));
     let last = Math.max(...rows.map(item => dayNumber(item.targetDate)));
     const todayDay = dayNumber(today);
@@ -394,8 +398,16 @@
     while ((last - first + 1) / 7 < 4) last += 7;
     const weeks = [];
     for (let day = first; day <= last; day += 7) { const date = new Date(day * DAY_MS); weeks.push(`${date.getUTCDate()} ${MONTHS_ES[date.getUTCMonth()]}`); }
+    // Años y meses consecutivos con su cantidad de días dentro del eje (para las dos filas del encabezado).
+    const years = [], months = [];
+    for (let day = first; day <= last; day++) {
+      const date = new Date(day * DAY_MS), year = date.getUTCFullYear(), month = date.getUTCMonth();
+      const lastYear = years[years.length - 1], lastMonth = months[months.length - 1];
+      if (lastYear && lastYear.year === year) lastYear.days++; else years.push({ year, days: 1 });
+      if (lastMonth && lastMonth.year === year && lastMonth.month === month) lastMonth.days++; else months.push({ year, month, label: MONTHS_ES[month], days: 1 });
+    }
     return {
-      weeks,
+      weeks, years, months,
       totalDays: last - first + 1,
       todayOffset: todayDay >= first && todayDay <= last ? todayDay - first : null,
       rows: rows.map((item, index) => {
@@ -444,5 +456,5 @@
     const added = field === 'correctiveMeasures' ? changes.newCorrectiveMeasures : changes.newMonitoringComments;
     return (added ? 'Nuevo en esta revisión:\n' + reviewBullets(added) : 'Sin información nueva en esta revisión.') + '\n\nAcumulado:\n' + full;
   }
-  return { MAX_PLAN_ACTIONS, newPlanAction, planActions, addPlanAction, removePlanAction, actionStatus, planSummary, actionsText, buildGantt, validatePlanDates, updatePlanDate, reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { MAX_PLAN_ACTIONS, newPlanAction, planActions, addPlanAction, removePlanAction, isOverdue, actionStatus, planSummary, actionsText, buildGantt, validatePlanDates, updatePlanDate, reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });
