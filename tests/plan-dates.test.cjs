@@ -42,7 +42,7 @@ test('both report formats include separate dates and ten matching columns', () =
   const html=fs.readFileSync('index.html','utf8');
   const plan=html.slice(html.indexOf('data-report-step="4"'),html.indexOf('data-report-step="5"'));
   assert.match(plan,/<th>Fecha de inicio<\/th><th>Fecha de finalización<\/th>/);
-  assert.match(plan,/formatDate\(ind.startDate\)/); assert.match(plan,/formatDate\(ind.targetDate\)/);
+  assert.match(plan,/formatDate\(act.startDate\)/); assert.match(plan,/formatDate\(act.targetDate\)/);
   assert.match(plan,/colspan="10"/);
   const data=Core.normalizeDataset(dataset({score:0,startDate:'2026-11-01',targetDate:'2026-11-20'}),catalog);
   const report=Pdf.definition(data,['TEST'],[]);

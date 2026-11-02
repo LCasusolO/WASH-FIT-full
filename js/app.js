@@ -343,7 +343,10 @@ createApp({
     const ganttView = computed(() => WashCore.buildGantt(
       indicators.value
         .filter(ind => shouldShowIndicator(ind) && (ind.score === 0 || ind.score === 1))
-        .map(ind => ({ id: ind.id, code: ind.code, module: ind.module, moduleId: ind.moduleId, title: ind.title, action: ind.action, startDate: ind.startDate, targetDate: ind.targetDate, status: WashCore.trackingStatus(ind), risk: calculateRiskScore(ind) })),
+        .flatMap(ind => WashCore.planActions(ind).map((act, index) => ({
+          id: act.id || ind.id, groupId: ind.id, code: ind.code, module: ind.module, moduleId: ind.moduleId, title: ind.title, risk: calculateRiskScore(ind),
+          action: act.action, startDate: act.startDate, targetDate: act.targetDate, status: WashCore.actionStatus(act), actionNumber: index + 1
+        }))),
       WashCore.localDate()
     ));
     const ganttBarClass = status => status === 'Completado' ? 'bg-emerald-600 text-white'
@@ -557,6 +560,7 @@ createApp({
         ind.responsible = '';
         ind.cost = null;
         ind.trackingStatus = 'No Iniciado';
+        ind.extraActions = [];
         ind.revisionNotes = '';
         ind.indicatorChange = 'sin_cambios';
         ind.correctiveMeasures = '';
@@ -634,7 +638,7 @@ createApp({
 
     const removeTeamMember = (index) => {
       const member = generalInfo.value.team[index];
-      indicators.value.filter(ind => ind.responsibleId === member.id).forEach(ind => { ind.responsible = member.name; ind.responsibleId = ''; });
+      indicators.value.forEach(ind => WashCore.planActions(ind).filter(act => act.responsibleId === member.id).forEach(act => { act.responsible = member.name; act.responsibleId = ''; }));
       generalInfo.value.team.splice(index, 1);
       triggerToast('Integrante removido del equipo.', 'error');
       nextTick(() => {
@@ -689,6 +693,7 @@ createApp({
         ind.responsible = '';
         ind.cost = null;
         ind.trackingStatus = 'No Iniciado';
+        ind.extraActions = [];
         
         triggerToast(`Se desmarcó el indicador.`, 'info');
         
@@ -903,6 +908,15 @@ createApp({
       } catch (error) { printWindow?.close(); triggerToast(error.message || 'No se pudo preparar la impresión.', 'error'); }
       finally { printBusy.value = false; }
     };
+    const addPlanAction = ind => {
+      try { WashCore.addPlanAction(ind); } catch (error) { triggerToast(error.message, 'error'); }
+    };
+    const removePlanAction = (ind, index) => {
+      const target = WashCore.planActions(ind)[index];
+      const hasContent = target && (target.action || target.resources || target.responsible || target.cost || target.startDate || target.targetDate);
+      if (hasContent && !window.confirm('¿Quitar esta acción del plan de mejora?')) return;
+      WashCore.removePlanAction(ind, index);
+    };
     const bulletValue = value => value || '';
     const focusBulletField = event => { if (!event.target.value) { event.target.value = '• '; event.target.setSelectionRange(2, 2); } };
     const updateBulletField = (event, ind, field) => {
@@ -982,7 +996,7 @@ createApp({
     const reportIndicators = computed(() => indicators.value.filter(shouldShowIndicator));
     const reportRadarSvg = computed(() => WashRadar.svg(reportIndicators.value, modulesList));
     const reportRisks = computed(() => reportIndicators.value.filter(ind => ind.score !== null));
-    const reportPlans = computed(() => reportIndicators.value.filter(ind => ind.score === 0 || ind.score === 1 || ind.action || ind.history?.length));
+    const reportPlans = computed(() => reportIndicators.value.filter(ind => ind.score === 0 || ind.score === 1 || WashCore.planActions(ind).some(act => act.action) || ind.history?.length));
     let reportMap = null;
     let reportMarker = null;
     let reportTilesReady = Promise.resolve();
@@ -1173,6 +1187,7 @@ createApp({
       getFilteredIndicatorsByModule,
       getActiveModuleProgressPercentage,
       getSortedGaps,
+      planActions: WashCore.planActions, planSummary: WashCore.planSummary, actionStatus: WashCore.actionStatus, actionsText: WashCore.actionsText, MAX_PLAN_ACTIONS: WashCore.MAX_PLAN_ACTIONS, addPlanAction, removePlanAction,
       ganttView, GANTT_DAY_PX, ganttBarClass, ganttBarColor, ganttModuleClass,
       jmpCalculatedStatus,
       radarChartData,
