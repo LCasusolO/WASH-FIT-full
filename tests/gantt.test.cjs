@@ -33,3 +33,19 @@ test('gantt exposes the first line of the action without bullets', () => {
   const g = Core.buildGantt([item('A_1', '2026-10-01', '2026-10-10', { action: '\n• Reparar la fuga\n• Revisar válvulas' }), item('A_2', '2026-10-01', '2026-10-10', { action: '' })], '2026-10-05');
   assert.equal(g.rows[0].actionText, 'Reparar la fuga'); assert.equal(g.rows[1].actionText, '');
 });
+
+test('gantt exposes consecutive years and months that cover the whole axis', () => {
+  const g = Core.buildGantt([item('A_1', '2026-12-20', '2027-02-10')], '2026-12-30');
+  assert.deepEqual(g.years.map(y => [y.year, y.days]), [[2026, 18], [2027, 45]]);
+  assert.deepEqual(g.months.map(m => [m.label, m.days]), [['dic', 18], ['ene', 31], ['feb', 14]]);
+  assert.equal(g.years.reduce((n, y) => n + y.days, 0), g.totalDays);
+  assert.equal(g.months.reduce((n, m) => n + m.days, 0), g.totalDays);
+  assert.deepEqual(Core.buildGantt([], '2026-11-01').months, []);
+});
+
+test('overdue only applies to unfinished actions whose end date has passed', () => {
+  assert.equal(Core.isOverdue({ targetDate: '2026-10-01', trackingStatus: 'En Progreso' }, '2026-11-01'), true);
+  assert.equal(Core.isOverdue({ targetDate: '2026-10-01', trackingStatus: 'Completado' }, '2026-11-01'), false);
+  assert.equal(Core.isOverdue({ targetDate: '2026-11-01', trackingStatus: 'No Iniciado' }, '2026-11-01'), false);
+  assert.equal(Core.isOverdue({ targetDate: '', trackingStatus: 'Retrasado' }, '2026-11-01'), false);
+});

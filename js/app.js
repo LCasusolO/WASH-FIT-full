@@ -340,15 +340,52 @@ createApp({
 
     // Cronograma del Resumen: solo brechas (puntaje 0 o 1) con fecha de inicio y de finalización.
     const GANTT_DAY_PX = 8;
-    const ganttView = computed(() => WashCore.buildGantt(
-      indicators.value
-        .filter(ind => shouldShowIndicator(ind) && (ind.score === 0 || ind.score === 1))
-        .flatMap(ind => WashCore.planActions(ind).map((act, index) => ({
-          id: act.id || ind.id, groupId: ind.id, code: ind.code, module: ind.module, moduleId: ind.moduleId, title: ind.title, risk: calculateRiskScore(ind),
-          action: act.action, startDate: act.startDate, targetDate: act.targetDate, status: WashCore.actionStatus(act), actionNumber: index + 1
-        }))),
-      WashCore.localDate()
-    ));
+    const ganttItems = computed(() => indicators.value
+      .filter(ind => shouldShowIndicator(ind) && (ind.score === 0 || ind.score === 1))
+      .flatMap(ind => WashCore.planActions(ind).map((act, index) => ({
+        id: act.id || ind.id, groupId: ind.id, code: ind.code, module: ind.module, moduleId: ind.moduleId, title: ind.title, risk: calculateRiskScore(ind),
+        action: act.action, startDate: act.startDate, targetDate: act.targetDate, status: WashCore.actionStatus(act), actionNumber: index + 1
+      }))));
+    // Reporte: todas las brechas con fechas. Resumen: las del dominio elegido (o todas si no hay ninguno).
+    const ganttView = computed(() => WashCore.buildGantt(ganttItems.value, WashCore.localDate()));
+    const ganttDomains = computed(() => {
+      const seen = new Map();
+      for (const row of ganttView.value.rows) if (!seen.has(row.moduleId)) seen.set(row.moduleId, row.module);
+      return modulesList.filter(mod => seen.has(mod.id)).map(mod => ({ id: mod.id, name: seen.get(mod.id) }));
+    });
+    const ganttDomain = ref(null);
+    const ganttActiveDomain = computed(() => ganttDomains.value.some(mod => mod.id === ganttDomain.value) ? ganttDomain.value : null);
+    const toggleGanttDomain = id => { ganttDomain.value = ganttActiveDomain.value === id ? null : id; };
+    const ganttShown = computed(() => ganttActiveDomain.value
+      ? WashCore.buildGantt(ganttItems.value.filter(item => item.moduleId === ganttActiveDomain.value), WashCore.localDate())
+      : ganttView.value);
+    // Altura del cuadro: encabezado + las filas de los primeros 3 indicadores; el resto se ve con scroll vertical.
+    const GANTT_VISIBLE_INDICATORS = 3;
+    const ganttScroll = ref(null);
+    const ganttMaxHeight = ref(320);
+    const measureGantt = () => nextTick(() => {
+      const el = ganttScroll.value;
+      if (!el) return;
+      const rows = [...el.querySelectorAll('tbody tr')];
+      let height = el.querySelector('thead')?.offsetHeight || 0, groups = 0;
+      if (!height) return; // vista oculta: se mide cuando se muestre
+      for (let i = 0; i < rows.length && i < ganttShown.value.rows.length; i++) {
+        if (ganttShown.value.rows[i].groupStart && ++groups > GANTT_VISIBLE_INDICATORS) break;
+        height += rows[i].offsetHeight;
+      }
+      ganttMaxHeight.value = Math.ceil(height) + 2;
+    });
+    // Se registra al montar: sus fuentes usan funciones definidas más abajo en setup().
+    onMounted(() => {
+      let observer = null;
+      watch(ganttShown, measureGantt, { flush: 'post' });
+      // El tamaño de la tabla cambia al mostrarse la vista o al reajustarse la ventana: se vuelve a medir.
+      watch(ganttScroll, el => {
+        observer?.disconnect();
+        if (el && typeof ResizeObserver !== 'undefined') { observer = new ResizeObserver(measureGantt); observer.observe(el.firstElementChild); }
+        measureGantt();
+      }, { flush: 'post', immediate: true });
+    });
     const ganttBarClass = status => status === 'Completado' ? 'bg-emerald-600 text-white'
       : status === 'Retrasado' ? 'bg-red-600 text-white'
       : status === 'En Progreso' ? 'bg-paho-blue text-white'
@@ -1187,8 +1224,8 @@ createApp({
       getFilteredIndicatorsByModule,
       getActiveModuleProgressPercentage,
       getSortedGaps,
-      planActions: WashCore.planActions, planSummary: WashCore.planSummary, actionStatus: WashCore.actionStatus, actionsText: WashCore.actionsText, MAX_PLAN_ACTIONS: WashCore.MAX_PLAN_ACTIONS, addPlanAction, removePlanAction,
-      ganttView, GANTT_DAY_PX, ganttBarClass, ganttBarColor, ganttModuleClass,
+      planActions: WashCore.planActions, planSummary: WashCore.planSummary, actionStatus: WashCore.actionStatus, actionOverdue: WashCore.isOverdue, actionsText: WashCore.actionsText, MAX_PLAN_ACTIONS: WashCore.MAX_PLAN_ACTIONS, addPlanAction, removePlanAction,
+      ganttView, ganttShown, ganttDomains, ganttActiveDomain, toggleGanttDomain, ganttScroll, ganttMaxHeight, GANTT_DAY_PX, ganttBarClass, ganttBarColor, ganttModuleClass,
       jmpCalculatedStatus,
       radarChartData,
       getViewTitle,
