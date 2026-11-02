@@ -1714,7 +1714,7 @@
                         <td v-if="row.groupStart" :rowspan="row.groupSize" class="py-3 px-3 border-r border-paho-grid align-top">
                           <div class="flex flex-col items-center text-center gap-1.5">
                             <span class="inline-block px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-none" :class="ganttModuleClass(row.moduleId)">{{ row.module }}</span>
-                            <span class="font-bold text-paho-dark-blue leading-snug line-clamp-2" :title="row.title">{{ row.code }} · {{ row.title }}</span>
+                            <span class="font-bold text-paho-dark-blue leading-snug line-clamp-2" :title="row.title">{{ row.title }}</span>
                             <span v-if="row.risk !== null" class="inline-block px-2 py-0.5 text-[11px] font-semibold border rounded-none" :class="getRiskColorClass(row.risk)">Riesgo {{ getRiskLabel(row.risk) }}</span>
                           </div>
                         </td>
@@ -1727,7 +1727,7 @@
                           <div v-if="ganttShown.todayOffset !== null" class="absolute top-0 bottom-0" :style="{ left: ganttShown.todayOffset * GANTT_DAY_PX + 'px', borderLeft: '2px dashed #ff671f' }"></div>
                           <div class="absolute flex items-center px-2 text-[11px] font-semibold overflow-hidden whitespace-nowrap" :class="ganttBarClass(row.status)"
                                :style="{ top: '17px', height: '22px', left: row.offset * GANTT_DAY_PX + 'px', width: row.days * GANTT_DAY_PX + 'px' }"
-                               :title="row.code + ' · ' + formatDate(row.startDate) + ' – ' + formatDate(row.targetDate) + ' · ' + row.status">{{ row.days * GANTT_DAY_PX >= 40 ? row.days + ' d' : '' }}</div>
+                               :title="(row.actionText || row.title) + ' · ' + formatDate(row.startDate) + ' – ' + formatDate(row.targetDate) + ' · ' + row.status">{{ row.days * GANTT_DAY_PX >= 40 ? row.days + ' d' : '' }}</div>
                         </td>
                       </tr>
                     </tbody>
@@ -2095,7 +2095,7 @@
               </thead>
               <tbody>
                 <tr v-for="row in ganttView.rows" :key="row.id">
-                  <td v-if="row.groupStart" :rowspan="row.groupSize"><strong>{{ row.module }}</strong><br>{{ row.code }} · {{ row.title }}<p v-if="row.risk !== null">Riesgo: {{ row.risk }} ({{ getRiskLabel(row.risk) }})</p></td>
+                  <td v-if="row.groupStart" :rowspan="row.groupSize"><strong>{{ row.module }}</strong><br>{{ row.title }}<p v-if="row.risk !== null">Riesgo: {{ row.risk }} ({{ getRiskLabel(row.risk) }})</p></td>
                   <td><span v-if="row.actionText" class="report-text">{{ row.actionText }}</span><em v-else>Sin texto de acción</em><p>{{ formatDate(row.startDate) }} – {{ formatDate(row.targetDate) }}</p></td>
                   <td class="report-gantt-track" :style="{ backgroundSize: 100 / ganttView.weeks.length + '% 100%' }">
                     <span v-if="ganttView.todayOffset !== null" class="report-gantt-today-line" :style="{ left: ganttView.todayOffset / ganttView.totalDays * 100 + '%' }"></span>
