@@ -184,6 +184,7 @@ button, [role=button], summary { cursor: pointer; }
 
 @media (min-width: 1024px) { .sidebar-menu { border-right: 0; } }
 
+#app .domain-summary-table :is(th, td):not(:first-child) { text-align: center; }
 .domain-summary-hint { display: none; }
 @media (max-width: 767px) {
   .domain-summary-hint { display: block; }

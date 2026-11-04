@@ -102,7 +102,7 @@
               <div class="bg-paho-blue h-2 transition-all duration-500" :style="{ width: progressPercentage + '%' }"></div>
             </div>
             <div class="flex justify-between items-center mt-3 text-[11px] text-paho-gray-medium font-semibold">
-              <span>{{ answeredCount }} de {{ totalVisibleIndicators }} aplicables evaluados</span>
+              <span>{{ answeredCount }} de {{ totalVisibleIndicators }} indicadores evaluados</span>
               <span>Brechas: {{ totalGaps }}</span>
             </div>
           </div>
@@ -1512,7 +1512,7 @@
                   <span class="block text-base font-extrabold tracking-tight leading-snug" :class="facilityValuation.colorClass">
                     {{ facilityValuation.label }}
                   </span>
-                  <span class="text-[10px] text-paho-gray-medium font-bold block">Cobertura: {{ answeredCount }} de {{ totalVisibleIndicators }} aplicables evaluados ({{ progressPercentage }}%)</span>
+                  <span class="text-[10px] text-paho-gray-medium font-bold block">Cobertura: {{ answeredCount }} de {{ totalVisibleIndicators }} indicadores evaluados ({{ progressPercentage }}%)</span>
                 </div>
 
                 <div v-if="answeredCount === totalVisibleIndicators && answeredCount > 0 && overallCompliance > 75" class="p-4 bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -1542,7 +1542,7 @@
                 <div class="space-y-1">
                   <span class="text-xs font-semibold text-paho-gray-medium uppercase tracking-wider">Brechas identificadas</span>
                   <span class="block text-3xl font-extrabold text-red-600 tracking-tight">{{ totalGaps }}</span>
-                  <span class="text-[10px] text-red-500 font-bold block">Indicadores evaluados con 0 o 1</span>
+                  <span class="text-[10px] text-red-500 font-bold block">Indicadores evaluados</span>
                 </div>
                 <div class="p-4 bg-red-50 text-red-600 border border-red-200">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1561,8 +1561,8 @@
               <!-- Radar Chart -->
               <div class="bg-paho-card border border-paho-grid p-8 space-y-6">
                 <div class="border-b border-paho-grid pb-4">
-                  <h3 class="text-base font-bold text-paho-very-dark-blue">Porcentaje de Desempeño por Dominio (Radar)</h3>
-                  <p class="text-xs text-paho-gray-medium mt-1">Cumplimiento de los indicadores respondidos por dominio. Los dominios pendientes no tienen una valoración definitiva.</p>
+                  <h3 class="text-base font-bold text-paho-very-dark-blue">Porcentaje de Cumplimiento por Dominio (Radar)</h3>
+                  <p class="text-xs text-paho-gray-medium mt-1">Cumplimiento de los indicadores respondidos por dominio.</p>
                 </div>
 
                 <div class="flex justify-center items-center py-2 bg-white border border-paho-grid">
@@ -1640,7 +1640,7 @@
                         <th class="py-2.5 text-center bg-paho-card">Indicadores</th>
                         <th class="py-2.5 text-center bg-paho-card">Evaluados</th>
                         <th class="py-2.5 text-center bg-paho-card">Puntos Logrados</th>
-                        <th class="py-2.5 text-right px-4 bg-paho-card">Porcentaje (%)</th>
+                        <th class="py-2.5 text-right px-4 bg-paho-card">Cumplimiento (%)</th>
                       </tr>
                     </thead>
 
@@ -1654,7 +1654,7 @@
                         <td data-label="Evaluados" class="py-3.5 text-center font-semibold text-paho-gray-dark">{{ getModuleAnsweredCount(mod.id) }}</td>
                         <!-- Solo puntos efectivos logrados por dominio -->
                         <td data-label="Puntos Logrados" class="py-3.5 text-center font-bold text-paho-very-dark-blue">{{ getModuleScoreAchieved(mod.id) }}</td>
-                        <td data-label="Porcentaje (%)" class="py-3.5 text-right px-4 font-extrabold text-paho-dark-blue">{{ getModuleAnsweredCount(mod.id) ? getModulePercentage(mod.id) + '%' : 'Sin indicadores evaluados' }}</td>
+                        <td data-label="Cumplimiento (%)" class="py-3.5 text-right px-4 font-extrabold text-paho-dark-blue">{{ getModuleAnsweredCount(mod.id) ? getModulePercentage(mod.id) + '%' : 'Sin indicadores evaluados' }}</td>
                       </tr>
                       <tr class="bg-paho-card font-bold text-paho-very-dark-blue border-t-2 border-paho-grid">
                         <td data-label="Dominio" class="py-4 px-4">TOTAL</td>
@@ -1662,7 +1662,7 @@
                         <td data-label="Evaluados" class="py-4 text-center">{{ answeredCount }}</td>
                         <!-- Solo total de puntos efectivos -->
                         <td data-label="Puntos Logrados" class="py-4 text-center">{{ totalScoreAchieved }}</td>
-                        <td data-label="Porcentaje (%)" class="py-4 text-right px-4 text-paho-dark-blue font-extrabold">{{ answeredCount ? overallCompliance + '%' : 'Sin indicadores evaluados' }}</td>
+                        <td data-label="Cumplimiento (%)" class="py-4 text-right px-4 text-paho-dark-blue font-extrabold">{{ answeredCount ? overallCompliance + '%' : 'Sin indicadores evaluados' }}</td>
                       </tr>
                     </tbody>
 
@@ -2123,10 +2123,10 @@
 
         <section class="report-step" data-report-step="6" aria-labelledby="report-step-6">
           <h2 id="report-step-6">Paso 6: Resumen</h2>
-          <p>Cobertura: {{ answeredCount }}/{{ totalVisibleIndicators }} aplicables evaluados ({{ progressPercentage }}%). Cumplimiento de los respondidos: {{ answeredCount ? overallCompliance + '%' : 'Sin indicadores evaluados' }}. Valoración: {{ facilityValuation.label }}.</p>
+          <p>Cobertura: {{ answeredCount }}/{{ totalVisibleIndicators }} indicadores evaluados ({{ progressPercentage }}%). Cumplimiento de los respondidos: {{ answeredCount ? overallCompliance + '%' : 'Sin indicadores evaluados' }}. Valoración: {{ facilityValuation.label }}.</p>
           <table><thead><tr><th>Dominio</th><th>Aplicables</th><th>Evaluados</th><th>Puntos</th><th>Cumplimiento de respondidos</th></tr></thead><tbody><tr v-for="mod in modulesList" :key="mod.id"><td>{{ mod.name }}</td><td>{{ getModuleTotalCount(mod.id) }}</td><td>{{ getModuleAnsweredCount(mod.id) }}</td><td>{{ getModuleScoreAchieved(mod.id) }}</td><td>{{ getModuleAnsweredCount(mod.id) ? getModulePercentage(mod.id) + '%' : 'Sin indicadores evaluados' }}</td></tr></tbody></table>
           <h3>Servicios JMP</h3><table><thead><tr><th>Agua</th><th>Saneamiento</th><th>Residuos</th><th>Higiene</th><th>Limpieza</th></tr></thead><tbody><tr><td>{{ jmpCalculatedStatus.water.status }}</td><td>{{ jmpCalculatedStatus.sanitation.status }}</td><td>{{ jmpCalculatedStatus.waste.status }}</td><td>{{ jmpCalculatedStatus.hygiene.status }}</td><td>{{ jmpCalculatedStatus.cleaning.status }}</td></tr></tbody></table>
-        <figure class="report-radar"><h3>Porcentaje de desempeño por dominio (Radar)</h3><div v-html="reportRadarSvg"></div><figcaption>Cumplimiento de los indicadores respondidos. Los dominios pendientes se muestran como Sin evaluar.</figcaption></figure>
+        <figure class="report-radar"><h3>Porcentaje de Cumplimiento por Dominio (Radar)</h3><div v-html="reportRadarSvg"></div><figcaption>Cumplimiento de los indicadores respondidos. Los dominios pendientes se muestran como Sin evaluar.</figcaption></figure>
         </section>
       </div>
     </section>
