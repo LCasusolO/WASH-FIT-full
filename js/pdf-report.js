@@ -33,8 +33,10 @@
     if(history.length) content.push({text:'Historial de revisiones',style:'subheading'},table(['Módulo','Indicador','Revisión / próxima','Cambio','Responsables','Acción','Medidas','Comentarios'],history,[55,'*',80,60,60,75,90,90]));
     step(6, 'Resumen');
     const compliance = evaluated.length ? Math.round(evaluated.reduce((n, i) => n + i.score, 0) / (evaluated.length * 2) * 100) : 0;
-    content.push(line('Cobertura', `${evaluated.length}/${indicators.filter(i => !Core.isNotApplicable(i)).length} indicadores evaluados`), line('Cumplimiento Global', percent(evaluated)), line('Valoración', Core.valuation(evaluated.length, indicators.length, compliance).label));
-    content.push(table(['Dominio', 'Indicadores', 'Respondidos', 'Puntos', 'Cumplimiento'], modules.map(m => { const all = indicators.filter(i => i.moduleId === m.id && !Core.isNotApplicable(i)); const done = all.filter(i => i.score !== null); return [m.name, String(all.length), String(done.length), String(done.reduce((n, i) => n + i.score, 0)), percent(done)]; })));
+    content.push(line('Cobertura', `${evaluated.length}/${indicators.filter(i => !Core.isNotApplicable(i)).length} indicadores evaluados`), line('Cumplimiento global', percent(evaluated)), line('Valoración', Core.valuation(evaluated.length, indicators.length, compliance).label));
+    const summary = table(['Dominio', 'Indicadores totales', 'Indicadores evaluados', 'Puntos logrados', 'Cumplimiento'], modules.map(m => { const all = indicators.filter(i => i.moduleId === m.id && !Core.isNotApplicable(i)); const done = all.filter(i => i.score !== null); return [m.name, String(all.length), String(done.length), String(done.reduce((n, i) => n + i.score, 0)), percent(done)]; }));
+    summary.alignment = 'center';
+    content.push(summary);
     const jmp = Core.calculateJmp(g, dataset.indicators);
     content.push({text: 'Servicios JMP', style: 'subheading'}, table(['Agua', 'Saneamiento', 'Residuos', 'Higiene', 'Limpieza'], [[jmp.water.status, jmp.sanitation.status, jmp.waste.status, jmp.hygiene.status, jmp.cleaning.status]]));
     content.push({stack:[{text:'Porcentaje de Cumplimiento por Dominio (Radar)',style:'subheading'},{svg:Radar.svg(indicators,modules),width:650,alignment:'center'},{text:'Cumplimiento de los indicadores respondidos. Los dominios pendientes se muestran como Sin evaluar.',fontSize:8}],unbreakable:true});
