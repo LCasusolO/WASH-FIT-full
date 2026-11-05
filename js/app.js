@@ -105,9 +105,9 @@ createApp({
       { id: 'sanitation', name: 'Saneamiento', shortName: 'Saneam. (S)', color: 'bg-emerald-600', hex: '#059669' },
       { id: 'waste', name: 'Gestión de Residuos', shortName: 'Residuos (RES)', color: 'bg-amber-600', hex: '#d97706' },
       { id: 'hygiene', name: 'Higiene de Manos', shortName: 'Higiene (H)', color: 'bg-purple-600', hex: '#7c3aed' },
-      { id: 'cleaning', name: 'Limpieza Hospitalaria', shortName: 'Limpieza (L)', color: 'bg-teal-600', hex: '#0d9488' },
-      { id: 'energy', name: 'Energía', shortName: 'Energía (E)', color: 'bg-yellow-500', hex: '#eab308' },
-      { id: 'management', name: 'Gestión y Administración', shortName: 'Gestión (M)', color: 'bg-indigo-600', hex: '#4f46e5' }
+      { id: 'cleaning', name: 'Limpieza ambiental', shortName: 'Limpieza (L)', color: 'bg-teal-600', hex: '#0d9488' },
+      { id: 'energy', name: 'Energía y medio ambiente', shortName: 'Energía (E)', color: 'bg-yellow-500', hex: '#eab308' },
+      { id: 'management', name: 'Gestión y personal', shortName: 'Gestión (M)', color: 'bg-indigo-600', hex: '#4f46e5' }
     ];
 
     // Opciones oficiales de la escala de Gravedad (0 a 10)

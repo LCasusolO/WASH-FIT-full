@@ -1,14 +1,18 @@
 // Archivo JS con la lista corregida, redactada y estandarizada de indicadores WASH-FIT
 // Identificadores estables; incluye el nombre utilizado por exportaciones anteriores.
 const MODULE_ID_BY_NAME = {
+  // Compatibilidad con evaluaciones guardadas con los nombres anteriores.
+  'Limpieza Hospitalaria': 'cleaning',
+  'Energía': 'energy',
+  'Gestión y Administración': 'management',
   'Agua': 'water',
   'Saneamiento': 'sanitation',
   'Gestión de Residuos': 'waste',
   'Residuos Hospitalarios': 'waste',
   'Higiene de Manos': 'hygiene',
-  'Limpieza Hospitalaria': 'cleaning',
-  'Energía': 'energy',
-  'Gestión y Administración': 'management'
+  'Limpieza ambiental': 'cleaning',
+  'Energía y medio ambiente': 'energy',
+  'Gestión y personal': 'management'
 };
 
 // Catálogo sincronizado con el Excel final aprobado. S_8 describe la ruta con alcantarillado; no se puntúa.
@@ -842,7 +846,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_1',
     code: 'L_1',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Existe una política o protocolo de limpieza claro, detallado, que se aplica y se le da seguimiento.',
     desc: 'Politicas\nEsencial\nSala/Establecimiento\nJMP Servicio Básico de Limpieza hospitalaria',
     guidance: 'Una política debe incluir lo siguiente:\n-cadenas de mando funcionales y responsabilidades definidas para todo el personal de limpieza;\n-cronograma de limpieza para cada área de atención de pacientes y equipo no crítico de atención de pacientes, indicando la frecuencia, el método y el personal responsable;\n-planes de contingencia y procedimientos de limpieza necesarios en caso de brotes;\n-requisitos de capacitación y normas de desempeño para el personal de limpieza;\n-métodos, frecuencia y personal responsable del seguimiento;\n-lista de los productos, materiales y equipo de limpieza aprobados, y cualquier especificación necesaria sobre su uso, y\n-lista de EPP necesario y recomendaciones sobre higiene de las manos para el personal de limpieza.\nEste indicador coincide con la pregunta del monitoreo conjunto sobre protocolos de limpieza. La evaluación de un área de servicio como "limpia" es muy subjetiva, y el concepto " visiblemente limpio" puede ser muy diferente a "microbiológicamente limpio". De manera análoga, es difícil medir la frecuencia de la limpieza porque no puede ser observada por todos los encuestadores en un día, y es probable que las respuestas estén sujetas a un sesgo por parte del entrevistado. La frecuencia con la que debe limpiarse un establecimiento está relacionada con la carga de pacientes y, por consiguiente, los cronogramas de limpieza varían mucho de un establecimiento a otro.\nPreguntar sobre la existencia de protocolos de limpieza es una indicación de la importancia que asigna un establecimiento de salud a la higiene ambiental. Los protocolos pueden o no estar por escrito dado que es posible que algunos de los encargados de la limpieza no sepan leer.',
@@ -856,7 +860,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_2',
     code: 'L_2',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Se lleva un registro de limpieza en las áreas de atención a pacientes, las salas o el establecimiento. La persona encargada de la limpieza lo firma todos los días.',
     desc: 'Supervisión\nEsencial\nSala/Establecimiento',
     guidance: 'Los registros deben estar disponibles en lugares centrales o donde se realizan las tareas de limpieza para que los supervisores puedan examinarlos diariamente junto con el personal responsable del seguimiento periódico. Consulte, para consultar más información sobre registros de limpieza y otros métodos de seguimiento, a las mejores prácticas de limpieza ambiental de los CDC, sección 2.4.3.',
@@ -870,7 +874,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_3',
     code: 'L_3',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Los inodoros se limpian al menos una vez al día, y el personal de limpieza firma un registro de limpieza que se expone de forma visible.',
     desc: 'Supervisión\nEsencial\nSala',
     guidance: 'Los inodoros públicos o compartidos deben limpiarse y desinfectarse dos veces al día, o cuando estén visiblemente sucios.\nLos inodoros privados deben limpiarse y desinfectarse por lo menos una vez por cada período de 24 horas, o cuando estén visiblemente sucios, después de la limpieza de rutina del área de atención del paciente.\nSi el personal tiene dificultades de lectura, adapte y simplifique el registro de limpieza con imágenes e ilustraciones fáciles de reconocer.',
@@ -884,7 +888,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_4',
     code: 'L_4',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Hay personal de limpieza asignado en la sala/establecimiento disponible todos los días.',
     desc: 'Personal\nEsencial\nSala/Establecimiento',
     guidance: 'Esta sección se refiere a las personas responsables de la limpieza ambiental en los establecimientos de salud que desempeñan una función clave para mantener un entorno limpio o higiénico y facilitan prácticas relacionadas con la prevención y el control de infecciones nosocomiales. El personal puede ser contratado a tiempo parcial o completo. No existe un número ni una proporción definitivos. Este personal debe estar disponible de manera regular (por ejemplo, diariamente), ser suficiente para todas las salas y dedicar tiempo a realizar actividades de limpieza.',
@@ -898,7 +902,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_5',
     code: 'L_5',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Todo el personal que se ocupa de la limpieza ha recibido capacitación.',
     desc: 'Personal\nEsencial\nJMP Servicio Básico de Limpieza hospitalaria',
     guidance: 'Esta sección se refiere a los proveedores de servicios que no son de salud, como el personal de limpieza, los enfermeros o el personal auxiliar, así como los prestadores de atención de salud que, además de sus responsabilidades clínicas y de atención del paciente, realizan tareas de limpieza como parte de su función.\nLa capacitación se refiere a programas de formación o programas estructurados conducidos por un instructor o supervisor debidamente capacitado.',
@@ -912,7 +916,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_6',
     code: 'L_6',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Existen y se aplican normas y procedimientos para mejorar la seguridad ocupacional del personal de limpieza y del que manipula residuos médicos.',
     desc: 'Personal\nAvanzado\nEstablecimiento',
     guidance: 'Véase más información sobre salud ocupacional en: OMS/OIT (2014) HealthWISE - Mejoras laborales en los servicios de salud - Manual operativo: https://www.ilo.org/sector/Resources/training-materials/WCMS_604886/lang--es/index.htm',
@@ -926,7 +930,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_7',
     code: 'L_7',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Se dispone de materiales apropiados y en buen estado para la limpieza (detergente, estropajos, baldes, etc.).',
     desc: 'Suministros\nEsencial\nSala',
     guidance: 'Como mínimo, trapos de limpieza desechables o reutilizables, baldes, estropajos, detergentes y desinfectante de poca potencia. Los productos deben cumplir con directrices/reglamentos nacionales sobre productos apropiados que se consiguen en el mercado local para limpieza de establecimientos de salud.',
@@ -940,7 +944,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_8',
     code: 'L_8',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Existe un presupuesto anual para suministros y equipos de limpieza ambiental, suficiente para cubrir todas las necesidades.',
     desc: 'Suministros\nEsencial\nEstablecimiento',
     guidance: 'Un presupuesto anual para un programa eficaz de limpieza medioambiental, que incluya :\n- personal (salario y prestaciones para el personal de limpieza, supervisores y un gestor general del programa)\n- formación del personal (al menos antes del servicio y actualización anual)\n- suministros y equipos de limpieza ambiental, incluido el EPP para el personal de limpieza\n- costes administrativos\n- costes de producción e impresión de listas de comprobación, registros y otras ayudas para el trabajo\n- costes de infraestructura/servicios, como servicios de agua y aguas residuales (si procede)',
@@ -954,7 +958,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_9',
     code: 'L_9',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Se dispone de un área para el almacenamiento, preparación y cuidado de equipo y materiales de limpieza (área de servicios de limpieza ambiental), limpia y en buen estado, y se utiliza para esos fines.',
     desc: 'Implementos\nAvanzado\nSala',
     guidance: 'El área de servicios de limpieza ambiental está dedicada a preparar, reprocesar y almacenar implementos y equipo de limpieza limpios o nuevos, incluidos los productos de limpieza y el EPP. El acceso debe estar restringido únicamente al personal de limpieza y otro personal autorizado. Debe estar ubicada dentro del establecimiento, independientemente de que el programa de limpieza se administre internamente o lo administre una empresa externa.\nEsta área debe estar bien ventilada, iluminada, tener un abastecimiento de agua apropiado (acceso a agua caliente y fría, si es factible), tener un lavabo exclusivamente para el lavado de las manos, EPP disponible, sin acumulación desordenada de materiales y de tamaño adecuado. Para obtener más información, consulte a las directrices sobre limpieza ambiental de los CDC.',
@@ -968,7 +972,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_10',
     code: 'L_10',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Se dispone de equipo de protección personal (EPP) adecuado en todo momento y en cantidades suficientes para el personal de limpieza.',
     desc: 'Equipo de Protección Personal (EPP)\nEsencial\nSala',
     guidance: 'El EPP mínimo necesario para el personal de limpieza en todos los establecimientos es: 1. Bata y/o delantal de plástico. 2. Guantes de hule reutilizables. 3. Mascarilla facial. 4. Gafas o careta protectora. Se deben mantener en existencia cantidades adecuadas de EPP (reutilizable y desechable), en buen estado ,y debe limpiarse antes de usar. Todo el EPP reutilizable se debe volver a procesar (es decir, se debe limpiar y desinfectar) por lo menos una vez al día.',
@@ -982,7 +986,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_11',
     code: 'L_11',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Se dispone de personal adicional (por ejemplo, una lista de turnos) y suministros de limpieza adicionales para su despliegue en el centro si aumenta la carga de pacientes.',
     desc: 'Preparativos para Emergencias\nAvanzado\nSala/Establecimiento',
     guidance: 'Consulte a las mejores prácticas de los CDC para limpieza ambiental en entornos con recursos limitados, para obtener más información.',
@@ -996,7 +1000,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_12',
     code: 'L_12',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Todas las camas tienen cubiertas impermeables sin señales de deterioro (rasgaduras, roturas o agujeros).',
     desc: 'Lavandería\nAvanzado\nSala',
     guidance: 'Para los cuidados hospitalarios de larga duración, las cubiertas impermeables deben ser desmontables y transpirables.',
@@ -1010,7 +1014,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_13',
     code: 'L_13',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Solo para establecimientos con pacientes hospitalizados: existe una lavandería limpia, en buen estado de mantenimiento y con capacidad para satisfacer la demanda (es decir, para lavar la ropa blanca antes de internar a nuevos pacientes).',
     desc: 'Lavandería\nAvanzado\nEstablecimiento\nSolo para Hospitales con pacientes hospitalizados',
     guidance: 'Las zonas de lavandería deben disponer de un sistema eficaz de drenaje y absorción, así como de una superficie suficiente para el secado de la ropa al aire libre. La ropa sucia debe guardarse en bolsas separadas, selladas y marcadas, para su transporte y almacenamiento.',
@@ -1024,7 +1028,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_14',
     code: 'L_14',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Hay servicios de lavandería con agua caliente a 70–80 °C durante 10 minutos para reprocesar los paños y los cabezales de las mopas. Estos materiales se lavan siempre por separado del resto de textiles hospitalarios sucios.',
     desc: 'Lavandería\nAvanzado\nEstablecimiento',
     guidance: '',
@@ -1038,7 +1042,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_15',
     code: 'L_15',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Solo para establecimientos con pacientes hospitalizados: los alimentos se manipulan y preparan de manera segura (sobre superficies limpias y con utensilios limpios).',
     desc: 'Higiene Alimentaria\nAvanzado\nEstablecimiento\nSolo para Hospitales con pacientes hospitalizados',
     guidance: 'Las superficies sobre las que se preparan los alimentos deben lavarse con agua potable y detergente y luego enjuagarse, o limpiarse con un trapo limpio que se lave con frecuencia. Deben desecharse rápidamente los restos de alimentos, porque son reservorios potenciales para bacterias y pueden atraer insectos y roedores. La basura debe mantenerse en recipientes cubiertos y eliminarse con rapidez y seguridad.\nLos cubiertos deben lavarse inmediatamente después de cada uso con agua caliente y detergente, y secarse al aire. Puede obtenerse más información en la publicación de la OMS Essential environmental health standards y en https://www.who.int/foodsafety/publications/all/en/',
@@ -1052,7 +1056,7 @@ const INDICATORS_DATA = [
   {
     id: 'L_16',
     code: 'L_16',
-    module: 'Limpieza Hospitalaria',
+    module: 'Limpieza ambiental',
     title: 'Solo para establecimientos con pacientes hospitalizados: las alacenas y los alimentos preparados están protegidos de moscas, otros insectos o ratas.',
     desc: 'Higiene Alimentaria\nAvanzado\nEstablecimiento\nSolo para Hospitales con pacientes hospitalizados',
     guidance: 'Las áreas de preparación de alimentos deben mantenerse limpias y protegidas de roedores e insectos.\nEl área de almacenamiento de alimentos debe estar cerrada para impedir contaminación por ratas y moscas.',
@@ -1066,7 +1070,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_1',
     code: 'E_1',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'Hay electricidad de alguna fuente, como la red pública, un generador o energía solar, incluidos los sistemas independientes de cadena de frío del Programa Ampliado de Inmunización (PAI). El suministro funciona correctamente y recibe mantenimiento.',
     desc: 'Energía\nEsencial',
     guidance: 'En hospitales (como los hospitales rurales) y en las estructuras temporales (como centros de tratamiento del cólera), probablemente sea necesario contar con generadores o paneles y baterías solares. Como mínimo, se debe disponer de una lámpara segura de querosén o de gas o linternas manuales potentes.',
@@ -1080,7 +1084,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_2',
     code: 'E_2',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'Hay energía suficiente para todas las necesidades eléctricas del establecimiento.',
     desc: 'Energía\nEsencial',
     guidance: 'Las necesidades incluyen iluminación, comunicaciones, dispositivos/equipos médicos y vivienda del personal.',
@@ -1094,7 +1098,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_3',
     code: 'E_3',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'Donde el agua se obtiene por medio de bombas, hay energía suficiente para bombear el agua.',
     desc: 'Energía\nAvanzado',
     guidance: 'Donde se requieran mejoras a los sistemas de bombeo, deberá considerarse el uso de energías renovables (por ejemplo, solar).',
@@ -1108,7 +1112,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_4',
     code: 'E_4',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'Donde se calienta el agua, hay energía suficiente para calentar el agua.',
     desc: 'Energía\nAvanzado',
     guidance: 'Donde se requieran mejoras a los sistemas para calentar el agua, deberá considerarse el uso de energías renovables (por ejemplo, solar).',
@@ -1122,7 +1126,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_5',
     code: 'E_5',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'Existe una fuente de energía de respaldo, en buen estado de funcionamiento, con combustible en cantidad adecuada, en caso de que falle la fuente principal.',
     desc: 'Respaldo\nAvanzado\nSala/ Establecimiento',
     guidance: 'En caso de que falle la fuente principal, puede necesitarse una fuente de respaldo para alimentar el equipo médico, los refrigeradores, la iluminación y el bombeo de agua. Debe activarse automáticamente cuando se corta la electricidad. Debe contarse con presupuesto suficiente para activar los generadores de respaldo.',
@@ -1136,7 +1140,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_6',
     code: 'E_6',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'Se utiliza iluminación de bajo consumo de energía, con mejores controles y focos ahorradores de energía.',
     desc: 'Eficiencia Energética\nAvanzado',
     guidance: 'Es posible que la luz natural sea suficiente durante el día y debe aprovecharse donde sea posible para reducir el consumo de energía',
@@ -1150,7 +1154,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_7',
     code: 'E_7',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'El establecimiento cuenta con un plan de preparativos y respuesta para situaciones de emergencia, con su debida partida presupuestaria.',
     desc: 'Adecuación\nEmergencia',
     guidance: '',
@@ -1164,7 +1168,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_8',
     code: 'E_8',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'La(s) ducha(s) están bien iluminadas, de día y de noche.',
     desc: 'Adecuación\nAvanzado\nSala',
     guidance: 'Es necesario que haya iluminación en las duchas en todos los establecimientos donde se prestan servicios nocturnos, y donde no haya suficiente luz natural para usar las duchas con seguridad durante el día.',
@@ -1178,7 +1182,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_9',
     code: 'E_9',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'Las letrinas están bien iluminadas, de día y de noche.',
     desc: 'Adecuación\nAvanzado\nSala',
     guidance: 'Es necesario que haya iluminación en las letrinas en todos los establecimientos donde se prestan servicios nocturnos, y donde no haya suficiente luz natural para usar las letrinas con seguridad durante el día.',
@@ -1192,7 +1196,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_10',
     code: 'E_10',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'Existe ventilación ambiental suficiente en buen funcionamiento (natural o mecánica) en las áreas de atención a pacientes.',
     desc: 'Ventilación\nAvanzado\nSala/ Establecimiento',
     guidance: 'Los edificios deben estar ubicados y diseñados con materiales que produzcan las mejores condiciones interiores (por ejemplo, ventanas más grandes, aleros amplios para dar sombra en climas más cálidos), teniendo en cuenta el clima local y los vientos predominantes. Los edificios pueden mejorarse con el uso eficaz de persianas, apertura y cierre de puertas y ventanas, vegetación apropiada alrededor del edificio y otras medidas operativas para optimizar las condiciones interiores. Donde el clima lo permita, pueden utilizarse ventanas de mayor superficie, tragaluces y respiraderos para optimizar la ventilación natural. No se recomiendan ventiladores de techo ni ventiladores pequeños portátiles porque esparcen polvo en la habitación (especialmente en áreas estériles). Una mejor ventilación reduce la necesidad de utilizar aire acondicionado.',
@@ -1206,7 +1210,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_11',
     code: 'E_11',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'En zonas donde la malaria es endémica, las camas tienen mosquiteros tratados con insecticida para proteger a los pacientes de enfermedades transmitidas por mosquitos.',
     desc: 'Control de Vectores\nAvanzado\nSala/ Establecimiento',
     guidance: 'Los mosquiteros tratados con insecticida deben lavarse y reimpregnarse cada 6 meses si se usan únicamente para pacientes con enfermedades no infecciosas. Si se usan para pacientes con enfermedades infecciosas (cólera, fiebre hemorrágica, etc.), deben lavarse y reimpregnarse antes de utilizarlos para otro paciente y cuando estén sucios. Los mosquiteros tratados con insecticida deben impregnarse.',
@@ -1220,7 +1224,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_12',
     code: 'E_12',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'Se aplica un sistema de compras sostenibles (aplicando el enfoque del ciclo de vida) en todo el establecimiento.',
     desc: 'Adquisiciones\nAvanzado\nClima',
     guidance: 'Un sistema de compras sostenibles incluye el empleo de productos que se consiguen localmente, que han sido certificados por una entidad acreditada y que cumplen con normas internacionales. (Los productos deben ser inocuos para su uso, cumplir requisitos sobre toxicidad, ser duraderos y hacer uso eficiente de la energía).',
@@ -1234,7 +1238,7 @@ const INDICATORS_DATA = [
   {
     id: 'E_13',
     code: 'E_13',
-    module: 'Energía',
+    module: 'Energía y medio ambiente',
     title: 'Hay papeleras generales en todas las zonas públicas, se retira regularmente la basura del interior y el exterior de las instalaciones y se procura mejorar y mantener el aspecto estético de las instalaciones mediante pintura, jardinería (plantas) y garantizando que todos los equipos y otros artículos se almacenan de forma segura.',
     desc: 'Medio Ambiente\nAvanzado',
     guidance: '',
@@ -1248,7 +1252,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_1',
     code: 'M_1',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'El establecimiento cuenta con equipos de gestión de calidad/mejora de la calidad/PCI/ WASH FIT, con puntos focales designados para prevención y control de infecciones, servicios de agua, saneamiento e higiene, etc.',
     desc: 'Gestión\nEsencial',
     guidance: 'Puede haber un solo equipo o equipos separados para mejora de la calidad, PCI y servicios de agua, saneamiento e higiene (WASH). Debe haber por lo menos una persona de limpieza/un supervisor de limpieza/un empleado de la empresa que se ocupa de la limpieza representado en el equipo de WASH FIT, PCI o mejora de la calidad y debe participar en la toma de decisiones/elaboración de planes de mejora.',
@@ -1262,7 +1266,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_2',
     code: 'M_2',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'El establecimiento tiene un punto focal o ingeniero que se ocupa de los servicios de agua, saneamiento e higiene, que cuenta con un programa aprobado de trabajo y tiene apoyo de los altos directivos.',
     desc: 'Personal\nAvanzado',
     guidance: 'El punto focal de servicios de agua, saneamiento e higiene debe ser responsable de su mantenimiento así como de la infraestructura para eliminar residuos médicos. En los hospitales también debe haber un punto focal encargado de PCI y uno de servicios de agua, saneamiento e higiene.\nPuede completarse el marco de evaluación de PCI de la OMS (MEPCI) (https://www.who.int/infection-prevention/tools/core-components/ipcaf_ES.pdf). El MEPCI es una herramienta sistemática que permite realizar una evaluación de referencia del programa y de las actividades en un establecimiento de salud, así como evaluaciones permanentes para documentar el avance en el transcurso del tiempo y facilitar mejoras.',
@@ -1276,7 +1280,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_3',
     code: 'M_3',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'Se consulta a los grupos de mujeres, personas con discapacidad, pueblos indígenas, otros usuarios y al personal —por ejemplo, enfermería, obstetricia y limpieza— sobre las necesidades de agua, saneamiento e higiene y los diseños tecnológicos. Sus aportes influyen en la elección, ubicación y mantenimiento de la tecnología.',
     desc: 'Gestión\nAvanzado',
     guidance: '',
@@ -1290,7 +1294,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_4',
     code: 'M_4',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'Existe un organigrama actualizado de la estructura administrativa del establecimiento, donde se incluye al personal de limpieza, claramente visible y legible.',
     desc: 'Gestión\nAvanzado',
     guidance: '',
@@ -1304,7 +1308,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_5',
     code: 'M_5',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'Todo el personal auxiliar, incluido el de limpieza y el que se ocupa de los residuos, tiene una descripción del puesto clara y por escrito, que describe las responsabilidades de PCI y servicios de agua, saneamiento e higiene.',
     desc: 'Gestión\nAvanzado',
     guidance: '',
@@ -1318,7 +1322,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_6',
     code: 'M_6',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'Todo el personal auxiliar nuevo, incluido el de limpieza y el que se ocupa de los residuos, recibe capacitación adecuada en WASH/PCI, adaptada a su descripción del puesto.',
     desc: 'Personal\nEsencial',
     guidance: '',
@@ -1332,7 +1336,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_7',
     code: 'M_7',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'Se evalúa periódicamente el desempeño del personal. Se reconoce/recompensa al personal de excelente desempeño y se ofrece apoyo para mejorar al personal que no tiene un buen desempeño.',
     desc: 'Personal\nAvanzado\nSala/Establecimiento',
     guidance: 'El desempeño puede estar relacionado con cumplir con la disposición de lavarse las manos, así como mostrar compasión, seguir procedimientos médicos correctos, escuchar al paciente, etc.',
@@ -1346,7 +1350,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_8',
     code: 'M_8',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'Existe un protocolo y un sistema eficaz para operar, mantener y reparar la infraestructura y adquirir insumos para:\n- Limpieza ambiental, adaptada a las distintas áreas de servicio.\n- Manipulación de residuos.\n- Operación y mantenimiento de los servicios de agua y saneamiento.',
     desc: 'Procedimientos operativos normalizados\nEsencial',
     guidance: 'Un sistema ayudaría a evitar desabastecimiento y a adquirir los materiales adicionales que se necesiten en emergencias/contingencias. El jefe del programa de limpieza, el equipo de compras y el comité de control y prevención de infecciones o de higiene deben preparar una lista maestra con las cantidades de materiales y equipo que requieren (es decir, especificaciones detalladas e información sobre proveedores) (por ejemplo, anualmente). Los resultados de las inspecciones sistemáticas y actividades de mantenimiento deben determinar las cantidades necesarias de materiales y equipo. Los establecimientos podrían tener un almacén central que recibe materiales y equipo y los distribuye a las áreas de servicios de limpieza ambiental designadas después de recibir los informes de inventario.',
@@ -1360,7 +1364,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_9',
     code: 'M_9',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'Se elabora un presupuesto para cubrir los costos del personal de limpieza y mantenimiento, capacitación en PCI/WASH, bienes consumibles de PCI/WASH (por ejemplo, jabón, cloro) y todas las actividades enumeradas en el protocolo.',
     desc: 'Presupuesto\nEsencial',
     guidance: 'El presupuesto cubre los costos de capital y operativos de personal, capacitación del personal, productos y equipo de limpieza, equipo para seguimiento de programas, gastos de administración, costos de producción e impresión para listas de verificación, registros y otras guías de trabajo, y costos de infraestructura/servicios (por ejemplo, abastecimiento de agua y servicios de eliminación de aguas residuales).',
@@ -1374,7 +1378,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_10',
     code: 'M_10',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'Existe una política de seguridad del paciente en todo el establecimiento para mejorar la calidad de la atención, escrita, actualizada y en ejecución.',
     desc: 'Políticas\nAvanzado',
     guidance: '',
@@ -1388,7 +1392,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_11',
     code: 'M_11',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'En hospitales, existe una política verde (ecológica) para todo el establecimiento, escrita y en ejecución.',
     desc: 'Políticas\nAvanzado\nClima\nSolo para Hospitales',
     guidance: 'Deben incorporarse conceptos de resiliencia climática en todas las estrategias y planes de servicios de agua, saneamiento e higiene de los establecimientos.',
@@ -1402,7 +1406,7 @@ const INDICATORS_DATA = [
   {
     id: 'M_12',
     code: 'M_12',
-    module: 'Gestión y Administración',
+    module: 'Gestión y personal',
     title: 'Se aplica un plan de preparación y respuesta ante emergencias que se actualiza periódicamente. El personal recibe capacitación y realiza simulacros para prepararse, responder y recuperarse de crisis climáticas o de emergencias agravadas por el clima.',
     desc: 'Preparación para situaciones de emergencia\nAvanzado\nClima',
     guidance: 'Los planes para situaciones de emergencia se actualizan periódica e iterativamente cuando se recibe nueva información sobre clima y vulnerabilidad. Existen sistemas para adoptar medidas ante advertencias de fenómenos climáticos extremos y recomendaciones para reducir los riesgos para la salud.\nEl plan de respuesta ante emergencias debe incluir medidas para obtener los suministros necesarios cuando aumenta la demanda o la carga de pacientes en lo que respecta a: el sistema de abastecimiento de agua (por ejemplo, cloro, filtros o kits de pruebas rápidas para el tratamiento del agua);\nhigiene de las manos (jabón, desinfectantes a base de alcohol, estaciones para lavado de las manos, etc.);\nlimpieza ambiental (productos químicos, estropajos, baldes, etc.)',

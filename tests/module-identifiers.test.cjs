@@ -109,6 +109,31 @@ test('assessment tabs and summary pass stable IDs to module calculations', () =>
     assert.ok(!html.includes(`${method}(mod.name)`));
   }
 });
+
+test('renamed domains keep legacy labels usable and preserve imported answers', async () => {
+  for (const [id, oldName, newName] of [
+    ['cleaning', 'Limpieza Hospitalaria', 'Limpieza ambiental'],
+    ['energy', 'Energía', 'Energía y medio ambiente'],
+    ['management', 'Gestión y Administración', 'Gestión y personal']
+  ]) {
+    const app = loadApp();
+    assert.equal(app.modulesList.find(mod => mod.id === id).name, newName);
+    const indicator = app.indicators.value.find(ind => ind.moduleId === id);
+    indicator.module = oldName;
+    delete indicator.moduleId;
+    indicator.score = 1;
+    indicator.notes = 'Respuesta anterior';
+    app.activeModuleTab.value = id;
+    assert.ok(app.getFilteredIndicatorsByModule.value.includes(indicator));
+    const data = {generalInfo: app.generalInfo.value, indicators: app.indicators.value};
+    await app.importData({target: {files: [{text: JSON.stringify(data)}]}});
+    const restored = app.indicators.value.find(ind => ind.code === indicator.code);
+    assert.equal(restored.module, newName);
+    assert.equal(restored.moduleId, id);
+    assert.equal(restored.score, 1);
+    assert.equal(restored.notes, 'Respuesta anterior');
+  }
+});
 test('risk label changes with the same indicator response selected in assessment', () => {
   const app=loadApp();
   const ind=app.indicators.value.find(item=>item.code==='H_1');
