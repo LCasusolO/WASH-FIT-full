@@ -48,5 +48,5 @@ test('both report formats include separate dates and ten matching columns', () =
   const report=Pdf.definition(data,['TEST'],[]);
   const table=report.content.find(x=>x.table?.body[0].some(cell=>cell.text==='Fecha de inicio')).table;
   assert.equal(table.body[0].length,10);assert.equal(table.body[1].length,10);
-  assert.equal(table.body[1][6],'2026-11-01');assert.equal(table.body[1][7],'2026-11-20');
+  assert.equal(table.body[1][6].text,'2026-11-01');assert.equal(table.body[1][7].text,'2026-11-20');
 });

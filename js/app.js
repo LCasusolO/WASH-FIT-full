@@ -335,7 +335,7 @@ createApp({
         });
       }
 
-      return result;
+      return WashCore.sortReportByAssessment(result);
     });
 
     // Cronograma del Resumen: solo brechas (puntaje 0 o 1) con fecha de inicio y de finalización.
