@@ -62,6 +62,7 @@ button, [role=button], summary { cursor: pointer; }
 .report-content th { background: #F7F9FB; text-align: left; }
 #app .report-summary-table :is(th, td),
 .report-content .report-summary-table :is(th, td) { text-align: center; }
+.report-summary-total { font-weight: bold; background: #F7F9FB; border-top: 2px solid #bbb; }
 .report-table-scroll { overflow-x: auto; }
 @media (max-width: 767px) { .report-wide { min-width: 950px; } }
 .report-plan { border: 1px solid #ddd; padding: .8rem; margin-bottom: 1rem; }
