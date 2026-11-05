@@ -57,6 +57,11 @@ test('alternate PDF uses the same order for risks, plans, monitoring and histori
   assert.deepEqual(titles(tables(4)[0]), expected);
   for (const table of tables(5)) assert.deepEqual(titles(table), expected);
   for (const step of [3, 4, 5]) {
-    assert.deepEqual(tables(step)[0].table.body.slice(1, 6).map(row => row[1].fillColor), ['#fee2e2', '#fee2e2', '#fef3c7', '#fef3c7', '#dcfce7']);
+    const resultColumn = step === 3 ? 2 : 1;
+    const rows = tables(step)[0].table.body.slice(1, 6);
+    assert.deepEqual(rows.map(row => row[resultColumn].fillColor), ['#fee2e2', '#fee2e2', '#fef3c7', '#fef3c7', '#dcfce7']);
+    for (const row of rows) {
+      assert.ok(row.every((cell, index) => index === resultColumn || cell.fillColor === undefined));
+    }
   }
 });

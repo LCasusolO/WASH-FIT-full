@@ -63,9 +63,9 @@ button, [role=button], summary { cursor: pointer; }
 #app .report-summary-table :is(th, td),
 .report-content .report-summary-table :is(th, td) { text-align: center; }
 .report-summary-total { font-weight: bold; background: #F7F9FB; border-top: 2px solid #bbb; }
-.report-content tr[data-assessment-score="0"] > td { background-color: #fee2e2; }
-.report-content tr[data-assessment-score="1"] > td { background-color: #fef3c7; }
-.report-content tr[data-assessment-score="2"] > td { background-color: #dcfce7; }
+.report-content tr[data-assessment-score="0"] > .report-assessment-cell { background-color: #fee2e2; }
+.report-content tr[data-assessment-score="1"] > .report-assessment-cell { background-color: #fef3c7; }
+.report-content tr[data-assessment-score="2"] > .report-assessment-cell { background-color: #dcfce7; }
 .report-table-scroll { overflow-x: auto; }
 @media (max-width: 767px) { .report-wide { min-width: 950px; } }
 .report-plan { border: 1px solid #ddd; padding: .8rem; margin-bottom: 1rem; }

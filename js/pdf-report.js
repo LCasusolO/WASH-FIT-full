@@ -4,9 +4,9 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (Core, Radar) {
   const value = x => x === null || x === undefined || x === '' ? 'Sin registrar' : String(x);
   const line = (label, x) => ({text: [{text: label + ': ', bold: true}, value(x)], margin: [0, 3, 0, 3]});
-  function assessmentRow(indicator, cells) {
+  function assessmentRow(indicator, cells, resultColumn = 1) {
     const colors = ['#fee2e2', '#fef3c7', '#dcfce7'];
-    return cells.map(text => ({text, fillColor: colors[indicator.score]}));
+    return cells.map((text, index) => index === resultColumn ? {text, fillColor: colors[indicator.score]} : {text});
   }
   const risk = ind => ind.severity == null || ind.likelihood == null || ind.severity === '' || ind.likelihood === '' ? null : Number(ind.severity) + Number(ind.likelihood);
   const riskText = ind => { const n = risk(ind); return n === null ? 'Sin evaluar' : `${n} - ${n >= 15 ? 'Alto' : n >= 8 ? 'Medio' : 'Bajo'}`; };
@@ -28,11 +28,11 @@
     step(2, 'Evaluación de la Situación');
     content.push(table(['Dominio', 'Indicador', 'Resultado', 'Hallazgos'], indicators.map(i => [i.module, i.title, Core.assessmentResult(i).label, value(i.notes)]), [80, '*', 85, 100]));
     step(3, 'Evaluación del Riesgo');
-    content.push({text: 'Riesgo = gravedad + probabilidad (0-20).'}, table(['Módulo', 'Indicador', 'Resultado', 'Problema', 'Riesgos asociados', 'Gravedad', 'Probabilidad', 'Riesgo'], evaluated.map(i => assessmentRow(i, [i.module, i.title, Core.assessmentResult(i).label, value(i.problemDesc), value(i.associatedRisks), value(i.severity), value(i.likelihood), riskText(i)])), [55, '*', 65, 115, 115, 40, 50, 55]));
+    content.push({text: 'Riesgo = gravedad + probabilidad (0-20).'}, table(['Módulo', 'Indicador', 'Resultado', 'Problema', 'Riesgos asociados', 'Gravedad', 'Probabilidad', 'Riesgo'], evaluated.map(i => assessmentRow(i, [i.module, i.title, Core.assessmentResult(i).label, value(i.problemDesc), value(i.associatedRisks), value(i.severity), value(i.likelihood), riskText(i)], 2)), [55, '*', 65, 115, 115, 40, 50, 55]));
     step(4, 'Plan de Mejora');
     content.push(table(['Módulo', 'Indicador / resultado / riesgo', 'Problema', 'Acción', 'Recursos', 'Responsables', 'Fecha de inicio', 'Fecha de finalización', 'Costo USD', 'Estado'], plans.map(i => assessmentRow(i, [i.module,i.title+'\n'+Core.assessmentResult(i).label+'\nRiesgo: '+riskText(i), value(i.problemDesc), value(Core.reviewBullets(i.action)), value(Core.reviewBullets(i.resources)), value(Core.reviewBullets(Core.responsibleName(i,g.team))), value(i.startDate), value(i.targetDate), value(i.cost), Core.trackingStatus(i)])), [50,'*',60,75,60,60,50,50,35,45]));
     step(5, 'Monitoreo y Revisión');
-    content.push(table(['Módulo', 'Indicador', 'Acción en seguimiento', 'Cambio', 'Medidas correctivas', 'Próxima revisión', 'Comentarios'], plans.map(i => assessmentRow(i, [i.module,i.title,value(Core.reviewBullets(i.action)),Core.changeLabel(i.indicatorChange),value(Core.reviewBullets(i.correctiveMeasures)),value(i.nextReviewDate),value(Core.reviewBullets(i.monitoringComments))])), [55,'*',90,65,100,60,100]));
+    content.push(table(['Módulo', 'Indicador', 'Acción en seguimiento', 'Cambio', 'Medidas correctivas', 'Próxima revisión', 'Comentarios'], plans.map(i => assessmentRow(i, [i.module,i.title+'\n'+Core.assessmentResult(i).label,value(Core.reviewBullets(i.action)),Core.changeLabel(i.indicatorChange),value(Core.reviewBullets(i.correctiveMeasures)),value(i.nextReviewDate),value(Core.reviewBullets(i.monitoringComments))])), [55,'*',90,65,100,60,100]));
     const history=plans.flatMap(i => (i.history || []).map(h => [i.module,i.title,new Date(h.recordedAt).toLocaleString('es-PE',{timeZone:'America/Lima'})+'\nPróxima: '+value(h.nextReviewDate),Core.changeLabel(h.indicatorChange),Core.reviewHistoryText(h,'responsible'),value(Core.reviewBullets(h.action)),Core.reviewHistoryText(h,'correctiveMeasures'),Core.reviewHistoryText(h,'monitoringComments')]));
     if(history.length) content.push({text:'Historial de revisiones',style:'subheading'},table(['Módulo','Indicador','Revisión / próxima','Cambio','Responsables','Acción','Medidas','Comentarios'],history,[55,'*',80,60,60,75,90,90]));
     step(6, 'Resumen');
