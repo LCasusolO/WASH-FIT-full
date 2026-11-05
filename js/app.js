@@ -1032,8 +1032,8 @@ createApp({
     };
     const reportIndicators = computed(() => indicators.value.filter(shouldShowIndicator));
     const reportRadarSvg = computed(() => WashRadar.svg(reportIndicators.value, modulesList));
-    const reportRisks = computed(() => reportIndicators.value.filter(ind => ind.score !== null));
-    const reportPlans = computed(() => reportIndicators.value.filter(ind => ind.score === 0 || ind.score === 1 || WashCore.planActions(ind).some(act => act.action) || ind.history?.length));
+    const reportRisks = computed(() => WashCore.sortReportByAssessment(reportIndicators.value.filter(ind => ind.score !== null)));
+    const reportPlans = computed(() => WashCore.sortReportByAssessment(reportIndicators.value.filter(ind => ind.score === 0 || ind.score === 1 || WashCore.planActions(ind).some(act => act.action) || ind.history?.length)));
     let reportMap = null;
     let reportMarker = null;
     let reportTilesReady = Promise.resolve();

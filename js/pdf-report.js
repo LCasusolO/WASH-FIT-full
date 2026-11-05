@@ -11,8 +11,8 @@
     const g = dataset.generalInfo;
     const visible = new Set(visibleCodes);
     const indicators = dataset.indicators.filter(i => visible.has(i.code));
-    const evaluated = indicators.filter(i => i.score !== null);
-    const plans = indicators.filter(i => i.score === 0 || i.score === 1 || i.action || i.history?.length);
+    const evaluated = Core.sortReportByAssessment(indicators.filter(i => i.score !== null));
+    const plans = Core.sortReportByAssessment(indicators.filter(i => i.score === 0 || i.score === 1 || i.action || i.history?.length));
     const percent = list => list.length ? Math.round(list.reduce((sum, i) => sum + i.score, 0) / (list.length * 2) * 100) + '%' : 'Sin evaluar';
     const content = [{text: 'WASH FIT - Reporte consolidado', style: 'title'}, line('Generado', new Date(dataset.savedAt).toLocaleString('es-PE', {timeZone: 'America/Lima'})), line('Fecha de evaluación', g.evaluationDate)];
     const step = (number, title) => content.push({text: `Paso ${number}: ${title}`, style: 'heading', ...(number > 1 ? {pageBreak: 'before'} : {})});

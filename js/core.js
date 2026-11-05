@@ -308,6 +308,10 @@
     return compliance > 75 ? { label: 'Mejora Avanzada', colorClass: 'text-emerald-700' } : compliance >= 60 ? { label: 'En Proceso de Mejora', colorClass: 'text-amber-700' } : { label: 'Requiere Mejoras Prioritarias', colorClass: 'text-rose-700' };
   }
   function hasAssessmentScore(indicator) { return [0, 1, 2].includes(indicator.score); }
+  function sortReportByAssessment(indicators) {
+    const rank = indicator => hasAssessmentScore(indicator) ? indicator.score : 3;
+    return indicators.slice().sort((a, b) => rank(a) - rank(b));
+  }
   function hasAssessmentExplanation(indicator) {
     const reason = String(indicator.notes || '').trim()
       .replace(/^(?:INDICADOR\s+)?NO\s+(?:SE\s+)?APLICA\b[\s:;,.()—-]*/i, '')
@@ -456,5 +460,5 @@
     const added = field === 'correctiveMeasures' ? changes.newCorrectiveMeasures : changes.newMonitoringComments;
     return (added ? 'Nuevo en esta revisión:\n' + reviewBullets(added) : 'Sin información nueva en esta revisión.') + '\n\nAcumulado:\n' + full;
   }
-  return { MAX_PLAN_ACTIONS, newPlanAction, planActions, addPlanAction, removePlanAction, isOverdue, actionStatus, planSummary, actionsText, buildGantt, validatePlanDates, updatePlanDate, reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
+  return { MAX_PLAN_ACTIONS, newPlanAction, planActions, addPlanAction, removePlanAction, isOverdue, actionStatus, planSummary, actionsText, buildGantt, validatePlanDates, updatePlanDate, sortReportByAssessment, reportLocation, hasAssessmentScore, hasAssessmentExplanation, isNotApplicable, assessmentComplete, bulletBackspace, reviewHistoryText, createReviewDraft, saveReviewDraft, reviewBullets, changeLabel, bulletEdit, bulletHasContent, countries, countryCode, fileBaseName, filterRisks, SCHEMA_VERSION, MAX_PHOTOS, MAX_PHOTO_BYTES, MAX_IMPORT_BYTES, clone, newId, localDate, validDate, defaults, normalizeDataset, calculateJmp, valuation, assessmentResult, populationWarning, parseNonNegative, responsibleName, trackingStatus, recordReview };
 });
