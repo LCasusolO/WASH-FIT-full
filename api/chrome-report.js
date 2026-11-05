@@ -40,7 +40,7 @@ async function renderOne(html, env) {
       await document.fonts.ready;
       await Promise.all(Array.from(document.images, image => image.decode()));
     });
-    return await page.pdf({format: 'A4', landscape: true, preferCSSPageSize: true, printBackground: true, timeout: 30000});
+    return await page.pdf({format: 'A4', landscape: true, preferCSSPageSize: true, printBackground: true, tagged: true, outline: true, timeout: 30000});
   } finally {
     try { await context?.close(); }
     finally { await rm(scratch, {recursive: true, force: true, maxRetries: 3}); }
