@@ -807,7 +807,7 @@ createApp({
             added++;
           } catch (_) { failed++; }
         }
-        triggerToast(added ? added + ' fotografía(s) cargada(s).' + (failed ? ' ' + failed + ' rechazada(s): revise formato, tamaño o límite.' : '') : 'No se cargaron fotografías. Use JPG, PNG o WebP de hasta 5 MB; máximo 20 fotos.', added ? 'success' : 'error');
+        triggerToast(added ? added + ' fotografía(s) cargada(s).' + (failed ? ' ' + failed + ' rechazada(s): revise formato, tamaño o límite.' : '') : 'No se cargaron fotografías. Use JPG, PNG o WebP de hasta 25 MB, con un máximo de 20 fotos.', added ? 'success' : 'error');
       } finally { photoBusy.value = false; }
     };
     const handleFileChange = async event => { await processPhotos(event.target.files); event.target.value = ''; };

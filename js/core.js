@@ -6,7 +6,8 @@
   'use strict';
   const SCHEMA_VERSION = 2;
   const MAX_PHOTOS = 20;
-  const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+  const MAX_PHOTO_BYTES = 25 * 1024 * 1024;
+  const MAX_STORED_PHOTO_BYTES = 5 * 1024 * 1024;
   const MAX_IMPORT_BYTES = 40 * 1024 * 1024;
   const TEXT_FIELDS = ['notes', 'problemDesc', 'associatedRisks', 'action', 'resources', 'responsible', 'responsibleId', 'revisionNotes', 'correctiveMeasures', 'monitoringComments'];
   const STATUSES = ['No Iniciado', 'En Progreso', 'Retrasado', 'Completado'];
@@ -143,7 +144,7 @@
     });
     if (input.photos !== undefined && (!Array.isArray(input.photos) || input.photos.length > MAX_PHOTOS)) throw new Error(`Máximo ${MAX_PHOTOS} fotografías.`);
     info.photos = (input.photos || []).map(photo => {
-      if (!isObject(photo) || typeof photo.url !== 'string' || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(photo.url) || photo.url.length > MAX_PHOTO_BYTES * 4 / 3 + 100) throw new Error('Fotografía inválida o demasiado grande.');
+      if (!isObject(photo) || typeof photo.url !== 'string' || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(photo.url) || photo.url.length > MAX_STORED_PHOTO_BYTES * 4 / 3 + 100) throw new Error('Fotografía inválida o demasiado grande.');
       return { name: text(photo.name, 'nombre de foto', 1000), url: photo.url };
     });
     return info;

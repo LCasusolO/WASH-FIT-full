@@ -25,7 +25,7 @@ Los cambios se guardan en IndexedDB unos 800 ms después de editar. El estado «
 - Importar valida todo el archivo antes de reemplazar el estado. Conserva el borrador anterior y admite JSON antiguos sin versión.
 - «Recuperar respaldo anterior» intercambia el borrador actual y el respaldo.
 - Exportar descarga JSON con `schemaVersion: 2` y fecha de guardado. El catálogo y sus textos se recuperan de la versión canónica; el JSON no puede reemplazar las definiciones de indicadores.
-- El límite de importación es 40 MB. Las fotografías admitidas son JPG, PNG y WebP, hasta 5 MB cada una, máximo 20. Se convierten a JPEG y se reducen a 1.200 píxeles.
+- El límite de importación de JSON es 40 MB. Se pueden cargar hasta 20 fotografías JPG, PNG o WebP de 25 MB por archivo (500 MB en total antes de comprimir). Se convierten a JPEG y se reducen a 1.200 píxeles.
 
 Este guardado es local y depende del almacenamiento del navegador. Incógnito, limpieza de datos o políticas del sistema pueden eliminarlo. Los dispositivos no se sincronizan; el JSON permite trasladar la evaluación. Exporte respaldos de los trabajos importantes. «Guardando» o «Error al guardar» indican que aún no se confirmó la persistencia.
 
