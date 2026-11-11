@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { render } = require('../api/chrome-report.js');
 test('PDF bookmarks contain all six steps with distinct page destinations', { skip: process.platform !== 'linux' && !process.env.WASH_CHROME_EXECUTABLE, timeout: 60000 }, async () => {
-  const titles = ['Paso 1: Datos Generales', 'Paso 2: Evaluación de la Situación', 'Paso 3: Evaluación del Riesgo', 'Paso 4: Plan de Mejora', 'Paso 5: Monitoreo y Revisión', 'Paso 6: Resumen'];
+  const titles = ['Paso 1: Datos Generales', 'Paso 2: Evaluación de la Situación', 'Paso 3: Evaluación del Riesgo', 'Paso 4: Plan de Mejora', 'Paso 5: Monitoreo y Revisión', 'Resumen'];
   const sections = titles.map(title => `<section><h2>${title}</h2><p>Contenido de prueba</p></section>`).join('');
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>section + section { break-before: page; }</style></head><body><div class="report-content"><h1>WASH FIT</h1>${sections}</div></body></html>`;
   const pdf = await render(html);
