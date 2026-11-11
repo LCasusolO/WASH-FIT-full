@@ -1,5 +1,20 @@
 (function (root) {
   'use strict';
+  const MAX_REPORT_BODY = 4 * 1024 * 1024;
+  const PHOTO_RETRY_PROFILES = [[900, 0.65], [640, 0.52], [480, 0.42]];
+
+  function photoJpeg(source, maxSide, quality) {
+    const scale = Math.min(1, maxSide / Math.max(source.naturalWidth, source.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(source.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(source.naturalHeight * scale));
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(source, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', quality);
+  }
+
   async function serialize(element, title) {
     await document.fonts.ready;
     const copy = element.cloneNode(true);
@@ -12,6 +27,12 @@
       if (image.classList.contains('leaflet-tile') && (!source.complete || !source.naturalWidth)) { image.remove(); return; }
       try {
         await source.decode();
+        if (image.closest('.report-photos')) {
+          const src = source.currentSrc || source.src;
+          image.src = /^data:image\/jpeg;base64,/i.test(src) ? src : photoJpeg(source, 1200, 0.75);
+          image.removeAttribute('srcset');
+          return;
+        }
         const canvas = document.createElement('canvas');
         canvas.width = source.naturalWidth; canvas.height = source.naturalHeight;
         canvas.getContext('2d').drawImage(source, 0, 0);
@@ -28,20 +49,47 @@
     const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     return '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>' + escape(title) + '</title><style>' + css.replace(/<\/style/gi, '<\\/style') + '</style></head><body class="font-sans antialiased"><section class="print-report report-open">' + copy.outerHTML + '</section></body></html>';
   }
-  async function generate(element, title) {
-    const html = typeof element === 'string' ? element : await serialize(element, title);
+  async function compressReportPhotos(html, maxSide, quality) {
+    const report = new DOMParser().parseFromString(html, 'text/html');
+    const photos = Array.from(report.querySelectorAll('.report-photos img'));
+    if (!photos.length) return null;
+    for (const photo of photos) {
+      const source = new Image();
+      source.src = photo.src;
+      await source.decode();
+      const jpeg = photoJpeg(source, maxSide, quality);
+      if (jpeg.length < photo.src.length) photo.src = jpeg;
+    }
+    return '<!doctype html>' + report.documentElement.outerHTML;
+  }
+
+  async function encodeReport(html) {
     const compressed = new Uint8Array(await new Response(new Blob([html]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());
     let binary = '';
     for (let offset = 0; offset < compressed.length; offset += 32768) binary += String.fromCharCode(...compressed.subarray(offset, offset + 32768));
-    const body = JSON.stringify({htmlGzip: btoa(binary)});
-    if (new Blob([body]).size > 4 * 1024 * 1024) throw new Error('El reporte supera el tamaño permitido. Reduzca el tamaño de las fotografías y reintente.');
-    const response = await fetch('/api/chrome-report', {method: 'POST', headers: {'Content-Type': 'application/json'}, body, signal: AbortSignal.timeout(90000)});
-    if (!response.ok) {
-      const result = await response.json().catch(() => ({}));
-      throw new Error(result.error || 'No se pudo generar el PDF con Chrome. Reintente el guardado.');
+    return JSON.stringify({htmlGzip: btoa(binary)});
+  }
+
+  async function generate(element, title) {
+    const html = typeof element === 'string' ? element : await serialize(element, title);
+    let candidate = html;
+    for (const profile of [...PHOTO_RETRY_PROFILES, null]) {
+      const body = await encodeReport(candidate);
+      // El cuerpo contiene únicamente JSON y base64 ASCII.
+      if (body.length <= MAX_REPORT_BODY) {
+        const response = await fetch('/api/chrome-report', {method: 'POST', headers: {'Content-Type': 'application/json'}, body, signal: AbortSignal.timeout(90000)});
+        if (response.ok) {
+          if (!response.headers.get('content-type')?.includes('application/pdf')) throw new Error('El servidor no devolvió un PDF válido.');
+          return response.blob();
+        }
+        const result = await response.json().catch(() => ({}));
+        if (response.status !== 413) throw new Error(result.error || 'No se pudo generar el PDF con Chrome. Reintente el guardado.');
+      }
+      if (!profile) break;
+      candidate = await compressReportPhotos(html, ...profile);
+      if (candidate === null) break;
     }
-    if (!response.headers.get('content-type')?.includes('application/pdf')) throw new Error('El servidor no devolvió un PDF válido.');
-    return response.blob();
+    throw new Error('El reporte supera el tamaño permitido incluso después de optimizar las fotografías. Reduzca el tamaño de las imágenes más grandes y reintente.');
   }
   function preparePrint() {
     try {
